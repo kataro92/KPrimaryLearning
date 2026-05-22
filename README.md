@@ -1,77 +1,97 @@
+<a id="readme-top"></a>
+
 # KV Primary Fun Learning
 
-Website game học tập lớp 4 — frontend only (HTML5 + Three.js + TypeScript).
+Website game học tập lớp 4 (frontend-only) với trải nghiệm 3D, tập trung vào học qua chơi.
 
-## Chạy dự án
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-6e56cf?style=for-the-badge)](https://kataro92.github.io/KPrimaryLearning/)
+[![Repo](https://img.shields.io/badge/Repository-KPrimaryLearning-24292f?style=for-the-badge&logo=github)](https://github.com/kataro92/KPrimaryLearning)
+
+## Mục lục
+
+- [Giới thiệu](#giới-thiệu)
+- [Công nghệ sử dụng](#công-nghệ-sử-dụng)
+- [Bắt đầu nhanh](#bắt-đầu-nhanh)
+- [Sử dụng](#sử-dụng)
+- [Roadmap](#roadmap)
+- [Tài liệu](#tài-liệu)
+- [Contributing](#contributing)
+- [License](#license)
+- [Liên hệ](#liên-hệ)
+
+## Giới thiệu
+
+- Nền tảng web game học tập cho học sinh lớp 4.
+- Hiện có **9/9 game** playable theo luồng: Welcome -> Home -> Game Select -> Gameplay -> Result/Celebration.
+- Persistence local qua IndexedDB (`profile`, `progress`, `sessions`) và localStorage (`kv_settings`).
+- Demo online: [https://kataro92.github.io/KPrimaryLearning/](https://kataro92.github.io/KPrimaryLearning/)
+
+## Công nghệ sử dụng
+
+- `TypeScript`
+- `Vite`
+- `Three.js`
+- `Modular CSS` + phong cách Claymorphism
+- `GitHub Actions` + `GitHub Pages`
+
+## Bắt đầu nhanh
+
+### Điều kiện
+
+- `Node.js` 20+ (khuyến nghị)
+- `npm`
+
+### Cài đặt và chạy local
 
 ```bash
+git clone https://github.com/kataro92/KPrimaryLearning.git
+cd KPrimaryLearning
 npm install
 npm run dev
 ```
 
-Mở URL do Vite in ra (thường `http://localhost:5173`).
+Mở URL do Vite in ra (thường là `http://localhost:5173`).
 
-**Quy trình:** Mỗi lần phát triển phải chạy web và test — xem `docs/workflow/DEVELOPMENT_WORKFLOW.md`.
-
-## Build
+### Build production
 
 ```bash
 npm run build
 npm run preview
 ```
 
-## Deploy GitHub Pages
+## Sử dụng
 
-- Repository URL: `https://github.com/kataro92/KPrimaryLearning`
-- Public site URL: `https://kataro92.github.io/KPrimaryLearning/`
-
-Sau khi push lên nhánh `main`, GitHub Actions sẽ tự build và deploy từ thư mục `dist`.
-
-## Trạng thái triển khai
-
-- Frontend-only: Vite + TypeScript + Three.js, không có backend.
-- **9/9 game** đang playable với màn chọn danh hiệu, gameplay riêng, kết quả + celebration.
-- Persistence local hoạt động qua IndexedDB (`profile`, `progress`, `sessions`) và localStorage (`settings`).
-- TTS runtime hiện tại dùng Web Speech API; hướng nâng cấp local-first được mô tả tại `docs/planning/TTS_LOCAL_ARCHITECTURE.md`.
-- Build hiện tại pass (`npm run build`), có cảnh báo chunk size cần tối ưu thêm.
-
-## Giao diện
-
-Claymorphism (thẻ kính, nút nổi, nền blob) — chi tiết: [`docs/STYLING.md`](docs/STYLING.md).
-
-## Test nhanh & ảnh tính năng
-
-- Smoke test local trên `http://localhost:5173`.
-- Build kiểm tra phát hành: `npm run build` (pass).
-- Đã đi qua các luồng chính: Welcome -> Home -> Chọn game/danh hiệu -> Gameplay -> Báo cáo nhân vật.
-
-### GIF demo nhanh
+### Demo nhanh
 
 ![Demo Flow](docs/screenshots/demo-flow.gif)
 
-### 1) Màn hình Welcome
+### Các màn hình chính
 
-![Welcome](docs/screenshots/01-welcome.png)
+1. Welcome  
+   ![Welcome](docs/screenshots/01-welcome.png)
 
-### 2) Home (dashboard 9 game + toggle nhanh)
+2. Home (dashboard 9 game + toggle nhanh)  
+   ![Home](docs/screenshots/02-home.png)
 
-![Home](docs/screenshots/02-home.png)
+3. Chọn game và danh hiệu  
+   ![Game Select Tier](docs/screenshots/03-game-select-tier.png)
 
-### 3) Chọn game và danh hiệu
+4. Gameplay (ví dụ Trạng Nguyên Toán Việt - giữa trận)  
+   ![Gameplay](docs/screenshots/04-gameplay.png)
 
-![Game Select Tier](docs/screenshots/03-game-select-tier.png)
+5. Báo cáo nhân vật và tiến độ  
+   ![Character Report](docs/screenshots/05-character-report.png)
 
-### 4) Gameplay (ví dụ Trạng Nguyên Toán Việt - giữa trận)
+## Roadmap
 
-![Gameplay](docs/screenshots/04-gameplay.png)
-
-### 5) Báo cáo nhân vật và tiến độ
-
-![Character Report](docs/screenshots/05-character-report.png)
+- Tối ưu bundle/chunk để giảm kích thước JS ban đầu.
+- Bổ sung test tự động cho score/unlock và smoke e2e tối thiểu.
+- Chuẩn hóa telemetry/observability runtime ở mức local.
+- Nâng cấp TTS local-first theo thiết kế tại `docs/planning/TTS_LOCAL_ARCHITECTURE.md`.
 
 ## Tài liệu
 
-- `docs/README.md` (điểm vào chính cho toàn bộ tài liệu)
+- `docs/README.md` (điểm vào chính)
 - `docs/requirements/BUSINESS_REQUIREMENTS.md`
 - `docs/requirements/TECHNICAL_REQUIREMENTS.md`
 - `docs/planning/IMPLEMENTATION_ROADMAP.md`
@@ -79,12 +99,25 @@ Claymorphism (thẻ kính, nút nổi, nền blob) — chi tiết: [`docs/STYLIN
 - `docs/status/CURRENT_STATE.md`
 - `docs/workflow/DEVELOPMENT_WORKFLOW.md`
 - `docs/workflow/DOCS_DEFINITION_OF_DONE.md`
-- `docs/GLOSSARY.md`
 - `docs/STYLING.md`
+- `docs/GLOSSARY.md`
 
-`docs/requirements/TECHNICAL_REQUIREMENTS.md` và `docs/planning/IMPLEMENTATION_ROADMAP.md` là nguồn mô tả hiện trạng kỹ thuật mới nhất.
+## Contributing
 
-## Cursor-first
+Contributions luôn được chào đón. Quy trình đề xuất:
 
-- Quy tắc cho Cursor Agent nằm trong `.cursor/rules/`.
-- Rule mặc định giúp agent ưu tiên đọc tài liệu trong `docs/` trước khi thay đổi code.
+1. Fork repository
+2. Tạo branch mới (`feature/...` hoặc `fix/...`)
+3. Commit thay đổi
+4. Tạo Pull Request
+
+## License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+## Liên hệ
+
+- Repository: [https://github.com/kataro92/KPrimaryLearning](https://github.com/kataro92/KPrimaryLearning)
+- Live site: [https://kataro92.github.io/KPrimaryLearning/](https://kataro92.github.io/KPrimaryLearning/)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
