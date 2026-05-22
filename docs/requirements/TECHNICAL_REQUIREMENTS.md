@@ -44,7 +44,7 @@ Tài liệu này mô tả **hiện trạng kỹ thuật đang chạy trong code*
 
 ### 3.3 localStorage
 - Key: `kv_settings`.
-- Dùng để lưu tùy chọn TTS/SFX/chữ lớn.
+- Dùng để lưu tùy chọn TTS/SFX/chữ lớn (`soundEnabled`, `musicEnabled`, `largeText`, `ttsMode`).
 
 ## 4. Gameplay engine hiện tại
 
@@ -62,7 +62,15 @@ Tài liệu này mô tả **hiện trạng kỹ thuật đang chạy trong code*
 
 - SFX: Web Audio (`src/features/audio/sfxService.ts`).
 - TTS: Web Speech API (`src/features/speech/speechService.ts`) với `vi-VN` khi có voice phù hợp.
+- Speech service đã có runtime status để chuẩn bị migration local neural TTS (`getSpeechRuntimeStatus`).
 - Interactive text: rule-based theo game/kind (`src/features/speech/interactiveText.ts`), không gọi cloud AI.
+
+### 5.1 Hướng nâng cấp TTS (to-be, chưa rollout)
+
+- Mục tiêu kiến trúc: local-first TTS qua Web Worker + ONNX Runtime Web, ưu tiên `WebGPU` và fallback `WASM`.
+- Persistence mục tiêu: dùng OPFS để cache model quantized và voice profile local.
+- Tương thích ngược bắt buộc: nếu local neural engine lỗi/không hỗ trợ phần cứng, fallback về Web Speech để không chặn gameplay.
+- Tài liệu thiết kế chi tiết: `docs/planning/TTS_LOCAL_ARCHITECTURE.md`.
 
 ## 6. UI và styling
 

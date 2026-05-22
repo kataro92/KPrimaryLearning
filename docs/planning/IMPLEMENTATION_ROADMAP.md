@@ -32,7 +32,10 @@
 |---|---|---|
 | P0 | Tối ưu bundle/chunk | Giảm cảnh báo chunk size, cải thiện thời gian tải ban đầu |
 | P0 | Chuẩn hóa smoke test runbook | Đồng bộ checklist test giữa dev và QA |
+| P0 | TTS local-first foundation | Refactor speech theo provider, chuẩn bị worker/fallback an toàn |
 | P1 | Bổ sung test tự động cơ bản | Thêm unit test cho score/unlock và smoke test e2e tối thiểu |
+| P1 | TTS neural runtime (WebGPU/WASM) | Tích hợp ONNX runtime web + progress state cho model load/inference |
+| P1 | Voice profile local | Luồng upload `.wav`, normalize audio, lưu embedding theo profile local |
 | P1 | Tăng observability local | Bổ sung logging chuẩn cho lỗi runtime và gameplay edge cases |
 | P2 | Nâng cấp data tools | Cân nhắc export/import dữ liệu local cho phụ huynh/giáo viên |
 | P2 | UX polish theo game | Tinh chỉnh microcopy/animation dựa trên feedback chơi thực tế |
@@ -43,6 +46,7 @@
 |---|---|---|
 | Bundle JS lớn | Trung bình | Tách chunk theo màn/game, lazy-load renderer |
 | Khác biệt hỗ trợ TTS giữa trình duyệt | Trung bình | Giữ fallback text + test đa trình duyệt định kỳ |
+| Model TTS local dung lượng lớn | Trung bình | Quantization + preload theo nhu cầu + cache OPFS theo version |
 | Regression khi chỉnh game riêng lẻ | Trung bình | Bắt buộc chạy smoke checklist + build mỗi phiên |
 
 ## 6. Định nghĩa “xong” cho mỗi task mới

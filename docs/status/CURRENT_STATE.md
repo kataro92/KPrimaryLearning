@@ -22,7 +22,9 @@ Last updated: 2026-05-22
   - localStorage: `kv_settings`.
 - Speech/Audio:
   - TTS qua Web Speech API.
+  - Có `ttsMode` (mặc định `auto`) và runtime capability check để chuẩn bị migration local neural TTS.
   - SFX qua Web Audio API.
+  - Đã bổ sung tài liệu định hướng TTS local-first: `docs/planning/TTS_LOCAL_ARCHITECTURE.md` (to-be).
 - Deployment:
   - GitHub Actions tự động build và publish lên GitHub Pages khi push `main`.
   - Base path production: `/KPrimaryLearning/`.
@@ -37,5 +39,6 @@ Last updated: 2026-05-22
 ## Next Priorities
 
 1. Tối ưu bundle/chunk để giảm kích thước JS ban đầu.
-2. Thêm test tự động cho score/unlock và smoke e2e tối thiểu.
-3. Chuẩn hóa telemetry/observability runtime ở mức local.
+2. Refactor TTS foundation theo hướng worker + fallback provider.
+3. Thêm test tự động cho score/unlock và smoke e2e tối thiểu.
+4. Chuẩn hóa telemetry/observability runtime ở mức local.

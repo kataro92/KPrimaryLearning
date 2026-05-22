@@ -34,10 +34,12 @@ export interface AppSettings {
   soundEnabled: boolean;
   musicEnabled: boolean;
   largeText: boolean;
+  ttsMode: 'auto' | 'webspeech';
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
   soundEnabled: true,
   musicEnabled: true,
   largeText: false,
+  ttsMode: 'auto',
 };
