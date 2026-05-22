@@ -38,6 +38,32 @@ Sau khi push lên nhánh `main`, GitHub Actions sẽ tự build và deploy từ 
 
 Claymorphism (thẻ kính, nút nổi, nền blob) — chi tiết: [`docs/STYLING.md`](docs/STYLING.md).
 
+## Test nhanh & ảnh tính năng
+
+- Smoke test local trên `http://localhost:5173`.
+- Build kiểm tra phát hành: `npm run build` (pass).
+- Đã đi qua các luồng chính: Welcome -> Home -> Chọn game/danh hiệu -> Gameplay -> Báo cáo nhân vật.
+
+### 1) Màn hình Welcome
+
+![Welcome](docs/screenshots/01-welcome.png)
+
+### 2) Home (dashboard 9 game + toggle nhanh)
+
+![Home](docs/screenshots/02-home.png)
+
+### 3) Chọn game và danh hiệu
+
+![Game Select Tier](docs/screenshots/03-game-select-tier.png)
+
+### 4) Gameplay (ví dụ Trạng Nguyên Toán Việt)
+
+![Gameplay](docs/screenshots/04-gameplay.png)
+
+### 5) Báo cáo nhân vật và tiến độ
+
+![Character Report](docs/screenshots/05-character-report.png)
+
 ## Tài liệu
 
 - `docs/README.md` (điểm vào chính cho toàn bộ tài liệu)
