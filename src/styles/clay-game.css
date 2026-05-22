@@ -1,0 +1,552 @@
+/**
+ * Clay styling — game arenas, passages, result, specialty widgets
+ */
+
+/* Đoạn văn / câu hỏi */
+.passage-text,
+.history-scroll__passage,
+.drum-puzzle__passage,
+.drum-puzzle__question,
+.history-panel__q,
+.temple-arena__board,
+.stele-run__math,
+.fps-quiz__prompt,
+.wall-build__mission {
+  font-family: var(--font-body);
+  color: var(--clay-foreground);
+  line-height: 1.55;
+}
+
+.passage-text,
+.history-scroll__passage,
+.drum-puzzle__passage {
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  border-radius: var(--clay-radius-md);
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-left: 4px solid var(--clay-accent);
+  box-shadow: var(--shadow-clay-card);
+}
+
+.history-panel__q,
+.drum-puzzle__question,
+.temple-arena__board {
+  padding: 14px 16px;
+  border-radius: var(--clay-radius-md);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-clay-card);
+  font-family: var(--font-display);
+  font-weight: 800;
+  margin: 0 0 14px;
+}
+
+.fps-quiz__prompt {
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: var(--shadow-clay-card);
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+/* FPS options — clay buttons, giữ màu từng đáp án */
+.fps-option {
+  min-height: 52px;
+  border-radius: var(--clay-radius-sm);
+  border: 2px solid color-mix(in srgb, var(--opt-color, #0ea5e9) 35%, white);
+  background: color-mix(in srgb, var(--opt-color, #0ea5e9) 10%, white 90%);
+  font-family: var(--font-display);
+  box-shadow: var(--shadow-clay-button);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.fps-option:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-clay-button-hover);
+}
+
+.fps-option:active:not(:disabled) {
+  transform: scale(0.92);
+  box-shadow: var(--shadow-clay-pressed);
+}
+
+.fps-option__code {
+  border-radius: 12px;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.15);
+}
+
+/* Trống đồng */
+.drum-face {
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fde68a, #b45309 72%);
+  box-shadow: var(--shadow-clay-deep);
+  border: 3px solid rgba(124, 58, 237, 0.15);
+}
+
+.drum-slot {
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-weight: 900;
+}
+
+/* Văn miếu — rùa */
+.stele-run__track {
+  border-radius: 999px;
+  background: var(--clay-input-bg);
+  box-shadow: var(--shadow-clay-pressed);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.stele-run__answer {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.5rem;
+  color: var(--clay-accent);
+  text-align: center;
+  margin-top: 10px;
+}
+
+/* Tính nhẩm */
+.arena-math {
+  text-align: center;
+}
+
+.arena-math__problem {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(1.75rem, 6vw, 2.5rem);
+  color: var(--clay-foreground);
+  margin: 0 0 16px;
+}
+
+.arena-math__drum {
+  font-size: 2.5rem;
+  filter: drop-shadow(0 8px 12px rgba(124, 58, 237, 0.2));
+}
+
+/* Hình học — gạch & ô */
+.wall-slot {
+  border-radius: var(--clay-radius-sm);
+  box-shadow: var(--shadow-clay-pressed);
+  background: var(--clay-input-bg);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.wall-slot:hover {
+  transform: translateY(-2px);
+}
+
+.brick {
+  border-radius: var(--clay-radius-sm);
+  box-shadow: var(--shadow-clay-button);
+  font-family: var(--font-display);
+  font-weight: 800;
+  cursor: grab;
+}
+
+.brick--dragging {
+  box-shadow: var(--shadow-clay-card-hover);
+  transform: scale(1.04);
+}
+
+/* Hội An — đèn lồng */
+.lantern-card {
+  border-radius: var(--clay-radius-md);
+}
+
+.lantern-card__back,
+.lantern-card__face {
+  border-radius: var(--clay-radius-md);
+  box-shadow: var(--shadow-clay-card);
+}
+
+.lantern-card__back {
+  background: linear-gradient(165deg, #fde68a, #f59e0b);
+  border: 2px solid #b45309;
+}
+
+.lantern-card__face {
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--clay-foreground);
+  border: 2px solid var(--clay-warning);
+}
+
+.lantern-pairs {
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--clay-accent);
+}
+
+/* Chọn danh hiệu */
+.level-list {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+}
+
+.game-card--level {
+  padding: 18px 20px;
+  text-align: left;
+}
+
+.game-card--level .game-card__title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+}
+
+.game-card--level .game-card__meta {
+  font-family: var(--font-body);
+  font-weight: 500;
+  color: var(--clay-muted);
+}
+
+.game-select-art {
+  border-radius: var(--clay-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-clay-card);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  margin-bottom: 16px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.settings-card,
+.play-hint-card {
+  margin-bottom: 16px;
+}
+
+.settings-row {
+  font-family: var(--font-body);
+  font-weight: 500;
+  color: var(--clay-foreground);
+}
+
+.settings-row input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--clay-accent);
+}
+
+/* Kết quả — thẻ clay */
+.result-card {
+  border-radius: var(--clay-radius-xl);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-clay-card-hover);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.result-headline,
+.result-score {
+  font-family: var(--font-display);
+}
+
+.result-score {
+  font-weight: 900;
+}
+
+.result-message,
+.result-meta,
+.result-grade {
+  font-family: var(--font-body);
+  color: var(--clay-muted);
+}
+
+.result-btn-in {
+  margin-top: 10px;
+}
+
+.result-btn-in--full {
+  width: 100%;
+}
+
+.play-hint-card__label {
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--clay-accent);
+  opacity: 1;
+}
+
+.play-hint-card__text {
+  font-family: var(--font-body);
+  color: var(--clay-foreground);
+}
+
+.game-card:disabled,
+.game-card--level:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: var(--shadow-clay-pressed);
+}
+
+/* History scroll container */
+.history-scroll {
+  border-radius: var(--clay-radius-md);
+}
+
+.history-panel__hint,
+.drum-puzzle__guide,
+.game-play__round-hint,
+.fps-quiz__hint {
+  font-family: var(--font-body);
+  color: var(--clay-muted);
+}
+
+/* Khóa đáp án sau khi trả lời */
+.stamp-row--locked .stamp--answer-correct:disabled {
+  background: linear-gradient(135deg, #4ade80, var(--clay-success)) !important;
+  color: #fff !important;
+  outline: 3px solid #047857;
+}
+
+.round-choices--locked button:disabled,
+.stamp-row--locked .stamp:disabled,
+.relic-tray--locked .relic-chip:disabled,
+.stone-row--locked .stone-tablet:disabled,
+.round-choices--locked .fps-option:disabled {
+  border-radius: var(--clay-radius-sm);
+  box-shadow: var(--shadow-clay-pressed);
+}
+
+.game-play__hero {
+  border-radius: var(--clay-radius-lg);
+  box-shadow: var(--shadow-clay-card);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+}
+
+/* Trống đồng — mảnh ghép */
+.relic-chip {
+  border: 2px solid color-mix(in srgb, var(--clay-warning) 45%, white);
+  background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
+  color: var(--clay-foreground);
+  font-weight: 700;
+}
+
+.relic-chip--dragging {
+  box-shadow: var(--shadow-clay-card-hover);
+}
+
+/* Văn miếu — bia đá */
+.stone-tablet {
+  min-height: 52px;
+  min-width: 72px;
+  padding: 12px 16px;
+  border: 2px solid rgba(124, 58, 237, 0.22);
+  background: linear-gradient(180deg, #faf5ff, #ede9fe);
+  color: var(--clay-foreground);
+  cursor: pointer;
+}
+
+.stone-tablet span {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.15rem;
+}
+
+/* Cửu chương — bàn phím số */
+/* Numpad visual — layout in global.css */
+
+.numpad__key {
+  min-height: 52px;
+  border: none;
+  background: var(--clay-card-solid);
+  color: var(--clay-foreground);
+  font-weight: 800;
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.numpad__key--ok {
+  background: linear-gradient(135deg, #4ade80, var(--clay-success));
+  color: #fff;
+}
+
+.numpad__key--clear {
+  background: linear-gradient(135deg, #fca5a5, #ef4444);
+  color: #fff;
+}
+
+.game-play--clay .game-play__header {
+  align-items: center;
+}
+
+.game-play__title-wrap {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+
+/* --- Kết quả theo hạng (giữ gradient, thêm clay) --- */
+.result-card.clay-card.result-card--excellent {
+  background: linear-gradient(160deg, #fffbeb 0%, #fef3c7 45%, rgba(255, 255, 255, 0.95) 100%);
+  border: 2px solid #facc15;
+  box-shadow: var(--shadow-clay-card-hover), 0 12px 36px rgba(250, 204, 21, 0.28);
+}
+
+.result-card.clay-card.result-card--good {
+  background: linear-gradient(160deg, #ecfdf5 0%, rgba(255, 255, 255, 0.95) 100%);
+  border: 2px solid #86efac;
+}
+
+.result-card.clay-card.result-card--pass {
+  background: linear-gradient(160deg, #eff6ff 0%, rgba(255, 255, 255, 0.95) 100%);
+  border: 2px solid #93c5fd;
+}
+
+.result-card.clay-card.result-card--low {
+  background: linear-gradient(160deg, #fff7ed 0%, rgba(255, 255, 255, 0.95) 100%);
+  border: 2px solid #fdba74;
+}
+
+.result-card.clay-card.result-card--unlock {
+  background: linear-gradient(160deg, #fef9c3 0%, #fce7f3 50%, rgba(255, 255, 255, 0.95) 100%);
+  border: 2px solid #facc15;
+  animation: result-card-in 0.6s ease both, result-glow 2s ease-in-out 0.6s infinite;
+}
+
+@keyframes result-glow {
+  0%,
+  100% {
+    box-shadow: var(--shadow-clay-card-hover), 0 12px 36px rgba(250, 204, 21, 0.3);
+  }
+  50% {
+    box-shadow: var(--shadow-clay-card-hover), 0 16px 44px rgba(250, 204, 21, 0.5);
+  }
+}
+
+.result-screen--excellent .result-score {
+  color: #a16207;
+}
+
+.result-message {
+  color: var(--clay-foreground);
+  font-weight: 700;
+}
+
+/* Trạng Nguyên — bia */
+.stone-tablet--ok {
+  background: linear-gradient(135deg, #4ade80, var(--clay-success));
+  color: #fff;
+  border-color: #047857;
+}
+
+.stone-tablet--bad {
+  background: linear-gradient(135deg, #fca5a5, #ef4444);
+  color: #fff;
+  border-color: #b91c1c;
+}
+
+.stone-row--locked .stone-tablet--reveal-ok:disabled {
+  background: linear-gradient(135deg, #4ade80, var(--clay-success)) !important;
+  color: #fff !important;
+}
+
+.stone-row--locked .stone-tablet--picked-bad:disabled {
+  outline: 3px solid #b91c1c;
+}
+
+/* Hình học — gạch màu */
+.brick {
+  background: linear-gradient(135deg, var(--clay-accent-light), var(--clay-accent));
+  color: #fff;
+}
+
+.wall-slot {
+  border: 2px dashed color-mix(in srgb, var(--clay-muted) 40%, white);
+}
+
+/* FPS viewport */
+.fps-wrap {
+  border-radius: var(--clay-radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: var(--shadow-clay-deep);
+}
+
+.fps-option--active {
+  background: color-mix(in srgb, var(--opt-color, #0ea5e9) 22%, white 78%);
+  transform: translateY(-2px);
+}
+
+.fps-option__code {
+  background: var(--opt-color, #0ea5e9);
+}
+
+.round-choices--locked .round-btn--correct:disabled,
+.round-choices--locked .fps-option--correct:disabled {
+  background: linear-gradient(135deg, #4ade80, var(--clay-success)) !important;
+  color: #fff !important;
+  border-color: #047857 !important;
+}
+
+.round-choices--locked .round-btn--picked:disabled {
+  background: #94a3b8 !important;
+  color: #f8fafc !important;
+}
+
+.relic-tray--locked .relic-chip--correct:disabled {
+  background: linear-gradient(135deg, #4ade80, var(--clay-success)) !important;
+  color: #fff !important;
+  border-color: #047857 !important;
+}
+
+.stamp-row--locked .stamp--picked:disabled {
+  background: #94a3b8 !important;
+  color: #f8fafc !important;
+}
+
+.stamp-row--locked .stamp:disabled {
+  background: var(--clay-input-bg) !important;
+  color: var(--clay-muted) !important;
+}
+
+.thanh-giong-status {
+  border-radius: var(--clay-radius-sm);
+  background: rgba(51, 47, 58, 0.72);
+  backdrop-filter: blur(10px);
+  font-family: var(--font-display);
+  box-shadow: var(--shadow-clay-card);
+}
+
+.thanh-giong-wrap {
+  border-radius: var(--clay-radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.edu-visual-thumb {
+  width: 68%;
+  border-radius: var(--clay-radius-sm);
+  border: 2px solid color-mix(in srgb, var(--clay-warning) 35%, white);
+  box-shadow: var(--shadow-clay-card);
+}
+
+.lantern-card__back,
+.lantern-card__face {
+  box-shadow: var(--shadow-clay-card);
+}
+
+.game-card--tile:disabled,
+.game-card--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: var(--shadow-clay-pressed);
+}
+
+.screen--clay h1 {
+  background: linear-gradient(135deg, var(--clay-accent) 0%, var(--clay-accent-alt) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.screen--games h1 {
+  margin-bottom: 4px;
+}
+
+.game-tile-grid .game-card--tile:not(:disabled):hover {
+  border-color: rgba(124, 58, 237, 0.3);
+}

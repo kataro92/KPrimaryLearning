@@ -1,0 +1,33 @@
+---
+description: Persistent standards for quality, performance, and educational content
+alwaysApply: true
+---
+
+# KVPrimaryFunLearning Core Rule (Cross-session)
+
+## Source of truth and scope
+- Read requirements in `docs/requirements/BUSINESS_REQUIREMENTS.md`, `docs/requirements/TECHNICAL_REQUIREMENTS.md`, and `docs/planning/IMPLEMENTATION_ROADMAP.md` before changing gameplay behavior.
+- Preserve project stack conventions: vanilla TypeScript + Vite + modular CSS + Three.js scenes (no framework migration in feature tasks).
+- Keep changes incremental and compatible with existing game flow and UI architecture.
+
+## Quality and correctness
+- After substantive edits, run `npm run build` and resolve TypeScript errors before finishing.
+- Check lints for edited files and fix newly introduced diagnostics.
+- For gameplay changes, verify both success and failure paths (correct, wrong, timeout, completion).
+- Do not leave placeholder behavior when replacing a demo scene; ensure feature-complete integration in `play.ts`.
+
+## Performance and stability
+- Favor lightweight procedural meshes/textures and avoid heavy model assets unless explicitly requested.
+- In Three.js code, always clean up resources (`geometry`, `material`, textures, listeners, RAF) in `dispose()`.
+- Keep renderer settings production-safe (`ACESFilmic`, controlled exposure, bounded pixel ratio, soft shadows).
+- If dev runtime shows stale dependency errors from Vite optimizer, clear `node_modules/.vite/deps` cache and re-test.
+
+## Educational content and UX
+- Keep Vietnamese copy age-appropriate, clear, and encouraging for primary learners.
+- Align game timing and difficulty with established balancing rules (for level easy, keep agreed standard timing).
+- Provide immediate feedback on user action (visual/audio/state text), not silent waiting.
+
+## Documentation discipline
+- When behavior, architecture, or UX conventions change, update relevant docs in `docs/` in the same task.
+- Keep `docs/status/CURRENT_STATE.md` updated after major behavior/system changes.
+- Validate docs completion against `docs/workflow/DOCS_DEFINITION_OF_DONE.md`.

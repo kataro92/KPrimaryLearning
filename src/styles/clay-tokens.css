@@ -1,0 +1,45 @@
+/**
+ * High-Fidelity Claymorphism — design tokens
+ * Map legacy --color-* vars in global.css to these where possible.
+ */
+:root {
+  --clay-canvas: #f4f1fa;
+  --clay-foreground: #332f3a;
+  --clay-muted: #635f69;
+  --clay-card-bg: rgba(255, 255, 255, 0.72);
+  --clay-card-solid: #ffffff;
+
+  --clay-accent: #7c3aed;
+  --clay-accent-light: #a78bfa;
+  --clay-accent-alt: #db2777;
+  --clay-sky: #0ea5e9;
+  --clay-success: #10b981;
+  --clay-warning: #f59e0b;
+
+  --clay-input-bg: #efebf5;
+  --clay-radius-sm: 20px;
+  --clay-radius-md: 24px;
+  --clay-radius-lg: 32px;
+  --clay-radius-xl: 48px;
+
+  --font-display: 'Nunito', system-ui, sans-serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+
+  --shadow-clay-deep:
+    30px 30px 60px #cdc6d9, -30px -30px 60px #ffffff,
+    inset 10px 10px 20px rgba(139, 92, 246, 0.05), inset -10px -10px 20px rgba(255, 255, 255, 0.8);
+  --shadow-clay-card:
+    16px 16px 32px rgba(160, 150, 180, 0.2), -10px -10px 24px rgba(255, 255, 255, 0.9),
+    inset 6px 6px 12px rgba(139, 92, 246, 0.03), inset -6px -6px 12px rgba(255, 255, 255, 1);
+  --shadow-clay-card-hover:
+    20px 24px 40px rgba(160, 150, 180, 0.28), -12px -12px 28px rgba(255, 255, 255, 0.95),
+    inset 6px 6px 12px rgba(139, 92, 246, 0.04), inset -6px -6px 12px rgba(255, 255, 255, 1);
+  --shadow-clay-button:
+    12px 12px 24px rgba(139, 92, 246, 0.3), -8px -8px 16px rgba(255, 255, 255, 0.4),
+    inset 4px 4px 8px rgba(255, 255, 255, 0.4), inset -4px -4px 8px rgba(0, 0, 0, 0.1);
+  --shadow-clay-button-hover:
+    14px 16px 28px rgba(139, 92, 246, 0.35), -10px -10px 20px rgba(255, 255, 255, 0.5),
+    inset 4px 4px 8px rgba(255, 255, 255, 0.45), inset -4px -4px 8px rgba(0, 0, 0, 0.08);
+  --shadow-clay-pressed:
+    inset 10px 10px 20px #d9d4e3, inset -10px -10px 20px #ffffff;
+}

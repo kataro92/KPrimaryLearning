@@ -1,0 +1,29 @@
+---
+description: Three.js scene quality and performance standards for game demos
+globs: src/games/**/*Scene.ts
+alwaysApply: false
+---
+
+# KVPrimaryFunLearning Three.js Scene Rule
+
+## Visual quality baseline
+- Use stylized low-poly direction with consistent color management (`outputColorSpace = SRGB`, `ACESFilmic`).
+- Prefer `MeshStandardMaterial`/PBR tuning in stylized ranges (higher roughness, moderate metalness) unless effect requires otherwise.
+- Use layered lighting (ambient + hemisphere + key directional + optional rim/fill) to avoid flat or overly dark scenes.
+- For hero moments, use controlled post-processing bloom via `EffectComposer`; keep strengths moderate in idle state.
+
+## Performance and memory
+- Keep `renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))`.
+- Avoid per-frame object creation inside loops; reuse vectors/materials where practical.
+- Implement full disposal: cancel RAF, remove listeners, dispose composer/renderer/geometries/materials/textures.
+- Keep shadow quality balanced (`PCFSoftShadowMap`, practical map sizes, bias to reduce acne).
+
+## Gameplay integration
+- Scene class must expose explicit hooks for gameplay (`onCorrect...`, `onWrong...`, `onCompleted...`) used by `play.ts`.
+- Every correct answer should trigger immediate visual change; completion state must be clearly visible and celebratory.
+- Keep status text and scene progression synchronized (e.g., `x/y` progress and completion message).
+
+## Validation checklist before done
+- `npm run build` passes.
+- Edited scene files show no new lints.
+- Dev server responds (`HTTP 200`) and no new runtime errors appear in active terminal logs.

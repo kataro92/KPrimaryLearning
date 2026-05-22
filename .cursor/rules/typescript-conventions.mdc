@@ -1,0 +1,15 @@
+---
+description: TypeScript conventions for game and UI code
+globs: src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# TypeScript Conventions
+
+- Use explicit types for exported functions, constants, and public interfaces.
+- Keep modules focused: one primary responsibility per file.
+- Prefer small pure helper functions for scoring, timing, and question validation logic.
+- Avoid `any`; use union types or narrow interfaces when possible.
+- Reuse existing domain types before adding new duplicated shapes.
+- Keep browser/game-state side effects in dedicated services or managers.
+- For gameplay changes, keep data files (`questions`, `banks`) separate from runtime logic.
