@@ -32,6 +32,7 @@ export interface PlaySession {
 
 export interface AppSettings {
   soundEnabled: boolean;
+  sfxEnabled: boolean;
   musicEnabled: boolean;
   largeText: boolean;
   ttsMode: 'auto' | 'webspeech';
@@ -39,6 +40,7 @@ export interface AppSettings {
 
 export const DEFAULT_SETTINGS: AppSettings = {
   soundEnabled: true,
+  sfxEnabled: true,
   musicEnabled: true,
   largeText: false,
   ttsMode: 'auto',

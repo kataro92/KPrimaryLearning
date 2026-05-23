@@ -163,7 +163,7 @@ export class FpsCrossbowScene {
     this.buildMinecraftBackdrop();
     this.buildCrossbow();
     this.hud = new FpsHud3d();
-    this.hud.attachTo(this.camera);
+    this.hud.attachToWorld(this.world);
     this.camera.add(createCrosshair3d());
     this.hitFlash = createHitFlashRig();
     this.camera.add(this.hitFlash.group);
@@ -468,11 +468,10 @@ export class FpsCrossbowScene {
     const now = performance.now();
     this.camera.rotation.y = this.yaw;
     this.camera.rotation.x = this.pitch;
-    const pulse = Math.sin(now * 0.004) * 0.03;
-    this.targets.forEach((t, idx) => {
-      t.core.position.z = 0.14 + pulse * (idx % 2 === 0 ? 1 : -1);
-      t.frame.rotation.y = Math.sin(now * 0.001 + idx) * 0.08;
-      t.codePlane.rotation.y = t.frame.rotation.y * 0.3;
+    this.targets.forEach((t) => {
+      t.core.position.z = 0.14;
+      t.frame.rotation.y = 0;
+      t.codePlane.rotation.y = 0;
     });
     const recoil = now < this.recoilUntil ? (this.recoilUntil - now) / 110 : 0;
     this.bowGroup.position.z = -0.72 + recoil * 0.12;
@@ -502,6 +501,7 @@ export class FpsCrossbowScene {
     }
     this.updateProjectiles(now);
     this.hitFlash.tick(now);
+    this.hud.updateFacing(this.camera);
     this.composer.render();
     this.rafId = requestAnimationFrame(this.loop);
   };

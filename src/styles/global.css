@@ -1137,8 +1137,14 @@ h1 {
 .game-play__qa-pane .history-panel__q,
 .game-play__qa-pane .drum-puzzle__question,
 .game-play__qa-pane .stele-run__math,
-.game-play__qa-pane .math-display {
+.game-play__qa-pane .math-display,
+.game-play__qa-pane .shape-quiz__prompt,
+.game-play__qa-pane .arena-math__problem,
+.game-play__qa-pane .temple-arena__board {
   font-size: clamp(1rem, 1.5vw, 1.28rem);
+  flex-shrink: 0;
+  animation: none !important;
+  transform: none !important;
 }
 
 .game-play__qa-pane .history-scroll__passage,

@@ -28,7 +28,8 @@ Các game khác dùng clay đầy đủ trên header, arena, và control.
 ## Âm thanh hiệu ứng (SFX)
 
 - Module: `src/features/audio/sfxService.ts` (Web Audio, không cần file `.mp3`)
-- Bật/tắt: Trang chủ → **Hiệu ứng âm thanh** (`musicEnabled` trong settings)
+- Bật/tắt SFX: Trang chủ → **SFX** (`sfxEnabled` trong settings)
+- Bật/tắt nhạc nền: Trang chủ → **Nhạc** (`musicEnabled` trong settings)
 - TTS riêng: **Đọc câu bằng giọng nói** (`soundEnabled`)
 - Gắn tự động: `setGameFeedback` (đúng/sai/hết giờ), màn kết quả, thanh timer, nút UI, FPS bắn/trượt, lật đèn Hội An, Mario gõ đúng/sai
 

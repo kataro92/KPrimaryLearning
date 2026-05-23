@@ -7,9 +7,13 @@ import { playSfx } from '@/features/audio/sfxService';
 import { fitModelToHeight, tryLoadGltfScene } from '@/core/assets/fitGltfModel';
 
 const BASE = import.meta.env.BASE_URL;
+const BOAT_MODEL_URLS = [
+  `${BASE}models/tu-vung-hoi-an/boat/fishing-boat.glb`,
+  `${BASE}models/tu-vung-hoi-an/boat/scene.gltf`,
+] as const;
 const LANTERN_MODEL_URLS = [
-  `${BASE}models/tu-vung-hoi-an/paper-lantern.glb`,
-  `${BASE}models/tu-vung-hoi-an/scene.gltf`,
+  `${BASE}models/tu-vung-hoi-an/lantern/paper-lantern.glb`,
+  `${BASE}models/tu-vung-hoi-an/lantern/scene.gltf`,
 ] as const;
 
 interface HangingLantern {
@@ -27,6 +31,14 @@ interface Firework {
 }
 
 const FIREWORK_COLORS = [0xffcc66, 0xff6b6b, 0x67e8f9, 0xc4b5fd, 0xf9a8d4];
+const BOAT_SCALE = 12;
+const BOAT_GLTF_HEIGHT = 1.35 * BOAT_SCALE;
+const LANTERN_DROP_OFFSET = 1.4 * BOAT_SCALE;
+/** Camera / fog tuned for large boat — far Z + high fog density was washing the scene to black. */
+const CAM_BASE = new THREE.Vector3(0, 14, 34);
+const CAM_LOOK = new THREE.Vector3(0, 5.5, -1);
+const BOAT_BASE_Y = 0.3;
+const BOAT_BASE_Z = -2.4;
 
 /** Cảnh 3D Hội An: thuyền đêm trên sông, treo đèn lồng khi trả lời đúng. */
 export class HoiAnBoatScene {
@@ -38,8 +50,9 @@ export class HoiAnBoatScene {
   private readonly mount: HTMLElement;
   private readonly clock = new THREE.Clock();
   private readonly boatGroup = new THREE.Group();
+  private readonly proceduralBoat = new THREE.Group();
   private readonly water = new THREE.Mesh(
-    new THREE.PlaneGeometry(34, 20, 54, 36),
+    new THREE.PlaneGeometry(140, 90, 64, 48),
     new THREE.MeshStandardMaterial({
       color: 0x0c3e66,
       emissive: 0x0b1f36,
@@ -68,8 +81,8 @@ export class HoiAnBoatScene {
   private nextFireworkAt = 0;
   private shakeUntil = 0;
   private readonly totalPairs: number;
-  private readonly moonLight = new THREE.PointLight(0xfef3c7, 0.8, 28);
-  private readonly ambient = new THREE.AmbientLight(0xc8dcff, 0.58);
+  private readonly moonLight = new THREE.PointLight(0xfef3c7, 1.35, 120);
+  private readonly ambient = new THREE.AmbientLight(0xc8dcff, 0.72);
   private readonly moon = new THREE.Mesh(
     new THREE.SphereGeometry(1.2, 24, 24),
     new THREE.MeshBasicMaterial({ color: 0xfbf7d0 })
@@ -83,11 +96,11 @@ export class HoiAnBoatScene {
     this.totalPairs = Math.max(1, totalPairs);
     this.scene = new THREE.Scene();
     this.scene.background = this.bgDark.clone();
-    this.scene.fog = new THREE.FogExp2(this.bgDark.getHex(), 0.035);
+    this.scene.fog = new THREE.FogExp2(this.bgDark.getHex(), 0.011);
 
-    this.camera = new THREE.PerspectiveCamera(46, 1, 0.1, 120);
-    this.camera.position.set(0, 3.4, 9);
-    this.camera.lookAt(0, 1.4, 0);
+    this.camera = new THREE.PerspectiveCamera(46, 1, 0.1, 220);
+    this.camera.position.copy(CAM_BASE);
+    this.camera.lookAt(CAM_LOOK);
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -95,7 +108,7 @@ export class HoiAnBoatScene {
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.1;
+    this.renderer.toneMappingExposure = 1.28;
     this.renderer.domElement.className = 'hoi-an-boat-canvas';
     this.mount.appendChild(this.renderer.domElement);
     this.composer = new EffectComposer(this.renderer);
@@ -106,13 +119,37 @@ export class HoiAnBoatScene {
 
     this.buildEnvironment();
     this.buildBoat();
+    this.boatGroup.add(this.proceduralBoat);
     this.buildLanternSlots();
     this.scene.add(this.water, this.reflectionGroup, this.boatGroup);
 
     this.resize();
     window.addEventListener('resize', this.onResize);
+    void this.loadBoatModel();
     void this.loadLanternTemplate();
     this.loop();
+  }
+
+  private async loadBoatModel(): Promise<void> {
+    const model = await tryLoadGltfScene(BOAT_MODEL_URLS);
+    if (this.disposed || !model) return;
+    model.traverse((node) => {
+      if (node instanceof THREE.Mesh) {
+        node.castShadow = true;
+        node.receiveShadow = true;
+        const mats = Array.isArray(node.material) ? node.material : [node.material];
+        for (const mat of mats) {
+          if (!(mat instanceof THREE.MeshStandardMaterial)) continue;
+          mat.color.multiplyScalar(1.35);
+          mat.roughness = Math.min(0.92, mat.roughness * 1.05);
+        }
+      }
+    });
+    fitModelToHeight(model, BOAT_GLTF_HEIGHT);
+    model.rotation.y = Math.PI / 2;
+    model.position.set(0, -0.2, 0);
+    this.proceduralBoat.visible = false;
+    this.boatGroup.add(model);
   }
 
   private async loadLanternTemplate(): Promise<void> {
@@ -124,7 +161,7 @@ export class HoiAnBoatScene {
         node.receiveShadow = false;
       }
     });
-    fitModelToHeight(scene, 0.52);
+    fitModelToHeight(scene, 0.52 * (BOAT_SCALE / 4));
     this.lanternTemplate = scene;
   }
 
@@ -163,35 +200,48 @@ export class HoiAnBoatScene {
 
   private buildEnvironment(): void {
     this.scene.add(this.ambient);
-    this.scene.add(new THREE.HemisphereLight(0xffffff, 0xb9d5ff, 0.5));
+    this.scene.add(new THREE.HemisphereLight(0xfff4e8, 0x1e3a5f, 0.62));
 
-    const key = new THREE.DirectionalLight(0xfff4d6, 1.05);
-    key.position.set(4.8, 7.4, 3.6);
+    const key = new THREE.DirectionalLight(0xfff4d6, 1.65);
+    key.position.set(18, 28, 22);
     key.castShadow = true;
     key.shadow.mapSize.set(2048, 2048);
     key.shadow.bias = -0.0005;
     key.shadow.camera.near = 0.5;
-    key.shadow.camera.far = 30;
+    key.shadow.camera.far = 165;
+    key.shadow.camera.left = -48;
+    key.shadow.camera.right = 48;
+    key.shadow.camera.top = 48;
+    key.shadow.camera.bottom = -48;
     this.scene.add(key);
 
-    this.moon.position.set(-6, 6, -8);
+    const fill = new THREE.DirectionalLight(0xaec8ff, 0.55);
+    fill.position.set(-12, 10, 28);
+    this.scene.add(fill);
+
+    const boatRim = new THREE.PointLight(0xffe8b8, 0.9, 55);
+    boatRim.position.set(0, 12, 8);
+    this.scene.add(boatRim);
+
+    this.moon.position.set(-22, 22, -28);
+    this.moon.scale.setScalar(2.4);
     this.scene.add(this.moon);
-    this.moonLight.position.set(-5.5, 5.8, -6.5);
+    this.moonLight.position.set(-18, 18, -16);
     this.scene.add(this.moonLight);
 
     const shore = new THREE.Mesh(
-      new THREE.PlaneGeometry(24, 5.5),
-      new THREE.MeshStandardMaterial({ color: 0x111b2f, roughness: 0.95, metalness: 0.02 })
+      new THREE.PlaneGeometry(90, 18),
+      new THREE.MeshStandardMaterial({ color: 0x1a2840, roughness: 0.95, metalness: 0.02 })
     );
-    shore.position.set(0, 1.5, -8.8);
+    shore.position.set(0, 1.5, -38);
     this.scene.add(shore);
 
     for (let i = 0; i < 24; i++) {
       const light = new THREE.Mesh(
-        new THREE.SphereGeometry(0.08, 10, 10),
+        new THREE.SphereGeometry(0.28, 10, 10),
         new THREE.MeshBasicMaterial({ color: i % 2 === 0 ? 0xffe08a : 0xfb7185 })
       );
-      light.position.set(-10 + i * 0.88, 2.3 + Math.sin(i) * 0.18, -8.5);
+      light.position.set(-42 + i * 3.6, 4.2 + Math.sin(i) * 0.6, -36);
       this.shorelineLights.push(light);
       this.scene.add(light);
     }
@@ -203,12 +253,12 @@ export class HoiAnBoatScene {
     const count = 2200;
     const p = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
-      const r = 16 + Math.random() * 30;
+      const r = 40 + Math.random() * 70;
       const t = Math.random() * Math.PI * 2;
-      const y = 2.5 + Math.random() * 8;
+      const y = 8 + Math.random() * 28;
       p[i * 3] = Math.cos(t) * r;
       p[i * 3 + 1] = y;
-      p[i * 3 + 2] = Math.sin(t) * r - 8;
+      p[i * 3 + 2] = Math.sin(t) * r - 28;
     }
     stars.setAttribute('position', new THREE.BufferAttribute(p, 3));
     const points = new THREE.Points(
@@ -220,7 +270,7 @@ export class HoiAnBoatScene {
     // Sương mỏng trên sông vào ban đêm
     for (let i = 0; i < 4; i++) {
       const mist = new THREE.Mesh(
-        new THREE.PlaneGeometry(10 + i * 2.2, 2.2 + i * 0.3),
+        new THREE.PlaneGeometry(28 + i * 6, 6 + i * 0.8),
         new THREE.MeshBasicMaterial({
           color: 0xbcd8ff,
           transparent: true,
@@ -230,7 +280,7 @@ export class HoiAnBoatScene {
           side: THREE.DoubleSide,
         })
       );
-      mist.position.set((i - 1.5) * 2.4, 0.12 + i * 0.06, -2.8 - i * 0.8);
+      mist.position.set((i - 1.5) * 8, 0.12 + i * 0.2, -10 - i * 2.4);
       mist.rotation.x = -Math.PI / 2;
       this.mistPlanes.push(mist);
       this.scene.add(mist);
@@ -246,32 +296,32 @@ export class HoiAnBoatScene {
     hull.position.y = 0.44;
     hull.castShadow = true;
     hull.receiveShadow = true;
-    this.boatGroup.add(hull);
+    this.proceduralBoat.add(hull);
 
     const nose = new THREE.Mesh(new THREE.ConeGeometry(0.9, 1.3, 4), hullMat);
     nose.rotation.z = Math.PI / 2;
     nose.rotation.y = Math.PI / 4;
     nose.position.set(3.45, 0.5, 0);
-    this.boatGroup.add(nose);
+    this.proceduralBoat.add(nose);
 
     const tail = nose.clone();
     tail.rotation.z = -Math.PI / 2;
     tail.position.x = -3.45;
-    this.boatGroup.add(tail);
+    this.proceduralBoat.add(tail);
 
     const deck = new THREE.Mesh(new THREE.BoxGeometry(5.25, 0.16, 1.4), darkWood);
     deck.position.y = 0.95;
-    this.boatGroup.add(deck);
+    this.proceduralBoat.add(deck);
 
     const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 2.8, 12), darkWood);
     mast.position.set(0.35, 2.28, 0);
     mast.castShadow = true;
-    this.boatGroup.add(mast);
+    this.proceduralBoat.add(mast);
 
     const boom = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.9, 10), darkWood);
     boom.rotation.z = -0.16;
     boom.position.set(0.05, 2.95, 0);
-    this.boatGroup.add(boom);
+    this.proceduralBoat.add(boom);
 
     const cloth = new THREE.Mesh(
       new THREE.PlaneGeometry(2.6, 1.7, 8, 8),
@@ -279,12 +329,12 @@ export class HoiAnBoatScene {
     );
     cloth.position.set(0.08, 2.35, 0);
     cloth.rotation.y = 0.12;
-    this.boatGroup.add(cloth);
+    this.proceduralBoat.add(cloth);
 
     const rope = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 5.2, 8), ropeMat);
     rope.rotation.z = Math.PI / 2;
     rope.position.set(0, 1.72, 0.66);
-    this.boatGroup.add(rope);
+    this.proceduralBoat.add(rope);
 
     // Hai mái chèo gỗ
     for (const side of [-1, 1] as const) {
@@ -296,36 +346,37 @@ export class HoiAnBoatScene {
       paddle.position.set(side * 2.65, 0.46, 0.18);
       paddle.rotation.z = side * 0.42;
       oarGroup.add(shaft, paddle);
-      this.boatGroup.add(oarGroup);
+      this.proceduralBoat.add(oarGroup);
     }
 
     // Cọc neo + dây neo
     for (const side of [-1, 1] as const) {
       const post = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.06, 0.52, 10), darkWood);
       post.position.set(side * 2.7, 1.2, 0.62);
-      this.boatGroup.add(post);
+      this.proceduralBoat.add(post);
       const knot = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.012, 8, 20), ropeMat);
       knot.rotation.x = Math.PI / 2;
       knot.position.set(side * 2.7, 1.25, 0.62);
-      this.boatGroup.add(knot);
+      this.proceduralBoat.add(knot);
     }
 
     // Hoa văn gỗ thân thuyền
     for (let i = 0; i < 10; i++) {
       const plank = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.03, 0.02), darkWood);
       plank.position.set(-2.45 + i * 0.54, 0.6 + (i % 2) * 0.06, 0.88);
-      this.boatGroup.add(plank);
+      this.proceduralBoat.add(plank);
     }
 
-    this.boatGroup.position.set(0, 0.1, -0.4);
+    this.proceduralBoat.scale.setScalar(BOAT_SCALE);
+    this.boatGroup.position.set(0, BOAT_BASE_Y, BOAT_BASE_Z);
   }
 
   private buildLanternSlots(): void {
     const max = 12;
     for (let i = 0; i < max; i++) {
-      const x = -2.45 + i * 0.46;
-      const y = 1.62 + Math.sin(i * 0.45) * 0.08;
-      this.slots.push(new THREE.Vector3(x, y, 0.66));
+      const x = (-2.45 + i * 0.46) * BOAT_SCALE;
+      const y = (1.62 + Math.sin(i * 0.45) * 0.08) * BOAT_SCALE;
+      this.slots.push(new THREE.Vector3(x, y, 0.66 * BOAT_SCALE));
     }
   }
 
@@ -379,7 +430,7 @@ export class HoiAnBoatScene {
   private attachLantern(slotIdx: number): void {
     const slot = this.slots[Math.min(slotIdx, this.slots.length - 1)]!;
     const lantern = this.makeLantern();
-    lantern.position.set(slot.x, slot.y + 1.4, slot.z);
+    lantern.position.set(slot.x, slot.y + LANTERN_DROP_OFFSET, slot.z);
     this.boatGroup.add(lantern);
     const reflection = new THREE.Mesh(
       new THREE.CircleGeometry(0.12, 18),
@@ -492,7 +543,7 @@ export class HoiAnBoatScene {
     pos.needsUpdate = true;
     waterGeo.computeVertexNormals();
 
-    this.boatGroup.position.y = 0.08 + Math.sin(t * 1.2) * 0.07;
+    this.boatGroup.position.y = BOAT_BASE_Y + Math.sin(t * 1.2) * 0.35;
     this.boatGroup.rotation.z = Math.sin(t * 1.1) * 0.02;
     if (now < this.shakeUntil) this.boatGroup.rotation.y = Math.sin(t * 28) * 0.045;
     else this.boatGroup.rotation.y *= 0.86;
@@ -501,7 +552,7 @@ export class HoiAnBoatScene {
       const tt = Math.min(1, (now - lan.startAt) / 640);
       const e = 1 - Math.pow(1 - tt, 3);
       lan.group.position.lerpVectors(
-        new THREE.Vector3(lan.target.x, lan.target.y + 1.4, lan.target.z),
+        new THREE.Vector3(lan.target.x, lan.target.y + LANTERN_DROP_OFFSET, lan.target.z),
         lan.target,
         e
       );
@@ -554,10 +605,10 @@ export class HoiAnBoatScene {
       this.scene.background = bg;
       if (this.scene.fog instanceof THREE.FogExp2) {
         this.scene.fog.color.copy(bg);
-        this.scene.fog.density = 0.025;
+        this.scene.fog.density = 0.008;
       }
-      this.moonLight.intensity = 1.1 + pulse * 0.75;
-      this.renderer.toneMappingExposure = 1.14 + this.celebrationFade * 0.34;
+      this.moonLight.intensity = 1.45 + pulse * 0.75;
+      this.renderer.toneMappingExposure = 1.32 + this.celebrationFade * 0.34;
       this.bloomPass.strength = 0.64;
       this.lanternLights.forEach((l, i) => {
         l.intensity = 1 + pulse * 0.95 + Math.sin(t * 6 + i * 0.6) * 0.25;
@@ -570,18 +621,19 @@ export class HoiAnBoatScene {
       this.scene.background = this.bgDark.clone();
       if (this.scene.fog instanceof THREE.FogExp2) {
         this.scene.fog.color.copy(this.bgDark);
-        this.scene.fog.density = 0.035;
+        this.scene.fog.density = 0.011;
       }
-      this.moonLight.intensity = 0.8;
-      this.renderer.toneMappingExposure = 1.1;
+      this.moonLight.intensity = 1.35;
+      this.renderer.toneMappingExposure = 1.28;
       this.bloomPass.strength = 0.4;
     }
 
     this.updateFireworks(now);
 
-    this.camera.position.x = Math.sin(t * 0.22) * 0.35;
-    this.camera.position.y = 3.35 + Math.sin(t * 0.35) * 0.08;
-    this.camera.lookAt(0, 1.5, -0.2);
+    this.camera.position.x = CAM_BASE.x + Math.sin(t * 0.22) * 0.8;
+    this.camera.position.y = CAM_BASE.y + Math.sin(t * 0.35) * 0.5;
+    this.camera.position.z = CAM_BASE.z;
+    this.camera.lookAt(CAM_LOOK.x, CAM_LOOK.y + Math.sin(t * 0.28) * 0.2, CAM_LOOK.z);
     this.composer.render();
     this.rafId = requestAnimationFrame(this.loop);
   };

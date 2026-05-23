@@ -47,10 +47,25 @@ Website game học tập lớp 4 (frontend-only) với trải nghiệm 3D, tập
 git clone https://github.com/kataro92/KPrimaryLearning.git
 cd KPrimaryLearning
 npm install
+cp .env.example .env   # tùy chọn — đã có .env mặc định cho dev
 npm run dev
 ```
 
 Mở URL do Vite in ra (thường là `http://localhost:5173`).
+
+### Biến môi trường
+
+| File | Mục đích |
+|------|----------|
+| `.env` | Dev local (gitignore) — `VITE_BASE_PATH=/` |
+| `.env.production` | Build GitHub Pages — `VITE_BASE_PATH=/KPrimaryLearning/` |
+| `.env.example` | Mẫu + mô tả biến |
+
+Biến chính:
+
+- `VITE_BASE_PATH` — base URL asset (dev: `/`, production: `/KPrimaryLearning/`)
+- `VITE_NEURAL_TTS_ENABLED` — bật/tắt TTS neural (`true`/`false`)
+- `SKETCHFAB_API_TOKEN` — token Sketchfab cho `npm run fetch:models` (không vào bundle)
 
 ### Build production
 
@@ -121,7 +136,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 | --- | --- | --- | --- |
 | Giải Mã Trống Đồng | Trống Đồng Đông Sơn | [Sketchfab — @Aaannnn](https://sketchfab.com/3d-models/trong-ong-ong-son-dong-son-bronze-drum-c91e55f6db8742f09ad2d5815ca6b749) | [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/) |
 | Hành Trình Từ Vựng Hội An | Japanese paper lantern | [Sketchfab — @abelGB](https://sketchfab.com/3d-models/japanese-paper-lantern-4450069fee444ae0920aa5babd5d9239) | CC BY 4.0 |
-| Tính Nhẩm Trạng Tí | Low-poly T-rex | [Sketchfab — @CGCStudio](https://sketchfab.com/3d-models/low-poly-t-rex-02e50ee6abc2456985944989a26d89b7) | CC BY 4.0 |
+| Tính Nhẩm Trạng Tí | Low Poly T Rex (Walk Cycle) | [Sketchfab — Jerome Angeles](https://sketchfab.com/3d-models/low-poly-t-rex-walk-cycle-free-download-80f501c8b7754f43a06c7463bb34419b) | CC BY 4.0 |
 | Bảng Cửu Chương Văn Miếu | Sea turtle low poly | [Sketchfab — @C.J..Goldman](https://sketchfab.com/3d-models/sea-turtle-low-poly-c92be549c8194136914883309a13a6b5) | CC BY 4.0 |
 | Trạng Nguyên Toán *(catalog)* | Low Poly Mech | [Sketchfab — @abdomash847](https://sketchfab.com/3d-models/low-poly-mech-with-sword-and-gun-arm-e6758a6e5b0e44918bdad7fa19a39814) | CC BY 4.0 |
 

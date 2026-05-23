@@ -6,7 +6,13 @@ export function loadSettings(): AppSettings {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return { ...DEFAULT_SETTINGS };
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    const parsed = JSON.parse(raw) as Partial<AppSettings>;
+    const merged: AppSettings = { ...DEFAULT_SETTINGS, ...parsed };
+  // Before BGM: musicEnabled gated SFX; preserve that preference as sfxEnabled.
+    if (parsed.sfxEnabled === undefined && parsed.musicEnabled !== undefined) {
+      merged.sfxEnabled = parsed.musicEnabled;
+    }
+    return merged;
   } catch {
     return { ...DEFAULT_SETTINGS };
   }

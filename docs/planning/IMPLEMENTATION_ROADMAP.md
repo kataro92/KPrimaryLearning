@@ -14,7 +14,7 @@
 | App flow nhiều màn hình | Done | Welcome, Home, Game Select, Game Play, Result/Celebration |
 | 9 game playable | Done | Có renderer và gameplay riêng cho từng game |
 | Lưu profile/progress/session local | Done | IndexedDB stores: `profile`, `progress`, `sessions` |
-| Cài đặt người dùng | Done | `soundEnabled`, `musicEnabled`, `largeText` qua localStorage |
+| Cài đặt người dùng | Done | `soundEnabled`, `sfxEnabled`, `musicEnabled`, `largeText` qua localStorage |
 | Điểm + xếp loại + sao | Done | Thang điểm 0-10, làm tròn 0.5 |
 | Mở khóa danh hiệu 1->2->3 | Done | Rule hiện tại: score >= 7 |
 | TTS tiếng Việt | Done | Web Speech API, có fallback theo hỗ trợ trình duyệt |

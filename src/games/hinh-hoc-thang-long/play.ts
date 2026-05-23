@@ -6,6 +6,7 @@ import { getGameById } from '@/games/catalog';
 import { createTimerSfxState, syncTimerBar } from '@/features/gameplay/timerBar';
 import { TimerEngine } from '@/core/engine/timerEngine';
 import { scheduleAfterAnswer, setRoundHint, WAIT_NEXT_HINT } from '@/features/gameplay/roundUi';
+import { speakVietnamese } from '@/features/speech/speechService';
 import { createGameStage } from '@/ui/gameStage/createGameStage';
 import { traitForObject } from './objectTraits';
 import { generateTasks, timePerTaskMs, type ShapeTask } from './questions';

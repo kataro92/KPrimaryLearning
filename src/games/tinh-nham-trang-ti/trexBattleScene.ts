@@ -33,7 +33,8 @@ export class TrexBattleScene {
   private readonly trex = new THREE.Group();
   private readonly proceduralLayer = new THREE.Group();
   private readonly cannon = new THREE.Group();
-  private readonly stars = new THREE.Group();
+  private readonly juraBackdrop = new THREE.Group();
+  private readonly skyTexture: THREE.CanvasTexture;
   private readonly balls: CannonBall[] = [];
   private readonly hitBursts: THREE.Mesh[] = [];
   private readonly bodyMat = new THREE.MeshStandardMaterial({ color: 0xb72626, roughness: 0.68, metalness: 0.06 });
@@ -65,21 +66,26 @@ export class TrexBattleScene {
   private disposed = false;
   private landedHits = 0;
   private nextFireworkAt = 0;
-  private readonly bgNight = new THREE.Color(0x06091b);
-  private readonly bgFinal = new THREE.Color(0x261b4f);
+  private readonly bgHorizon = new THREE.Color(0xf0b060);
+  private readonly bgCelebrate = new THREE.Color(0xc87840);
+  /** Vị trí đầu T-Rex (world) — dùng cho đạn pháo & KO. */
+  private readonly trexHeadTarget = new THREE.Vector3(0, 3.35, 0.95);
+  private readonly trexBaseY = 0;
+  private readonly trexBaseZ = -0.85;
 
   constructor(mount: HTMLElement, totalHits: number) {
     this.mount = mount;
     const _maxHits = Math.max(1, totalHits);
     void _maxHits;
 
+    this.skyTexture = this.makeSkyTexture();
     this.scene = new THREE.Scene();
-    this.scene.background = this.bgNight.clone();
-    this.scene.fog = new THREE.FogExp2(this.bgNight.getHex(), 0.04);
+    this.scene.background = this.bgHorizon.clone();
+    this.scene.fog = new THREE.FogExp2(0xa8c8a0, 0.022);
 
-    this.camera = new THREE.PerspectiveCamera(44, 1, 0.1, 80);
-    this.camera.position.set(0, 3.2, 9);
-    this.camera.lookAt(0, 1.5, 0);
+    this.camera = new THREE.PerspectiveCamera(42, 1, 0.1, 90);
+    this.camera.position.set(0, 4.1, 11.5);
+    this.camera.lookAt(0, 2.75, 0.1);
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -100,7 +106,7 @@ export class TrexBattleScene {
     this.buildTrex();
     this.buildCannon();
 
-    this.scene.add(this.stars, this.cannon, this.trex);
+    this.scene.add(this.juraBackdrop, this.cannon, this.trex);
     this.resize();
     window.addEventListener('resize', this.onResize);
     void this.loadGltfTrex();
@@ -116,9 +122,10 @@ export class TrexBattleScene {
         node.receiveShadow = false;
       }
     });
-    fitModelToHeight(model, 2.75);
-    model.rotation.y = -Math.PI / 2;
-    model.position.set(0.15, 0, 0);
+    fitModelToHeight(model, 5.2);
+    // Model mặc định hướng +Z; camera ở +Z — không xoay 180° (Math.PI sẽ quay lưng).
+    model.rotation.y = 0;
+    model.position.set(0, 0, 0);
     this.proceduralLayer.visible = false;
     this.trex.add(model);
     this.head = model;
@@ -160,6 +167,7 @@ export class TrexBattleScene {
     window.removeEventListener('resize', this.onResize);
     this.mount.innerHTML = '';
     this.renderer.dispose();
+    this.skyTexture.dispose();
     this.scene.traverse((obj) => {
       if (obj instanceof THREE.Mesh) {
         obj.geometry.dispose();
@@ -170,49 +178,158 @@ export class TrexBattleScene {
     });
   }
 
+  private makeSkyTexture(): THREE.CanvasTexture {
+    const c = document.createElement('canvas');
+    c.width = 512;
+    c.height = 512;
+    const ctx = c.getContext('2d')!;
+    const grad = ctx.createLinearGradient(0, 0, 0, c.height);
+    grad.addColorStop(0, '#6eb8d4');
+    grad.addColorStop(0.45, '#98d4e8');
+    grad.addColorStop(0.72, '#f0c878');
+    grad.addColorStop(1, '#d4883a');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, c.width, c.height);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }
+
   private buildWorld(): void {
-    this.scene.add(new THREE.AmbientLight(0xb9d3ff, 0.52));
-    this.scene.add(new THREE.HemisphereLight(0xffffff, 0xb9d5ff, 0.52));
-    const key = new THREE.DirectionalLight(0xfff4dc, 1.15);
-    key.position.set(5, 7, 4);
-    key.castShadow = true;
-    key.shadow.mapSize.set(2048, 2048);
-    key.shadow.bias = -0.0005;
-    this.scene.add(key);
-    const rim = new THREE.DirectionalLight(0x6ea8ff, 0.75);
-    rim.position.set(-5, 3.5, -4);
-    this.scene.add(rim);
+    const sky = new THREE.Mesh(
+      new THREE.SphereGeometry(44, 32, 18),
+      new THREE.MeshBasicMaterial({ map: this.skyTexture, side: THREE.BackSide, fog: false, depthWrite: false })
+    );
+    sky.position.y = 6;
+    this.juraBackdrop.add(sky);
+
+    this.scene.add(new THREE.AmbientLight(0xfff1dc, 0.5));
+    this.scene.add(new THREE.HemisphereLight(0x87ceeb, 0x4a7c38, 0.58));
+    const sun = new THREE.DirectionalLight(0xffe8b8, 1.38);
+    sun.position.set(9, 14, 7);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.bias = -0.0005;
+    sun.shadow.camera.near = 0.5;
+    sun.shadow.camera.far = 45;
+    this.scene.add(sun);
+    const fill = new THREE.DirectionalLight(0xc8e6b0, 0.42);
+    fill.position.set(-6, 5, 4);
+    this.scene.add(fill);
 
     const ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(18, 10),
-      new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.95, metalness: 0.02 })
+      new THREE.PlaneGeometry(30, 22),
+      new THREE.MeshStandardMaterial({ color: 0x3d6b32, roughness: 0.94, metalness: 0.02 })
     );
     ground.rotation.x = -Math.PI / 2;
     ground.position.y = -0.02;
     ground.receiveShadow = true;
     this.scene.add(ground);
 
-    const starGeo = new THREE.BufferGeometry();
-    const count = 1500;
-    const p = new Float32Array(count * 3);
-    for (let i = 0; i < count; i++) {
-      const r = 12 + Math.random() * 20;
-      const t = Math.random() * Math.PI * 2;
-      p[i * 3] = Math.cos(t) * r;
-      p[i * 3 + 1] = 2 + Math.random() * 8;
-      p[i * 3 + 2] = Math.sin(t) * r - 6;
-    }
-    starGeo.setAttribute('position', new THREE.BufferAttribute(p, 3));
-    this.stars.add(
-      new THREE.Points(
-        starGeo,
-        new THREE.PointsMaterial({ color: 0xc7d2fe, size: 0.07, transparent: true, opacity: 0.9, depthWrite: false })
-      )
+    const dirt = new THREE.Mesh(
+      new THREE.PlaneGeometry(14, 8),
+      new THREE.MeshStandardMaterial({ color: 0x6b4423, roughness: 0.98, metalness: 0 })
     );
+    dirt.rotation.x = -Math.PI / 2;
+    dirt.position.set(0, 0.01, -0.4);
+    dirt.receiveShadow = true;
+    this.scene.add(dirt);
+
+    this.buildJuraHills();
+    this.buildJuraVegetation();
+    this.buildVolcano();
+  }
+
+  private buildJuraHills(): void {
+    const hillMat = new THREE.MeshStandardMaterial({ color: 0x4a6741, roughness: 0.95, metalness: 0 });
+    const farMat = new THREE.MeshStandardMaterial({ color: 0x5c7354, roughness: 0.96, metalness: 0, fog: true });
+    const specs = [
+      { x: -9, z: -14, sx: 7, sy: 3.2, mat: farMat },
+      { x: 4, z: -16, sx: 9, sy: 3.8, mat: farMat },
+      { x: 11, z: -12, sx: 6, sy: 2.6, mat: farMat },
+      { x: -5, z: -9, sx: 5, sy: 2.2, mat: hillMat },
+      { x: 7, z: -8.5, sx: 4.5, sy: 2, mat: hillMat },
+    ];
+    for (const s of specs) {
+      const hill = new THREE.Mesh(new THREE.ConeGeometry(s.sx * 0.5, s.sy, 8), s.mat);
+      hill.position.set(s.x, s.sy * 0.5 - 0.1, s.z);
+      hill.castShadow = false;
+      hill.receiveShadow = true;
+      this.juraBackdrop.add(hill);
+    }
+  }
+
+  private buildVolcano(): void {
+    const cone = new THREE.Mesh(
+      new THREE.ConeGeometry(2.8, 5.5, 10),
+      new THREE.MeshStandardMaterial({ color: 0x4a4038, roughness: 0.92, metalness: 0.04 })
+    );
+    cone.position.set(-12, 2.65, -18);
+    this.juraBackdrop.add(cone);
+    const rim = new THREE.Mesh(
+      new THREE.TorusGeometry(0.55, 0.14, 8, 14),
+      new THREE.MeshBasicMaterial({ color: 0xff6b2b, transparent: true, opacity: 0.75 })
+    );
+    rim.rotation.x = Math.PI / 2;
+    rim.position.set(-12, 5.35, -18);
+    this.juraBackdrop.add(rim);
+    const smoke = new THREE.Mesh(
+      new THREE.SphereGeometry(1.2, 10, 10),
+      new THREE.MeshBasicMaterial({ color: 0xd8dce0, transparent: true, opacity: 0.22, depthWrite: false })
+    );
+    smoke.position.set(-12, 6.4, -18);
+    smoke.scale.set(1.6, 1.1, 1.2);
+    this.juraBackdrop.add(smoke);
+  }
+
+  private buildJuraVegetation(): void {
+    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5c3d1e, roughness: 0.88, metalness: 0.02 });
+    const leafMat = new THREE.MeshStandardMaterial({ color: 0x2d6a2e, roughness: 0.82, metalness: 0.02 });
+    const fernMat = new THREE.MeshStandardMaterial({ color: 0x3d7c3a, roughness: 0.85, metalness: 0.02 });
+
+    const palmSpots = [
+      { x: -7.5, z: -6.5, h: 4.2 },
+      { x: 8.2, z: -7, h: 3.8 },
+      { x: -10, z: -9, h: 3.4 },
+      { x: 10.5, z: -8.5, h: 4.6 },
+      { x: 5.5, z: -5.5, h: 3.2 },
+    ];
+    for (const p of palmSpots) {
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.2, p.h, 8), trunkMat);
+      trunk.position.set(p.x, p.h * 0.5, p.z);
+      trunk.castShadow = true;
+      this.juraBackdrop.add(trunk);
+      for (let i = 0; i < 5; i++) {
+        const frond = new THREE.Mesh(new THREE.ConeGeometry(0.08, 1.6 + i * 0.08, 6), leafMat);
+        frond.position.set(p.x, p.h + 0.15, p.z);
+        frond.rotation.z = ((i - 2) * Math.PI) / 5;
+        frond.rotation.x = 0.55;
+        this.juraBackdrop.add(frond);
+      }
+    }
+
+    for (let i = 0; i < 14; i++) {
+      const fern = new THREE.Group();
+      const base = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.55, 6), fernMat);
+      base.position.y = 0.28;
+      fern.add(base);
+      for (let j = 0; j < 3; j++) {
+        const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.7, 5), fernMat);
+        leaf.position.set(Math.sin(j * 1.4) * 0.18, 0.55, Math.cos(j * 1.4) * 0.18);
+        leaf.rotation.z = (j - 1) * 0.45;
+        leaf.rotation.x = 0.35;
+        fern.add(leaf);
+      }
+      fern.position.set(-6 + i * 1.05, 0, -4.5 - (i % 3) * 0.8);
+      fern.rotation.y = (i % 5) * 0.35;
+      this.juraBackdrop.add(fern);
+    }
   }
 
   private buildTrex(): void {
     this.trex.add(this.proceduralLayer);
+    this.proceduralLayer.scale.setScalar(1.85);
+    this.proceduralLayer.rotation.y = -Math.PI / 2;
     const body = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.4, 1.1), this.bodyMat);
     body.position.set(0, 1.5, 0);
     body.castShadow = true;
@@ -307,17 +424,17 @@ export class TrexBattleScene {
         new THREE.IcosahedronGeometry(0.08, 0),
         new THREE.MeshBasicMaterial({ color: i % 2 === 0 ? 0xfacc15 : 0xf9a8d4 })
       );
-      star.position.set(Math.cos((i / 6) * Math.PI * 2) * 0.5, 2.95, Math.sin((i / 6) * Math.PI * 2) * 0.32);
+      star.position.set(Math.cos((i / 6) * Math.PI * 2) * 0.75, 4.85, Math.sin((i / 6) * Math.PI * 2) * 0.45);
       this.dizzyStars.add(star);
     }
     this.trex.add(this.dizzyStars);
 
     this.koSprite = this.createKoSprite();
     this.koSprite.visible = false;
-    this.koSprite.position.set(1.2, 3.35, 0.15);
+    this.koSprite.position.copy(this.trexHeadTarget).add(new THREE.Vector3(0, 0.55, 0.2));
     this.scene.add(this.koSprite);
 
-    this.trex.position.set(1.25, 0, -0.35);
+    this.trex.position.set(0, this.trexBaseY, this.trexBaseZ);
   }
 
   private addOutline(mesh: THREE.Mesh, thickness = 0.024): void {
@@ -427,8 +544,8 @@ export class TrexBattleScene {
       new THREE.MeshStandardMaterial({ color: 0x93c5fd, emissive: 0x3b82f6, emissiveIntensity: 0.4, roughness: 0.4, metalness: 0.3 })
     );
     const start = new THREE.Vector3(-2.15, 1.15, 0.45);
-    const end = new THREE.Vector3(1.55, 2.15, 0.05);
-    const control = new THREE.Vector3(-0.2, 3.2, 0.12);
+    const end = this.trexHeadTarget.clone();
+    const control = new THREE.Vector3(-0.35, end.y + 0.85, (start.z + end.z) * 0.45);
     ball.position.copy(start);
     this.scene.add(ball);
     this.balls.push({
@@ -527,15 +644,15 @@ export class TrexBattleScene {
     this.hitShake = Math.max(0, this.hitShake - 0.03);
 
     if (!this.fainted) {
-      this.trex.position.y = idle;
+      this.trex.position.y = this.trexBaseY + idle;
       this.trex.rotation.z = shake;
-      this.trex.rotation.y = Math.sin(t * 0.7) * 0.09;
+      this.trex.rotation.y = Math.sin(t * 0.7) * 0.07;
       if (this.head) this.head.rotation.z = Math.sin(t * 2.8) * 0.07;
       if (this.jaw) this.jaw.rotation.x = 0.08 + Math.sin(t * 3.5) * 0.06;
       if (this.tail) this.tail.rotation.y = Math.sin(t * 3) * 0.2;
     } else {
       this.trex.rotation.z += (-1.25 - this.trex.rotation.z) * 0.05;
-      this.trex.position.y += (-0.45 - this.trex.position.y) * 0.05;
+      this.trex.position.y += (-0.55 - this.trex.position.y) * 0.05;
       this.trex.rotation.y *= 0.9;
       if (this.jaw) this.jaw.rotation.x = 0.42;
       if (this.dizzyStars) {
@@ -549,20 +666,20 @@ export class TrexBattleScene {
         this.koSprite.material.opacity = Math.min(1, pop * 1.1);
         const s = 1.25 + Math.sin(t * 10) * 0.08;
         this.koSprite.scale.set(1.7 * pop * s, 0.9 * pop * s, 1);
-        this.koSprite.position.y = 3.35 + Math.sin(t * 8) * 0.07;
+        this.koSprite.position.y = this.trexHeadTarget.y + 0.55 + Math.sin(t * 8) * 0.07;
       }
     }
 
     if (this.celebrationGlow > 0) {
       const pulse = 0.5 + Math.sin(t * 7) * 0.5;
-      const bg = this.bgNight.clone().lerp(this.bgFinal, 0.45 + pulse * 0.4);
+      const bg = this.bgHorizon.clone().lerp(this.bgCelebrate, 0.45 + pulse * 0.35);
       this.scene.background = bg;
       if (this.scene.fog instanceof THREE.FogExp2) {
-        this.scene.fog.color.copy(bg);
-        this.scene.fog.density = 0.028;
+        this.scene.fog.color.copy(bg).lerp(new THREE.Color(0xd4a870), 0.35);
+        this.scene.fog.density = 0.018;
       }
-      this.renderer.toneMappingExposure = 1.18 + pulse * 0.22;
-      this.bloomPass.strength = 0.62;
+      this.renderer.toneMappingExposure = 1.22 + pulse * 0.18;
+      this.bloomPass.strength = 0.58;
       if (now >= this.nextFireworkAt) {
         const dummy = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.01, 0.01), new THREE.MeshBasicMaterial());
         dummy.position.set((Math.random() - 0.5) * 8, 3 + Math.random() * 2.5, -2 + (Math.random() - 0.5) * 3);
@@ -574,23 +691,22 @@ export class TrexBattleScene {
         this.nextFireworkAt = now + 550;
       }
     } else {
-      this.scene.background = this.bgNight.clone();
+      this.scene.background = this.bgHorizon.clone();
       if (this.scene.fog instanceof THREE.FogExp2) {
-        this.scene.fog.color.copy(this.bgNight);
-        this.scene.fog.density = 0.04;
+        this.scene.fog.color.set(0xa8c8a0);
+        this.scene.fog.density = 0.022;
       }
-      this.renderer.toneMappingExposure = 1.1;
-      this.bloomPass.strength = 0.36;
+      this.renderer.toneMappingExposure = 1.12;
+      this.bloomPass.strength = 0.34;
     }
 
     this.cannon.rotation.y = Math.sin(t * 1.6) * 0.03;
-    this.stars.rotation.y = t * 0.015;
     const zoomBlend = now < this.zoomUntil ? 1 - (this.zoomUntil - now) / 1500 : 0;
-    const camZ = 9 - zoomBlend * 1.6;
-    this.camera.position.x = Math.sin(t * 0.28) * 0.35 + zoomBlend * 0.32;
-    this.camera.position.y = 3.2 + Math.sin(t * 0.42) * 0.08 - zoomBlend * 0.22;
+    const camZ = 11.5 - zoomBlend * 1.8;
+    this.camera.position.x = Math.sin(t * 0.28) * 0.3 + zoomBlend * 0.28;
+    this.camera.position.y = 4.1 + Math.sin(t * 0.42) * 0.08 - zoomBlend * 0.25;
     this.camera.position.z = camZ;
-    this.camera.lookAt(0.9, 1.55, 0);
+    this.camera.lookAt(0, 2.75 + zoomBlend * 0.15, 0.12);
 
     this.composer.render();
     this.rafId = requestAnimationFrame(this.loop);

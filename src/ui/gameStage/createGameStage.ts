@@ -1,6 +1,7 @@
 import { useAppStore } from '@/app/store';
 import type { SceneHost } from '@/core/rendering/sceneHost';
 import { gameFeedbackLine, type FeedbackKind } from '@/features/speech/interactiveText';
+import { startBgm, stopBgm } from '@/features/audio/bgmService';
 import { playSfx } from '@/features/audio/sfxService';
 import { cancelSpeech, speakVietnamese } from '@/features/speech/speechService';
 import { getGameById } from '@/games/catalog';
@@ -82,6 +83,7 @@ export function createGameStage(
   const intro = gameFeedbackLine(gameId, 'start');
   feedbackEl.textContent = intro;
   speakVietnamese(intro);
+  startBgm(gameId);
 
   return {
     root,
@@ -114,6 +116,7 @@ export function createGameStage(
       }).join('');
     },
     cleanup: () => {
+      stopBgm();
       cancelSpeech();
       feedbackFx3d.dispose();
       sceneHost.resetTheme();

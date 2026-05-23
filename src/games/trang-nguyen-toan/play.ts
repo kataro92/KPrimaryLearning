@@ -5,6 +5,7 @@ import type { PlayResult } from '@/features/gameplay/types';
 import { getGameById } from '@/games/catalog';
 import { createTimerSfxState, syncTimerBar } from '@/features/gameplay/timerBar';
 import { TimerEngine } from '@/core/engine/timerEngine';
+import { speakVietnamese } from '@/features/speech/speechService';
 import { createGameStage } from '@/ui/gameStage/createGameStage';
 import { scheduleAfterAnswer } from '@/features/gameplay/roundUi';
 import {
@@ -123,6 +124,7 @@ export function renderTrangNguyenToanGame(
       </div>
     `;
     stage.gameArea.querySelector<HTMLElement>('#prompt')!.textContent = q.prompt;
+    speakVietnamese(q.prompt);
     stage.gameArea.querySelectorAll<HTMLButtonElement>('.stone-tablet').forEach((btn, i) => {
       btn.querySelector('span')!.textContent = q.choices[i] ?? '';
     });

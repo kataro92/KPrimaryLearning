@@ -4,6 +4,13 @@ import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { playSfx } from '@/features/audio/sfxService';
+import { fitModelToHeight, tryLoadGltfScene } from '@/core/assets/fitGltfModel';
+
+const BASE = import.meta.env.BASE_URL;
+const MECH_MODEL_URLS = [
+  `${BASE}models/trang-nguyen-toan/mech.glb`,
+  `${BASE}models/trang-nguyen-toan/scene.gltf`,
+] as const;
 
 interface AssemblePart {
   group: THREE.Group;
@@ -28,6 +35,8 @@ interface KneeMechanism {
 }
 
 const FIREWORK_COLORS = [0xff335c, 0xffcc00, 0x22ee88, 0x55bbff, 0xff88ee];
+/** Mặt bục lắp ráp (y của đế cylinder). */
+const PLATFORM_TOP_Y = 0.35;
 
 /**
  * Robot Gundam hard-surface theo spec:
@@ -43,6 +52,7 @@ export class GundamRobotScene {
   private readonly camera: THREE.PerspectiveCamera;
   private readonly mount: HTMLElement;
   private readonly root = new THREE.Group();
+  private readonly gltfMechRoot = new THREE.Group();
   private readonly platform = new THREE.Group();
   private readonly stars = new THREE.Group();
   private readonly nebula = new THREE.Group();
@@ -148,11 +158,32 @@ export class GundamRobotScene {
     this.buildPlatform();
     this.buildRobotBySpec();
     this.buildCelebrationFx();
-    this.scene.add(this.stars, this.nebula, this.platform, this.root, this.fx);
+    this.scene.add(this.stars, this.nebula, this.platform, this.root, this.gltfMechRoot, this.fx);
 
     this.resize();
     window.addEventListener('resize', this.onResize);
+    void this.loadGltfMech();
     this.loop();
+  }
+
+  private async loadGltfMech(): Promise<void> {
+    const model = await tryLoadGltfScene(MECH_MODEL_URLS);
+    if (this.disposed || !model) return;
+    model.traverse((node) => {
+      if (node instanceof THREE.Mesh) {
+        node.castShadow = true;
+        node.receiveShadow = false;
+      }
+    });
+    fitModelToHeight(model, 3.5, 0);
+    const box = new THREE.Box3().setFromObject(model);
+    model.position.y += PLATFORM_TOP_Y - box.min.y;
+    model.rotation.y = -Math.PI * 0.18;
+    this.gltfMechRoot.position.set(2.35, 0, 0.35);
+    this.gltfMechRoot.add(model);
+    this.parts.forEach((p) => {
+      p.group.visible = false;
+    });
   }
 
   onCorrectAnswer(): void {
@@ -872,6 +903,7 @@ export class GundamRobotScene {
     else this.root.rotation.z *= 0.86;
 
     this.root.position.y = Math.sin(t * 1.2) * 0.04;
+    this.gltfMechRoot.position.y = Math.sin(t * 1.2 + 0.4) * 0.03;
 
     if (this.celebration) {
       this.celebrationFade = Math.min(1, this.celebrationFade + 0.012);
@@ -895,6 +927,7 @@ export class GundamRobotScene {
       this.root.rotation.y = t * 0.52;
       this.root.rotation.x = -0.05 + this.poseProgress * 0.03;
       this.root.scale.setScalar(1.03 + Math.sin(t * 3.1) * 0.03);
+      this.gltfMechRoot.rotation.y = t * 0.52;
       this.updateCinematicPose(t);
 
       for (const mat of this.glowMats) {
@@ -921,6 +954,7 @@ export class GundamRobotScene {
       this.root.rotation.y = Math.sin(t * 0.35) * 0.12;
       this.root.rotation.x = 0;
       this.root.scale.setScalar(1);
+      this.gltfMechRoot.rotation.y = Math.sin(t * 0.35) * 0.12;
       this.poseProgress = 0;
       if (this.rightArmPivot) {
         this.rightArmPivot.rotation.set(0, 0, 0);

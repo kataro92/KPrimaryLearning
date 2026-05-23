@@ -9,6 +9,8 @@
 .drum-puzzle__question,
 .history-panel__q,
 .temple-arena__board,
+.shape-quiz__prompt,
+.arena-math__problem,
 .stele-run__math,
 .fps-quiz__prompt,
 .wall-build__mission {
@@ -31,7 +33,10 @@
 
 .history-panel__q,
 .drum-puzzle__question,
-.temple-arena__board {
+.temple-arena__board,
+.shape-quiz__prompt,
+.arena-math__problem,
+.stele-run__math {
   padding: 14px 16px;
   border-radius: var(--clay-radius-md);
   background: rgba(255, 255, 255, 0.9);
@@ -39,6 +44,8 @@
   font-family: var(--font-display);
   font-weight: 800;
   margin: 0 0 14px;
+  animation: none;
+  transform: none;
 }
 
 .fps-quiz__prompt {

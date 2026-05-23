@@ -1,4 +1,5 @@
 import { loadSettings } from '@/data/storage/settingsStore';
+import { getAudioContext, resumeAudioContext } from './audioContext';
 
 export type SfxKind =
   | 'correct'
@@ -21,27 +22,10 @@ export interface TimerSfxState {
   dangered: boolean;
 }
 
-let audioCtx: AudioContext | null = null;
-
 /** Gọi sau thao tác người dùng để mở khóa AudioContext (trình duyệt). */
 export function resumeAudio(): void {
-  if (!loadSettings().musicEnabled) return;
-  try {
-    const ctx = getAudioContext(true);
-    if (ctx?.state === 'suspended') void ctx.resume();
-  } catch {
-    /* ignore */
-  }
-}
-
-function getAudioContext(force = false): AudioContext | null {
-  if (!force && !loadSettings().musicEnabled) return null;
-  try {
-    if (!audioCtx) audioCtx = new AudioContext();
-    return audioCtx;
-  } catch {
-    return null;
-  }
+  if (!loadSettings().sfxEnabled && !loadSettings().musicEnabled) return;
+  resumeAudioContext();
 }
 
 function tone(
@@ -72,8 +56,8 @@ function tone(
 }
 
 export function playSfx(kind: SfxKind): void {
-  if (!loadSettings().musicEnabled) return;
-  const ctx = getAudioContext();
+  if (!loadSettings().sfxEnabled) return;
+  const ctx = getAudioContext(true);
   if (!ctx) return;
   if (ctx.state === 'suspended') void ctx.resume();
 

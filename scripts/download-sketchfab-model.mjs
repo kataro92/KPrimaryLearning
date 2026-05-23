@@ -7,6 +7,9 @@ import { mkdir, writeFile, copyFile, rm, readdir, cp } from 'node:fs/promises';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
+import { loadEnvFile } from './load-env.mjs';
+
+loadEnvFile();
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -20,15 +23,15 @@ const MODELS = [
   },
   {
     uid: '4450069fee444ae0920aa5babd5d9239',
-    outDir: join(ROOT, 'public/models/tu-vung-hoi-an'),
+    outDir: join(ROOT, 'public/models/tu-vung-hoi-an/lantern'),
     outFile: 'paper-lantern.glb',
     name: 'Japanese paper lantern (Hội An)',
   },
   {
-    uid: '02e50ee6abc2456985944989a26d89b7',
+    uid: '80f501c8b7754f43a06c7463bb34419b',
     outDir: join(ROOT, 'public/models/tinh-nham-trang-ti'),
     outFile: 'trex.glb',
-    name: 'Low-poly T-rex',
+    name: 'Low Poly T Rex (Walk Cycle) — Jerome Angeles',
   },
   {
     uid: 'c92be549c8194136914883309a13a6b5',
@@ -44,7 +47,7 @@ const MODELS = [
   },
   {
     uid: '8a22e9c369d64a329c67e9a355064b2c',
-    outDir: join(ROOT, 'public/models/tu-vung-hoi-an'),
+    outDir: join(ROOT, 'public/models/tu-vung-hoi-an/boat'),
     outFile: 'fishing-boat.glb',
     name: 'Fishing Boat',
   },

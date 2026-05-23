@@ -10,7 +10,26 @@ interface TextPlate {
   ctx: CanvasRenderingContext2D;
   w: number;
   h: number;
+  frame?: THREE.Mesh;
 }
+
+/** Căn HUD theo hàng 3 ô A/B/C (x ±2.9, y 2, z -8.2). */
+const TARGET_ROW_Y = 2.0;
+const TARGET_ROW_Z = -8.2;
+const TARGET_SPAN_X = 5.8;
+const HUD_Z = TARGET_ROW_Z + 0.12;
+
+const STATUS_Y = TARGET_ROW_Y + 2.65;
+const QUESTION_Y = TARGET_ROW_Y - 1.62;
+const FEEDBACK_Y = TARGET_ROW_Y - 2.22;
+const FEEDBACK_Z = TARGET_ROW_Z + 1.65;
+
+const QUESTION_PLATE_W = TARGET_SPAN_X + 1.15;
+const QUESTION_PLATE_H = 0.64;
+const TIMER_BAR_W = TARGET_SPAN_X * 0.78;
+const TIMER_BAR_H = 0.12;
+const DOT_SIZE = 0.14;
+const DOT_SPACING = 0.22;
 
 function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
   const words = text.split(/\s+/);
@@ -33,44 +52,58 @@ function drawPanelBg(
   ctx: CanvasRenderingContext2D,
   w: number,
   h: number,
-  fill = 'rgba(15, 23, 42, 0.9)',
-  stroke = 'rgba(251, 191, 36, 0.45)'
+  fill = 'rgba(15, 23, 42, 0.92)',
+  stroke = 'rgba(251, 191, 36, 0.5)'
 ): void {
   ctx.clearRect(0, 0, w, h);
   ctx.fillStyle = fill;
   ctx.beginPath();
-  ctx.roundRect(10, 10, w - 20, h - 20, 16);
+  ctx.roundRect(12, 12, w - 24, h - 24, 18);
   ctx.fill();
   ctx.strokeStyle = stroke;
-  ctx.lineWidth = 4;
+  ctx.lineWidth = 5;
   ctx.stroke();
 }
 
-/** Bảng thông tin 3D gắn trên camera (nằm trong thế giới 3D). */
+/** HUD 3D cố định trong scene — không gắn nỏ/camera. */
 export class FpsHud3d {
-  readonly root = new THREE.Group();
+  readonly worldHud = new THREE.Group();
   private readonly timerRoot = new THREE.Group();
   private timerFill!: THREE.Mesh;
   private readonly dotsRoot = new THREE.Group();
   private questionPlate!: TextPlate;
   private feedbackPlate!: TextPlate;
   private readonly woodMat = new THREE.MeshLambertMaterial({ color: 0x78350f });
+  private timerHalfW = TIMER_BAR_W / 2;
+  private worldAttached = false;
   private disposed = false;
 
   constructor() {
+    this.worldHud.position.set(0, STATUS_Y, HUD_Z);
+
     this.buildQuestionPlate();
     this.buildFeedbackPlate();
     this.buildTimer();
-    this.dotsRoot.position.set(0, 0.54, -1.38);
-    this.root.add(this.questionPlate.group, this.feedbackPlate.group, this.timerRoot, this.dotsRoot);
+    this.dotsRoot.position.set(0, 0.26, 0.03);
+    this.worldHud.add(this.timerRoot, this.dotsRoot);
+
     this.setFeedback('', 'neutral');
     this.setQuestion('...');
     this.setTimer(1);
     this.setProgress(0, 0, 1);
   }
 
-  attachTo(camera: THREE.Object3D): void {
-    camera.add(this.root);
+  attachToWorld(world: THREE.Object3D): void {
+    if (this.worldAttached) return;
+    this.worldAttached = true;
+    world.add(this.worldHud, this.questionPlate.group, this.feedbackPlate.group);
+  }
+
+  updateFacing(camera: THREE.Object3D): void {
+    for (const g of [this.worldHud, this.questionPlate.group, this.feedbackPlate.group]) {
+      if (!g.visible) continue;
+      g.lookAt(camera.position.x, g.position.y, camera.position.z);
+    }
   }
 
   setQuestion(text: string): void {
@@ -78,20 +111,20 @@ export class FpsHud3d {
   }
 
   setFeedback(text: string, kind: FeedbackKind = 'neutral'): void {
+    const trimmed = text.trim();
+    if (!trimmed) {
+      this.feedbackPlate.group.visible = false;
+      return;
+    }
+    this.feedbackPlate.group.visible = true;
     const fg = kind === 'ok' ? '#86efac' : kind === 'bad' ? '#fca5a5' : '#fef9c3';
-    const stroke =
-      kind === 'ok'
-        ? 'rgba(34, 197, 94, 0.55)'
-        : kind === 'bad'
-          ? 'rgba(239, 68, 68, 0.55)'
-          : 'rgba(251, 191, 36, 0.45)';
-    this.paintFeedback(text, fg, stroke);
+    this.paintFeedback(trimmed, fg);
   }
 
   setTimer(ratio: number): void {
     const r = Math.max(0, Math.min(1, ratio));
     this.timerFill.scale.x = Math.max(0.02, r);
-    this.timerFill.position.x = -0.52 + 0.52 * r;
+    this.timerFill.position.x = -this.timerHalfW + this.timerHalfW * r;
     const mat = this.timerFill.material as THREE.MeshLambertMaterial;
     if (r < 0.25) mat.color.setHex(0xef4444);
     else if (r < 0.5) mat.color.setHex(0xf59e0b);
@@ -109,17 +142,17 @@ export class FpsHud3d {
       }
       this.dotsRoot.remove(child);
     }
-    const spacing = 0.11;
+    const spacing = DOT_SPACING;
     const startX = -((total - 1) * spacing) / 2;
     for (let i = 0; i < total; i++) {
       let color = 0x64748b;
       if (i < done) color = 0x22c55e;
       else if (i === current) color = 0xfbbf24;
       const dot = new THREE.Mesh(
-        new THREE.BoxGeometry(0.07, 0.07, 0.04),
-        new THREE.MeshLambertMaterial({ color, emissive: color, emissiveIntensity: 0.25 })
+        new THREE.BoxGeometry(DOT_SIZE, DOT_SIZE, 0.05),
+        new THREE.MeshLambertMaterial({ color, emissive: color, emissiveIntensity: 0.3 })
       );
-      dot.position.set(startX + i * spacing, 0, 0.03);
+      dot.position.set(startX + i * spacing, 0, 0.04);
       this.dotsRoot.add(dot);
     }
   }
@@ -139,15 +172,32 @@ export class FpsHud3d {
     });
     this.setProgress(0, 0, 0);
     this.woodMat.dispose();
-    this.root.removeFromParent();
+    this.worldHud.removeFromParent();
+    this.questionPlate.group.removeFromParent();
+    this.feedbackPlate.group.removeFromParent();
   }
 
   private buildQuestionPlate(): void {
-    this.questionPlate = this.createTextPlate(920, 200, 1.75, 0.38, new THREE.Vector3(0, 0.28, -1.42));
+    this.questionPlate = this.createTextPlate(
+      1024,
+      176,
+      QUESTION_PLATE_W,
+      QUESTION_PLATE_H,
+      new THREE.Vector3(0, QUESTION_Y, HUD_Z),
+      true
+    );
   }
 
   private buildFeedbackPlate(): void {
-    this.feedbackPlate = this.createTextPlate(760, 120, 1.45, 0.22, new THREE.Vector3(0, -0.34, -1.38));
+    this.feedbackPlate = this.createTextPlate(
+      960,
+      120,
+      QUESTION_PLATE_W * 0.88,
+      0.34,
+      new THREE.Vector3(0, FEEDBACK_Y, FEEDBACK_Z),
+      false
+    );
+    this.feedbackPlate.group.visible = false;
   }
 
   private createTextPlate(
@@ -155,7 +205,8 @@ export class FpsHud3d {
     ch: number,
     pw: number,
     ph: number,
-    pos: THREE.Vector3
+    pos: THREE.Vector3,
+    withFrame: boolean
   ): TextPlate {
     const canvas = document.createElement('canvas');
     canvas.width = cw;
@@ -168,64 +219,73 @@ export class FpsHud3d {
     const group = new THREE.Group();
     group.position.copy(pos);
 
-    const frame = new THREE.Mesh(new THREE.BoxGeometry(pw + 0.08, ph + 0.08, 0.06), this.woodMat);
+    let frame: THREE.Mesh | undefined;
+    if (withFrame) {
+      frame = new THREE.Mesh(new THREE.BoxGeometry(pw + 0.1, ph + 0.1, 0.07), this.woodMat);
+      group.add(frame);
+    }
+
     const mesh = new THREE.Mesh(
       new THREE.PlaneGeometry(pw, ph),
-      new THREE.MeshBasicMaterial({ map: texture, transparent: true, toneMapped: false })
+      new THREE.MeshBasicMaterial({ map: texture, transparent: true, toneMapped: false, depthTest: false })
     );
-    mesh.position.z = 0.035;
-    group.add(frame, mesh);
+    mesh.position.z = 0.04;
+    mesh.renderOrder = 10;
+    group.add(mesh);
 
-    return { group, mesh, texture, canvas, ctx, w: cw, h: ch };
+    return { group, mesh, texture, canvas, ctx, w: cw, h: ch, frame };
   }
 
   private buildTimer(): void {
-    this.timerRoot.position.set(0, 0.46, -1.4);
+    const w = TIMER_BAR_W;
+    const h = TIMER_BAR_H;
+    this.timerHalfW = w / 2;
+    this.timerRoot.position.set(0, -0.08, 0.03);
     const bg = new THREE.Mesh(
-      new THREE.BoxGeometry(1.08, 0.07, 0.05),
+      new THREE.BoxGeometry(w, h, 0.06),
       new THREE.MeshLambertMaterial({ color: 0x334155 })
     );
-    const frame = new THREE.Mesh(new THREE.BoxGeometry(1.14, 0.12, 0.04), this.woodMat);
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(w + 0.12, h + 0.08, 0.05), this.woodMat);
     frame.position.z = -0.02;
     this.timerFill = new THREE.Mesh(
-      new THREE.BoxGeometry(1.04, 0.05, 0.06),
-      new THREE.MeshLambertMaterial({ color: 0x22c55e, emissive: 0x166534, emissiveIntensity: 0.2 })
+      new THREE.BoxGeometry(w - 0.08, h - 0.04, 0.07),
+      new THREE.MeshLambertMaterial({ color: 0x22c55e, emissive: 0x166534, emissiveIntensity: 0.25 })
     );
-    this.timerFill.position.set(0, 0, 0.02);
+    this.timerFill.position.set(0, 0, 0.03);
     this.timerRoot.add(frame, bg, this.timerFill);
   }
 
   private paintQuestion(text: string): void {
     const { ctx, texture, w, h } = this.questionPlate;
     drawPanelBg(ctx, w, h);
-    ctx.fillStyle = '#fde68a';
-    ctx.font = 'bold 30px system-ui, sans-serif';
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = 'bold 34px system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    const prompt = `Bắn đáp án đúng cho:`;
-    ctx.fillStyle = '#f8fafc';
-    ctx.font = 'bold 26px system-ui, sans-serif';
-    ctx.fillText(prompt, w / 2, h * 0.32);
+    ctx.fillText('Phân loại:', w / 2, h * 0.27);
     ctx.fillStyle = '#fde68a';
-    ctx.font = 'bold 34px system-ui, sans-serif';
+    ctx.font = 'bold 52px system-ui, sans-serif';
     const lines = wrapLines(ctx, text, w - 56);
-    const lineH = 40;
-    const startY = h * 0.58 - ((lines.length - 1) * lineH) / 2;
+    const lineH = 54;
+    const startY = h * 0.63 - ((lines.length - 1) * lineH) / 2;
     lines.forEach((line, i) => ctx.fillText(line, w / 2, startY + i * lineH));
     texture.needsUpdate = true;
   }
 
-  private paintFeedback(text: string, fg: string, stroke: string): void {
+  private paintFeedback(text: string, fg: string): void {
     const { ctx, texture, w, h } = this.feedbackPlate;
-    drawPanelBg(ctx, w, h, 'rgba(15, 23, 42, 0.88)', stroke);
-    ctx.fillStyle = fg;
-    ctx.font = 'bold 28px system-ui, sans-serif';
+    ctx.clearRect(0, 0, w, h);
+    ctx.font = 'bold 48px system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    const lines = wrapLines(ctx, text || ' ', w - 48);
-    const lineH = 32;
+    ctx.shadowColor = 'rgba(0,0,0,0.9)';
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = fg;
+    const lines = wrapLines(ctx, text, w - 40);
+    const lineH = 44;
     const startY = h / 2 - ((lines.length - 1) * lineH) / 2;
     lines.forEach((line, i) => ctx.fillText(line, w / 2, startY + i * lineH));
+    ctx.shadowBlur = 0;
     texture.needsUpdate = true;
   }
 
@@ -233,8 +293,7 @@ export class FpsHud3d {
     plate.texture.dispose();
     plate.mesh.geometry.dispose();
     (plate.mesh.material as THREE.Material).dispose();
-    const frame = plate.group.children[0];
-    if (frame instanceof THREE.Mesh) frame.geometry.dispose();
+    if (plate.frame instanceof THREE.Mesh) plate.frame.geometry.dispose();
   }
 }
 

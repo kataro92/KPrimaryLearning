@@ -40,6 +40,8 @@ export class VanMieuTurtleScene {
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.18;
@@ -50,6 +52,9 @@ export class VanMieuTurtleScene {
     this.scene.add(new THREE.HemisphereLight(0xfff8eb, 0x14532d, 0.55));
     const key = new THREE.DirectionalLight(0xfff5dc, 1.15);
     key.position.set(2.5, 4, 2.8);
+    key.castShadow = true;
+    key.shadow.mapSize.set(1024, 1024);
+    key.shadow.bias = -0.0004;
     this.scene.add(key);
     const rim = new THREE.DirectionalLight(0xfbbf24, 0.55);
     rim.position.set(-3, 2, -2);
@@ -103,12 +108,7 @@ export class VanMieuTurtleScene {
     if (this.disposed) return;
     this.clearPivot();
     if (scene) {
-      scene.traverse((node) => {
-        if (node instanceof THREE.Mesh) {
-          node.castShadow = false;
-          node.receiveShadow = false;
-        }
-      });
+      this.styleTurtleMaterials(scene);
       fitModelToHeight(scene, 0.55);
       scene.rotation.y = -Math.PI / 2;
       this.pivot.add(scene);
@@ -116,6 +116,60 @@ export class VanMieuTurtleScene {
     }
     this.loadFailed = true;
     this.pivot.add(this.buildFallbackTurtle());
+  }
+
+  private styleTurtleMaterials(root: THREE.Object3D): void {
+    const shellTint = new THREE.Color(0x7dd3a8);
+    root.traverse((node) => {
+      if (!(node instanceof THREE.Mesh)) return;
+      node.castShadow = true;
+      node.receiveShadow = true;
+
+      const rawMats = Array.isArray(node.material) ? node.material : [node.material];
+      const nextMats = rawMats.map((raw) => {
+        let mat = raw;
+        if (!(mat instanceof THREE.MeshStandardMaterial)) {
+          if (mat instanceof THREE.MeshPhysicalMaterial) {
+            mat.metalness = Math.min(mat.metalness, 0.25);
+            return mat;
+          }
+          if (mat instanceof THREE.MeshBasicMaterial || mat instanceof THREE.MeshLambertMaterial) {
+            const std = new THREE.MeshStandardMaterial({
+              map: mat.map,
+              color: mat.color,
+              transparent: mat.transparent,
+              opacity: mat.opacity,
+              side: mat.side,
+              name: mat.name,
+            });
+            mat.dispose();
+            mat = std;
+          } else {
+            return mat;
+          }
+        }
+
+        const label = `${mat.name} ${node.name}`.toLowerCase();
+        const isEye = label.includes('eye');
+        if (mat.map) {
+          mat.map.colorSpace = THREE.SRGBColorSpace;
+          mat.color.setHex(0xffffff);
+          if (!isEye) mat.color.multiply(shellTint);
+        } else if (!isEye) {
+          mat.color.set(0x3f8f5c);
+        }
+        if (mat.normalMap) mat.normalMap.colorSpace = THREE.LinearSRGBColorSpace;
+        if (mat.metalnessMap) mat.metalnessMap.colorSpace = THREE.LinearSRGBColorSpace;
+        if (mat.roughnessMap) mat.roughnessMap.colorSpace = THREE.LinearSRGBColorSpace;
+        if (!isEye) {
+          mat.metalness = Math.min(mat.metalness, 0.18);
+          mat.roughness = Math.max(mat.roughness, 0.52);
+        }
+        mat.needsUpdate = true;
+        return mat;
+      });
+      node.material = nextMats.length === 1 ? nextMats[0]! : nextMats;
+    });
   }
 
   private buildFallbackTurtle(): THREE.Group {

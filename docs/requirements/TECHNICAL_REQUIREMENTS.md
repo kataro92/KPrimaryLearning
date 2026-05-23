@@ -40,11 +40,11 @@ Tài liệu này mô tả **hiện trạng kỹ thuật đang chạy trong code*
 - `PlayerProfile`: thông tin người chơi local.
 - `GameProgress`: bậc danh hiệu đã mở + best score + best time.
 - `PlaySession`: kết quả mỗi lượt chơi.
-- `AppSettings`: `soundEnabled`, `musicEnabled`, `largeText`.
+- `AppSettings`: `soundEnabled`, `sfxEnabled`, `musicEnabled`, `largeText`.
 
 ### 3.3 localStorage
 - Key: `kv_settings`.
-- Dùng để lưu tùy chọn TTS/SFX/chữ lớn (`soundEnabled`, `musicEnabled`, `largeText`, `ttsMode`).
+- Dùng để lưu tùy chọn TTS/SFX/nhạc nền/chữ lớn (`soundEnabled`, `sfxEnabled`, `musicEnabled`, `largeText`, `ttsMode`).
 
 ## 4. Gameplay engine hiện tại
 
@@ -61,6 +61,7 @@ Tài liệu này mô tả **hiện trạng kỹ thuật đang chạy trong code*
 ## 5. Audio và speech
 
 - SFX: Web Audio (`src/features/audio/sfxService.ts`).
+- BGM: Web Audio procedural loops (`src/features/audio/bgmService.ts`), một theme riêng cho mỗi game.
 - TTS orchestrator (`src/features/speech/ttsOrchestrator.ts`):
   - Worker + ONNX: `@huggingface/transformers`, model `Xenova/mms-tts-vie` (`neural/neuralTtsEngine.ts`).
   - Device: WebGPU nếu có, ngược lại WASM (`dtype: q8`).

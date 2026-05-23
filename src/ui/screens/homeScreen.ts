@@ -38,9 +38,14 @@ export function renderHomeScreen(root: HTMLElement): void {
           <span class="settings-toggle__tooltip" role="tooltip">Bật đọc câu bằng giọng nói</span>
         </label>
         <label class="settings-toggle">
-          <input type="checkbox" id="opt-sfx" ${settings.musicEnabled ? 'checked' : ''} />
+          <input type="checkbox" id="opt-sfx" ${settings.sfxEnabled ? 'checked' : ''} />
           <span class="settings-toggle__chip">SFX</span>
           <span class="settings-toggle__tooltip" role="tooltip">Bật hiệu ứng âm thanh</span>
+        </label>
+        <label class="settings-toggle">
+          <input type="checkbox" id="opt-music" ${settings.musicEnabled ? 'checked' : ''} />
+          <span class="settings-toggle__chip">Nhạc</span>
+          <span class="settings-toggle__tooltip" role="tooltip">Bật nhạc nền khi chơi</span>
         </label>
         <label class="settings-toggle">
           <input type="checkbox" id="opt-large" ${settings.largeText ? 'checked' : ''} />
@@ -77,6 +82,11 @@ export function renderHomeScreen(root: HTMLElement): void {
     if (s.soundEnabled) preloadLocalTts();
   });
   root.querySelector('#opt-sfx')!.addEventListener('change', (e) => {
+    const s = loadSettings();
+    s.sfxEnabled = (e.target as HTMLInputElement).checked;
+    saveSettings(s);
+  });
+  root.querySelector('#opt-music')!.addEventListener('change', (e) => {
     const s = loadSettings();
     s.musicEnabled = (e.target as HTMLInputElement).checked;
     saveSettings(s);
