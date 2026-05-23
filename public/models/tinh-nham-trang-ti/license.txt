@@ -1,0 +1,11 @@
+Model Information:
+* title:	Low-poly T-rex
+* source:	https://sketchfab.com/3d-models/low-poly-t-rex-02e50ee6abc2456985944989a26d89b7
+* author:	CGC Studio (https://sketchfab.com/CGCStudio)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Low-poly T-rex" (https://sketchfab.com/3d-models/low-poly-t-rex-02e50ee6abc2456985944989a26d89b7) by CGC Studio (https://sketchfab.com/CGCStudio) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

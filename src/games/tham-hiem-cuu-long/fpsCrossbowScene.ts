@@ -4,6 +4,7 @@ import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { playSfx } from '@/features/audio/sfxService';
+import { createCrosshair3d, createHitFlashRig, FpsHud3d } from './fpsHud3d';
 
 export interface FpsOption {
   id: string;
@@ -113,10 +114,16 @@ export class FpsCrossbowScene {
   private clouds: THREE.Mesh[] = [];
   private riverMesh: THREE.Mesh | null = null;
   private isPointerLocked = false;
+  private isPointerInside = false;
+  private readonly hud: FpsHud3d;
+  private readonly hitFlash: ReturnType<typeof createHitFlashRig>;
 
   constructor(private mount: HTMLElement) {
     const w = mount.clientWidth || 640;
     const h = mount.clientHeight || 360;
+    mount.tabIndex = -1;
+    mount.setAttribute('role', 'application');
+    mount.setAttribute('aria-label', 'Khung ngắm nỏ — di chuột để ngắm, bấm Space hoặc click để bắn');
     const canvas = document.createElement('canvas');
     canvas.className = 'fps-canvas';
     mount.appendChild(canvas);
@@ -155,6 +162,11 @@ export class FpsCrossbowScene {
 
     this.buildMinecraftBackdrop();
     this.buildCrossbow();
+    this.hud = new FpsHud3d();
+    this.hud.attachTo(this.camera);
+    this.camera.add(createCrosshair3d());
+    this.hitFlash = createHitFlashRig();
+    this.camera.add(this.hitFlash.group);
     this.trail = new THREE.Line(
       new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]),
       new THREE.LineBasicMaterial({ color: 0xf8fafc, transparent: true, opacity: 0 })
@@ -162,10 +174,46 @@ export class FpsCrossbowScene {
     this.scene.add(this.trail);
 
     mount.addEventListener('pointermove', this.onPointerMove);
+    mount.addEventListener('pointerenter', this.onPointerEnter);
+    mount.addEventListener('pointerleave', this.onPointerLeave);
     mount.addEventListener('click', this.onRequestPointerLock);
     document.addEventListener('pointerlockchange', this.onPointerLockChange);
     window.addEventListener('resize', this.onResize);
     this.loop();
+  }
+
+  /** Đưa focus vào khung chơi để điều khiển ngay (chuột + phím). */
+  focusControl(): void {
+    if (this.disposed) return;
+    this.mount.focus({ preventScroll: true });
+    const rect = this.mount.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) {
+      this.isPointerInside = true;
+      this.updateAimFromPointer({
+        clientX: rect.left + rect.width / 2,
+        clientY: rect.top + rect.height / 2,
+      } as PointerEvent);
+    }
+  }
+
+  setHudQuestion(itemLabel: string): void {
+    this.hud.setQuestion(itemLabel);
+  }
+
+  setHudFeedback(text: string, kind: 'ok' | 'bad' | 'neutral' = 'neutral'): void {
+    this.hud.setFeedback(text, kind);
+  }
+
+  setHudTimer(ratio: number): void {
+    this.hud.setTimer(ratio);
+  }
+
+  setHudProgress(done: number, current: number, total: number): void {
+    this.hud.setProgress(done, current, total);
+  }
+
+  flashHit(ok: boolean): void {
+    this.hitFlash.flash(ok);
   }
 
   setOptions(options: FpsOption[]): void {
@@ -242,6 +290,8 @@ export class FpsCrossbowScene {
     this.disposed = true;
     cancelAnimationFrame(this.rafId);
     this.mount.removeEventListener('pointermove', this.onPointerMove);
+    this.mount.removeEventListener('pointerenter', this.onPointerEnter);
+    this.mount.removeEventListener('pointerleave', this.onPointerLeave);
     this.mount.removeEventListener('click', this.onRequestPointerLock);
     document.removeEventListener('pointerlockchange', this.onPointerLockChange);
     window.removeEventListener('resize', this.onResize);
@@ -249,6 +299,15 @@ export class FpsCrossbowScene {
       document.exitPointerLock();
     }
     this.clearTargets();
+    this.hud.dispose();
+    this.hitFlash.group.traverse((node) => {
+      if (node instanceof THREE.Mesh) {
+        node.geometry.dispose();
+        const mat = node.material;
+        if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
+        else mat.dispose();
+      }
+    });
     this.projectiles.forEach((p) => {
       p.mesh.traverse((node) => {
         if (node instanceof THREE.Mesh) {
@@ -346,11 +405,37 @@ export class FpsCrossbowScene {
     this.scene.add(this.camera);
   }
 
+  private onPointerEnter = (e: PointerEvent) => {
+    this.isPointerInside = true;
+    if (!this.isPointerLocked) this.updateAimFromPointer(e);
+  };
+
+  private onPointerLeave = () => {
+    this.isPointerInside = false;
+  };
+
   private onPointerMove = (e: PointerEvent) => {
     const sensitivity = 0.0022;
-    if (!this.isPointerLocked) return;
-    this.yaw -= e.movementX * sensitivity;
-    this.pitch -= e.movementY * sensitivity;
+    if (this.isPointerLocked) {
+      this.yaw -= e.movementX * sensitivity;
+      this.pitch -= e.movementY * sensitivity;
+    } else if (this.isPointerInside) {
+      this.updateAimFromPointer(e);
+      return;
+    } else {
+      return;
+    }
+    this.pitch = Math.max(-0.58, Math.min(0.42, this.pitch));
+  };
+
+  /** Ngắm theo vị trí chuột trên khung — không cần bấm để khóa con trỏ. */
+  private updateAimFromPointer(e: PointerEvent): void {
+    const rect = this.mount.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+    const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    const ny = ((e.clientY - rect.top) / rect.height) * 2 - 1;
+    this.yaw = -nx * 0.92;
+    this.pitch = -ny * 0.48;
     this.pitch = Math.max(-0.58, Math.min(0.42, this.pitch));
   };
 
@@ -416,6 +501,7 @@ export class FpsCrossbowScene {
       this.riverMesh.rotation.z = Math.sin(now * 0.0009) * 0.01;
     }
     this.updateProjectiles(now);
+    this.hitFlash.tick(now);
     this.composer.render();
     this.rafId = requestAnimationFrame(this.loop);
   };

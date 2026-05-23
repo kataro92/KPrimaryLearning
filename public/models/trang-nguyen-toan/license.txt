@@ -1,0 +1,11 @@
+Model Information:
+* title:	Low Poly Mech (with sword and gun arm)
+* source:	https://sketchfab.com/3d-models/low-poly-mech-with-sword-and-gun-arm-e6758a6e5b0e44918bdad7fa19a39814
+* author:	abdomash847 (https://sketchfab.com/abdomash847)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Low Poly Mech (with sword and gun arm)" (https://sketchfab.com/3d-models/low-poly-mech-with-sword-and-gun-arm-e6758a6e5b0e44918bdad7fa19a39814) by abdomash847 (https://sketchfab.com/abdomash847) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

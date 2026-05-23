@@ -73,12 +73,9 @@ function generateOne(level: 1 | 2 | 3): McqQuestion {
         side * 5,
       ]);
     }
-    const whole = randInt(4, 12) * 2;
-    return buildMcq(`1/2 của ${whole} bằng bao nhiêu?`, whole / 2, [
-      whole / 4,
-      whole,
-      whole / 2 + 2,
-    ]);
+    const half = randInt(2, 12);
+    const whole = half * 2;
+    return buildMcq(`Một nửa số ${whole} là bao nhiêu?`, half, [half + 1, half - 1, whole]);
   }
   if (level === 2) {
     const type = randInt(0, 4);
@@ -91,7 +88,7 @@ function generateOne(level: 1 | 2 | 3): McqQuestion {
       const b = randInt(2, 9);
       const ans = randInt(2, 9);
       const a = b * ans;
-      return buildMcq(`${a} : ${b} = ?`, ans, [ans + 1, ans - 1, b]);
+      return buildMcq(`${a} chia ${b} bằng mấy?`, ans, [ans + 1, Math.max(1, ans - 1), b]);
     }
     if (type === 2) {
       const length = randInt(4, 20);
@@ -138,13 +135,13 @@ function generateOne(level: 1 | 2 | 3): McqQuestion {
     return buildMcq(`${a} × (${b} + ${c}) = ?`, ans, [a * b + c, a * b + a * c - a, ans + a]);
   }
   if (type === 2) {
-    const total = randInt(40, 120);
     const each = randInt(4, 12);
-    const boxes = Math.floor(total / each);
+    const boxes = randInt(3, 10);
+    const total = each * boxes;
     return buildMcq(`Có ${total} quyển vở, chia đều ${each} quyển mỗi hộp. Được mấy hộp?`, boxes, [
       each,
       boxes + 1,
-      Math.floor(total / (each + 1)),
+      Math.max(1, boxes - 1),
     ]);
   }
   if (type === 3) {
@@ -153,12 +150,9 @@ function generateOne(level: 1 | 2 | 3): McqQuestion {
     return buildMcq(`${a} + ${b} = ?`, a + b, [a + b + 10, a + b - 10, a + b + 1]);
   }
   if (type === 4) {
-    const n = randInt(20, 80);
-    return buildMcq(`1/4 của ${n} bằng bao nhiêu?`, Math.floor(n / 4), [
-      Math.floor(n / 2),
-      n,
-      Math.floor(n / 4) + 2,
-    ]);
+    const quarter = randInt(5, 20);
+    const n = quarter * 4;
+    return buildMcq(`Một phần tư số ${n} là bao nhiêu?`, quarter, [quarter + 1, quarter - 1, n]);
   }
   const d = randInt(7, 15);
   const r = randInt(4, 12);

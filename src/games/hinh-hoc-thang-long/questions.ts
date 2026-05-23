@@ -1,36 +1,26 @@
-export interface BuildTask {
+import { OBJECT_BANK, type ObjectItem, type ObjectShape } from './objectBank';
+
+export type { ObjectShape };
+
+export interface ShapeChoice {
   id: string;
-  shape: 'square' | 'rect' | 'triangle';
+  shape: ObjectShape;
   label: string;
-  targetSlot: string;
-  slots: { id: string; label: string; shape: string }[];
 }
 
-const BASE_SLOTS = [
-  { id: 'slot-sq', label: 'Ô vuông', shape: 'square' },
-  { id: 'slot-rect', label: 'Ô chữ nhật', shape: 'rect' },
-  { id: 'slot-tri', label: 'Ô tam giác', shape: 'triangle' },
-];
+export interface ShapeTask {
+  id: string;
+  objectId: string;
+  label: string;
+  shape: ObjectShape;
+  choices: ShapeChoice[];
+  correctChoiceId: string;
+}
 
-const TASK_BANK: Array<{ shape: BuildTask['shape']; label: string; targetSlot: string; minLevel: 1 | 2 | 3 }> = [
-  { shape: 'square', label: 'Gạch vuông', targetSlot: 'slot-sq', minLevel: 1 },
-  { shape: 'rect', label: 'Gạch dài', targetSlot: 'slot-rect', minLevel: 1 },
-  { shape: 'triangle', label: 'Mái tam giác', targetSlot: 'slot-tri', minLevel: 1 },
-  { shape: 'square', label: 'Cửa sổ vuông', targetSlot: 'slot-sq', minLevel: 1 },
-  { shape: 'rect', label: 'Cổng chữ nhật', targetSlot: 'slot-rect', minLevel: 1 },
-  { shape: 'triangle', label: 'Lá cờ tam giác', targetSlot: 'slot-tri', minLevel: 1 },
-  { shape: 'square', label: 'Viên gạch lát sân', targetSlot: 'slot-sq', minLevel: 2 },
-  { shape: 'rect', label: 'Thanh dầm chữ nhật', targetSlot: 'slot-rect', minLevel: 2 },
-  { shape: 'triangle', label: 'Mái ngói tam giác', targetSlot: 'slot-tri', minLevel: 2 },
-  { shape: 'square', label: 'Khung tranh vuông', targetSlot: 'slot-sq', minLevel: 2 },
-  { shape: 'rect', label: 'Tấm biển chữ nhật', targetSlot: 'slot-rect', minLevel: 2 },
-  { shape: 'triangle', label: 'Nêm góc tam giác', targetSlot: 'slot-tri', minLevel: 2 },
-  { shape: 'square', label: 'Ô bàn cờ', targetSlot: 'slot-sq', minLevel: 3 },
-  { shape: 'rect', label: 'Mặt bàn chữ nhật', targetSlot: 'slot-rect', minLevel: 3 },
-  { shape: 'triangle', label: 'Khung mái tam giác', targetSlot: 'slot-tri', minLevel: 3 },
-  { shape: 'square', label: 'Gạch hoa vuông', targetSlot: 'slot-sq', minLevel: 3 },
-  { shape: 'rect', label: 'Viên gạch ống', targetSlot: 'slot-rect', minLevel: 3 },
-  { shape: 'triangle', label: 'Cánh buồm tam giác', targetSlot: 'slot-tri', minLevel: 3 },
+const CHOICE_DEFS: Array<{ shape: ObjectShape; label: string }> = [
+  { shape: 'square', label: 'Hình vuông' },
+  { shape: 'rect', label: 'Hình chữ nhật' },
+  { shape: 'triangle', label: 'Hình tam giác' },
 ];
 
 function shuffle<T>(arr: T[]): T[] {
@@ -42,22 +32,42 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-export function generateTasks(level: 1 | 2 | 3): BuildTask[] {
-  const count = level === 2 ? 6 : 8;
-  const pool = TASK_BANK.filter((t) => t.minLevel <= level);
-  return shuffle(pool)
-    .slice(0, count)
-    .map((t, idx) => ({
-      id: `t${idx + 1}`,
-      shape: t.shape,
-      label: t.label,
-      targetSlot: t.targetSlot,
-      slots: BASE_SLOTS,
-    }));
+function buildChoicesForShape(correctShape: ObjectShape): { choices: ShapeChoice[]; correctChoiceId: string } {
+  const choices = shuffle(CHOICE_DEFS).map((c) => ({
+    id: `choice-${c.shape}`,
+    shape: c.shape,
+    label: c.label,
+  }));
+  return { choices, correctChoiceId: `choice-${correctShape}` };
+}
+
+function toTask(item: ObjectItem, idx: number): ShapeTask {
+  const { choices, correctChoiceId } = buildChoicesForShape(item.shape);
+  return {
+    id: `t${idx + 1}`,
+    objectId: item.id,
+    label: item.label,
+    shape: item.shape,
+    choices,
+    correctChoiceId,
+  };
+}
+
+export function taskCount(level: 1 | 2 | 3): number {
+  if (level === 1) return 10;
+  if (level === 2) return 12;
+  return 14;
+}
+
+export function generateTasks(level: 1 | 2 | 3): ShapeTask[] {
+  const count = taskCount(level);
+  const pool = OBJECT_BANK.filter((o) => o.minLevel <= level);
+  const picked = shuffle(pool).slice(0, count);
+  return picked.map((item, idx) => toTask(item, idx));
 }
 
 export function timePerTaskMs(level: 1 | 2 | 3): number {
-  if (level === 1) return 30000;
-  if (level === 2) return 25000;
+  if (level === 1) return 28000;
+  if (level === 2) return 24000;
   return 22000;
 }

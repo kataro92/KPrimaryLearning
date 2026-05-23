@@ -32,9 +32,9 @@
 |---|---|---|
 | P0 | Tối ưu bundle/chunk | Giảm cảnh báo chunk size, cải thiện thời gian tải ban đầu |
 | P0 | Chuẩn hóa smoke test runbook | Đồng bộ checklist test giữa dev và QA |
-| P0 | TTS local-first foundation | Refactor speech theo provider, chuẩn bị worker/fallback an toàn |
+| P0 | TTS local-first (MMS + Web Speech) | Done |
 | P1 | Bổ sung test tự động cơ bản | Thêm unit test cho score/unlock và smoke test e2e tối thiểu |
-| P1 | TTS neural runtime (WebGPU/WASM) | Tích hợp ONNX runtime web + progress state cho model load/inference |
+| P2 | TTS progress UI trên Home | Hiển thị `downloading-model` khi preload MMS |
 | P1 | Voice profile local | Luồng upload `.wav`, normalize audio, lưu embedding theo profile local |
 | P1 | Tăng observability local | Bổ sung logging chuẩn cho lỗi runtime và gameplay edge cases |
 | P2 | Nâng cấp data tools | Cân nhắc export/import dữ liệu local cho phụ huynh/giáo viên |

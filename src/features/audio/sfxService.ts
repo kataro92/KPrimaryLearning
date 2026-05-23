@@ -13,7 +13,8 @@ export type SfxKind =
   | 'danger'
   | 'celebrate'
   | 'unlock'
-  | 'star';
+  | 'star'
+  | 'drumStrike';
 
 export interface TimerSfxState {
   warned: boolean;
@@ -132,6 +133,12 @@ export function playSfx(kind: SfxKind): void {
     case 'star':
       tone(ctx, { freq: 1318.5, type: 'triangle', start: t, duration: 0.14, peak: 0.05 });
       tone(ctx, { freq: 1568, type: 'triangle', start: t + 0.1, duration: 0.16, peak: 0.045 });
+      break;
+    case 'drumStrike':
+      tone(ctx, { freq: 78, type: 'sine', start: t, duration: 0.42, peak: 0.2, attack: 0.004, decay: 0.38 });
+      tone(ctx, { freq: 156, type: 'triangle', start: t, duration: 0.28, peak: 0.09, attack: 0.003 });
+      tone(ctx, { freq: 312, start: t + 0.04, duration: 0.18, peak: 0.045 });
+      tone(ctx, { freq: 520, type: 'triangle', start: t + 0.1, duration: 0.45, peak: 0.028 });
       break;
     default:
       break;

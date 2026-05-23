@@ -2,7 +2,7 @@ import { useAppStore } from '@/app/store';
 import type { SceneHost } from '@/core/rendering/sceneHost';
 import { gameFeedbackLine, type FeedbackKind } from '@/features/speech/interactiveText';
 import { playSfx } from '@/features/audio/sfxService';
-import { speakVietnamese } from '@/features/speech/speechService';
+import { cancelSpeech, speakVietnamese } from '@/features/speech/speechService';
 import { getGameById } from '@/games/catalog';
 import { getOrInitProgress } from '@/features/progress/userProgressStore';
 import { mountGameSprite } from '@/assets/gameSprites';
@@ -63,7 +63,10 @@ export function createGameStage(
   const achLabel = root.querySelector<HTMLElement>('#achievement-label')!;
   const heroEl = root.querySelector<HTMLElement>('#game-hero')!;
   const feedbackFx3d = new StageFeedback3DFx(sceneHost);
-  mountGameSprite(heroEl, gameId, 'hero');
+  // Some games replace #game-hero with their own 3D preview (avoid static SVG overlay).
+  if (gameId !== 'hinh-hoc-thang-long' && gameId !== 'trong-dong' && gameId !== 'tham-hiem-cuu-long' && gameId !== 'cuu-chuong-van-mieu') {
+    mountGameSprite(heroEl, gameId, 'hero');
+  }
 
   void getOrInitProgress(profileId, gameId, game.achievements[1]).then((p) => {
     achLabel.textContent = `${game.achievements[level]}`;
@@ -96,7 +99,7 @@ export function createGameStage(
       feedbackEl.className = ok ? 'feedback feedback--ok' : kind === 'wrong' || kind === 'timeout' ? 'feedback feedback--bad' : 'feedback';
       if (kind !== 'start') {
         feedbackFx3d.trigger(kind, Math.max(520, ANSWER_FEEDBACK_MS - 400));
-        if (kind === 'correct') playSfx('correct');
+        if (kind === 'correct') playSfx(gameId === 'trong-dong' ? 'drumStrike' : 'correct');
         else if (kind === 'wrong') playSfx('wrong');
         else if (kind === 'timeout') playSfx('timeout');
       }
@@ -111,6 +114,7 @@ export function createGameStage(
       }).join('');
     },
     cleanup: () => {
+      cancelSpeech();
       feedbackFx3d.dispose();
       sceneHost.resetTheme();
       root.querySelector('#btn-back')?.removeEventListener('click', onBack);

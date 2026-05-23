@@ -87,7 +87,7 @@ npm run preview
 - Tối ưu bundle/chunk để giảm kích thước JS ban đầu.
 - Bổ sung test tự động cho score/unlock và smoke e2e tối thiểu.
 - Chuẩn hóa telemetry/observability runtime ở mức local.
-- Nâng cấp TTS local-first theo thiết kế tại `docs/planning/TTS_LOCAL_ARCHITECTURE.md`.
+- TTS local: `Xenova/mms-tts-vie` (ONNX) + Web Speech fallback — `docs/planning/TTS_LOCAL_ARCHITECTURE.md`.
 
 ## Tài liệu
 
@@ -114,6 +114,24 @@ Contributions luôn được chào đón. Quy trình đề xuất:
 ## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
+
+### Third-party 3D assets
+
+| Game | Asset | Source | License |
+| --- | --- | --- | --- |
+| Giải Mã Trống Đồng | Trống Đồng Đông Sơn | [Sketchfab — @Aaannnn](https://sketchfab.com/3d-models/trong-ong-ong-son-dong-son-bronze-drum-c91e55f6db8742f09ad2d5815ca6b749) | [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/) |
+| Hành Trình Từ Vựng Hội An | Japanese paper lantern | [Sketchfab — @abelGB](https://sketchfab.com/3d-models/japanese-paper-lantern-4450069fee444ae0920aa5babd5d9239) | CC BY 4.0 |
+| Tính Nhẩm Trạng Tí | Low-poly T-rex | [Sketchfab — @CGCStudio](https://sketchfab.com/3d-models/low-poly-t-rex-02e50ee6abc2456985944989a26d89b7) | CC BY 4.0 |
+| Bảng Cửu Chương Văn Miếu | Sea turtle low poly | [Sketchfab — @C.J..Goldman](https://sketchfab.com/3d-models/sea-turtle-low-poly-c92be549c8194136914883309a13a6b5) | CC BY 4.0 |
+| Trạng Nguyên Toán *(catalog)* | Low Poly Mech | [Sketchfab — @abdomash847](https://sketchfab.com/3d-models/low-poly-mech-with-sword-and-gun-arm-e6758a6e5b0e44918bdad7fa19a39814) | CC BY 4.0 |
+
+Download all listed models:
+
+```bash
+SKETCHFAB_API_TOKEN=your_token npm run fetch:models
+```
+
+See `public/models/*/README.md` per game. Missing files fall back to procedural geometry.
 
 ## Liên hệ
 

@@ -7,7 +7,10 @@ import { createTimerSfxState, syncTimerBar } from '@/features/gameplay/timerBar'
 import { TimerEngine } from '@/core/engine/timerEngine';
 import { scheduleAfterAnswer, setRoundHint, WAIT_NEXT_HINT } from '@/features/gameplay/roundUi';
 import { createGameStage } from '@/ui/gameStage/createGameStage';
-import { generateTasks, timePerTaskMs, type BuildTask } from './questions';
+import { traitForObject } from './objectTraits';
+import { generateTasks, timePerTaskMs, type ShapeTask } from './questions';
+import { preloadPropTextures } from './props/textureLibrary';
+import { ShapePreviewScene } from './shapePreviewScene';
 import { ThangLongCastleScene } from './thangLongCastleScene';
 
 export type { PlayResult };
@@ -40,67 +43,90 @@ export function renderHinhHocThangLongGame(
   sceneHost.setParallaxSway(false);
   const heroHost = stage.root.querySelector<HTMLElement>('#game-hero')!;
   heroHost.innerHTML = `
-    <div class="thang-long-castle-wrap">
-      <div class="thang-long-castle-status" id="thang-long-castle-status">
-        Thành cổ đang xây · 0/${tasks.length} mảnh
+    <div class="thang-long-hero">
+      <div class="shape-preview-wrap">
+        <div class="shape-preview__canvas-host" id="shape-preview-canvas"></div>
+        <div class="shape-preview__caption">
+          <p class="shape-preview__name" id="shape-preview-name">Đồ vật</p>
+          <p class="shape-preview__trait" id="shape-preview-trait"></p>
+        </div>
+      </div>
+      <div class="thang-long-castle-wrap">
+        <div class="thang-long-castle-status" id="thang-long-castle-status">
+          Thành cổ đang xây · 0/${tasks.length} mảnh
+        </div>
       </div>
     </div>
   `;
+  const previewMount = heroHost.querySelector<HTMLElement>('#shape-preview-canvas')!;
+  const previewName = heroHost.querySelector<HTMLElement>('#shape-preview-name')!;
+  const previewTrait = heroHost.querySelector<HTMLElement>('#shape-preview-trait')!;
   const castleMount = heroHost.querySelector<HTMLElement>('.thang-long-castle-wrap')!;
   const castleStatusEl = heroHost.querySelector<HTMLElement>('#thang-long-castle-status')!;
+  void preloadPropTextures();
+  const shapePreview = new ShapePreviewScene(previewMount);
   const castleScene = new ThangLongCastleScene(castleMount, tasks.length);
+
   let index = 0;
   let questionStarted = Date.now();
-  let currentTask: BuildTask | null = null;
+  let currentTask: ShapeTask | null = null;
   let locked = false;
-  let trySlot: ((slotId: string) => void) | null = null;
   let correctCount = 0;
 
-  const shapeClass = (s: string) =>
-    s === 'square' ? 'brick--sq' : s === 'rect' ? 'brick--rect' : 'brick--tri';
-
-  const showTask = (task: BuildTask) => {
+  const showTask = (task: ShapeTask) => {
     currentTask = task;
     locked = false;
     stage.updateDots(index, tasks.length);
+    shapePreview.setObject(task.objectId, task.shape);
+    previewName.textContent = task.label;
+    previewTrait.textContent = traitForObject(task.objectId);
+    stage.setFeedback('');
+
     stage.gameArea.innerHTML = `
-      <div class="wall-build">
-        <p class="wall-build__mission">Xây thành: đặt <strong>${task.label}</strong> vào ô đúng hình</p>
-        <div class="wall-slots">
-          ${task.slots
+      <div class="shape-quiz">
+        <p class="shape-quiz__prompt">
+          <strong class="shape-quiz__object">${escapeHtml(task.label)}</strong> thuộc dạng hình nào?
+        </p>
+        <div class="shape-quiz__choices" id="shape-choices">
+          ${task.choices
             .map(
-              (s) =>
-                `<div class="wall-slot ${shapeClass(s.shape)}" data-slot="${s.id}"><span>${s.label}</span></div>`
+              (c, i) =>
+                `<button type="button" class="shape-choice shape-choice--${c.shape}" data-choice="${c.id}" data-shape="${c.shape}" data-i="${i}">
+                  <span class="shape-choice__glyph" aria-hidden="true"></span>
+                  <span class="shape-choice__label">${c.label}</span>
+                </button>`
             )
             .join('')}
         </div>
-        <div class="brick-palette">
-          <div class="brick ${shapeClass(task.shape)}" id="active-brick" draggable="true">
-            ${task.label}
-          </div>
-        </div>
-        <p class="game-play__round-hint">Kéo gạch vào ô đúng hoặc bấm phím 1-3</p>
+        <p class="game-play__round-hint">Chọn một đáp án hoặc bấm phím 1–3</p>
       </div>
     `;
 
-    const brick = stage.gameArea.querySelector<HTMLElement>('#active-brick')!;
-    const slots = stage.gameArea.querySelectorAll<HTMLElement>('.wall-slot');
+    const quiz = stage.gameArea.querySelector<HTMLElement>('.shape-quiz')!;
+    const choiceBtns = stage.gameArea.querySelectorAll<HTMLButtonElement>('.shape-choice');
 
-    const lockBuild = (pickedSlotId?: string) => {
-      stage.gameArea.querySelector('.wall-build')?.classList.add('wall-build--locked');
-      slots.forEach((slot) => {
-        const id = slot.dataset.slot!;
-        if (id === task.targetSlot) slot.classList.add('wall-slot--correct');
-        if (pickedSlotId && id === pickedSlotId) slot.classList.add('wall-slot--picked');
+    const lockQuiz = (pickedId?: string) => {
+      quiz.classList.add('shape-quiz--locked');
+      choiceBtns.forEach((btn) => {
+        btn.disabled = true;
+        const id = btn.dataset.choice!;
+        if (id === task.correctChoiceId) btn.classList.add('shape-choice--correct');
+        if (pickedId && id === pickedId && id !== task.correctChoiceId) {
+          btn.classList.add('shape-choice--picked-wrong');
+        }
+        if (pickedId && id === pickedId && id === task.correctChoiceId) {
+          btn.classList.add('shape-choice--picked-ok');
+        }
       });
       setRoundHint(stage.gameArea, '.game-play__round-hint', WAIT_NEXT_HINT);
     };
 
-    const complete = (ok: boolean, pickedSlotId?: string) => {
+    const submitChoice = (choiceId: string) => {
       if (locked) return;
       locked = true;
       timer.stop();
-      lockBuild(pickedSlotId);
+      const ok = choiceId === task.correctChoiceId;
+      lockQuiz(choiceId);
       tracker.recordRound(ok, Date.now() - questionStarted);
       stage.setGameFeedback(ok ? 'correct' : 'wrong');
       if (ok) {
@@ -123,36 +149,8 @@ export function renderHinhHocThangLongGame(
       );
     };
 
-    trySlot = (slotId: string) => {
-      if (locked) return;
-      complete(slotId === task.targetSlot, slotId);
-    };
-
-    brick.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      brick.classList.add('brick--dragging');
-      brick.setPointerCapture(e.pointerId);
-    });
-    const onBrickEnd = (e: PointerEvent) => {
-      brick.classList.remove('brick--dragging');
-      if (brick.hasPointerCapture(e.pointerId)) brick.releasePointerCapture(e.pointerId);
-      for (const slot of slots) {
-        const r = slot.getBoundingClientRect();
-        if (
-          e.clientX >= r.left - 16 &&
-          e.clientX <= r.right + 16 &&
-          e.clientY >= r.top - 16 &&
-          e.clientY <= r.bottom + 16
-        ) {
-          trySlot?.(slot.dataset.slot!);
-          return;
-        }
-      }
-    };
-    brick.addEventListener('pointerup', onBrickEnd);
-    brick.addEventListener('pointercancel', onBrickEnd);
-    slots.forEach((slot) => {
-      slot.addEventListener('click', () => trySlot?.(slot.dataset.slot!));
+    choiceBtns.forEach((btn) => {
+      btn.addEventListener('click', () => submitChoice(btn.dataset.choice!));
     });
 
     questionStarted = Date.now();
@@ -161,23 +159,32 @@ export function renderHinhHocThangLongGame(
       (remaining) => {
         syncTimerBar(stage.timerFillEl, remaining, perMs, timerSfx);
       },
-      () => complete(false)
+      () => {
+        if (locked) return;
+        locked = true;
+        timer.stop();
+        lockQuiz();
+        stage.setGameFeedback('timeout');
+        tracker.recordRound(false, Date.now() - questionStarted);
+        index++;
+        const last = index >= tasks.length;
+        scheduleAfterAnswer(
+          last,
+          () => showTask(tasks[index]),
+          () => tracker.finish().then(onDone)
+        );
+      }
     );
   };
 
   const onKeyDown = (e: KeyboardEvent) => {
     if (!currentTask || locked) return;
     const idx = Number(e.key) - 1;
-    if (idx >= 0 && idx < currentTask.slots.length) {
+    if (idx >= 0 && idx < currentTask.choices.length) {
       e.preventDefault();
-      trySlotByIndex(currentTask, idx);
+      const btn = stage.gameArea.querySelector<HTMLButtonElement>(`.shape-choice[data-i="${idx}"]`);
+      btn?.click();
     }
-  };
-
-  const trySlotByIndex = (task: BuildTask, idx: number) => {
-    const slot = task.slots[idx];
-    if (!slot || locked) return;
-    trySlot?.(slot.id);
   };
 
   window.addEventListener('keydown', onKeyDown);
@@ -185,8 +192,17 @@ export function renderHinhHocThangLongGame(
   return () => {
     window.removeEventListener('keydown', onKeyDown);
     timer.stop();
+    shapePreview.dispose();
     castleScene.dispose();
     sceneHost.setParallaxSway(true);
     stage.cleanup();
   };
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }

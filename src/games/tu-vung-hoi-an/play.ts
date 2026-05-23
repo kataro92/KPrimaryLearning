@@ -8,7 +8,6 @@ import { createTimerSfxState, syncTimerBar } from '@/features/gameplay/timerBar'
 import { TimerEngine } from '@/core/engine/timerEngine';
 import { ANSWER_FEEDBACK_MS } from '@/features/gameplay/roundTiming';
 import { createGameStage } from '@/ui/gameStage/createGameStage';
-import { makeVisualCardDataUrl } from '@/features/visuals/answerVisual';
 import { selectPairs, sessionTimeMs } from './questions';
 import { HoiAnBoatScene } from './boatLanternScene';
 
@@ -21,7 +20,6 @@ interface MemoryCard {
   pairId: string;
   face: CardFace;
   label: string;
-  artUrl: string;
 }
 
 export function renderTuVungHoiAnGame(
@@ -55,14 +53,12 @@ export function renderTuVungHoiAnGame(
       pairId: p.en,
       face: 'en' as CardFace,
       label: p.en,
-      artUrl: makeVisualCardDataUrl({ title: p.en, subtitle: 'ENGLISH', seed: `${p.en}-en` }),
     },
     {
       id: `${p.en}-vi`,
       pairId: p.en,
       face: 'vi' as CardFace,
       label: p.vi,
-      artUrl: makeVisualCardDataUrl({ title: p.vi, subtitle: 'TIENG VIET', seed: `${p.en}-vi` }),
     },
   ]);
   cards.sort(() => Math.random() - 0.5);
@@ -84,9 +80,10 @@ export function renderTuVungHoiAnGame(
   const boatStatusEl = heroHost.querySelector<HTMLElement>('#boat-status')!;
   const boatScene = new HoiAnBoatScene(boatMount, totalPairs);
 
+  const gridRows = Math.ceil(cards.length / 4);
   stage.gameArea.innerHTML = `
-    <p class="memory-hud">Ghép đèn lồng: từ tiếng Anh ↔ tiếng Việt · <span id="pairs-left">${totalPairs}</span> cặp còn lại</p>
-    <div class="lantern-grid" id="grid"></div>
+    <p class="memory-hud">Ghép thẻ: Anh ↔ Việt · còn <span id="pairs-left">${totalPairs}</span> cặp</p>
+    <div class="lantern-grid" id="grid" style="--hoi-an-rows: ${gridRows}"></div>
   `;
   const grid = stage.gameArea.querySelector<HTMLElement>('#grid')!;
   const pairsLeftEl = stage.gameArea.querySelector<HTMLElement>('#pairs-left')!;
@@ -99,11 +96,10 @@ export function renderTuVungHoiAnGame(
       .map(
         (c) => `
       <button type="button" class="lantern-card ${matchedIds.has(c.id) ? 'lantern-card--matched' : ''}"
-        data-id="${c.id}" aria-label="đèn lồng" ${matchedIds.has(c.id) ? 'disabled' : ''}>
+        data-id="${c.id}" aria-label="thẻ từ vựng ${escapeAttr(c.label)}" ${matchedIds.has(c.id) ? 'disabled' : ''}>
         <span class="lantern-card__back"><span class="lantern-card__back-icon"></span></span>
-        <span class="lantern-card__face">
-          <img class="edu-visual-thumb" src="${c.artUrl}" alt="${escapeAttr(c.label)}" />
-          <strong>${c.label}</strong>
+        <span class="lantern-card__face vocab-play-card">
+          <span class="vocab-play-card__word">${escapeHtml(c.label)}</span>
         </span>
       </button>`
       )
@@ -213,4 +209,12 @@ export function renderTuVungHoiAnGame(
 
 function escapeAttr(s: string): string {
   return s.replace(/"/g, '&quot;');
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }

@@ -14,6 +14,7 @@ import {
   timePerQuestionMs,
   type MathQuestion,
 } from './questions';
+import { VanMieuTurtleScene } from './vanMieuTurtleScene';
 
 export type { PlayResult };
 
@@ -42,6 +43,18 @@ export function renderCuuChuongGame(
   });
 
   const stage = createGameStage(root, sceneHost, gameId, 'game-play--van-mieu');
+  sceneHost.setParallaxSway(false);
+  const heroHost = stage.root.querySelector<HTMLElement>('#game-hero')!;
+  heroHost.innerHTML = `
+    <div class="van-mieu-hero">
+      <div class="van-mieu-hero__canvas-host" id="van-mieu-turtle-canvas"></div>
+      <p class="van-mieu-hero__caption">Rùa Vàng tiến về bia Văn Miếu</p>
+    </div>
+  `;
+  const turtleMount = heroHost.querySelector<HTMLElement>('#van-mieu-turtle-canvas')!;
+  const turtleScene = new VanMieuTurtleScene(turtleMount, questions.length);
+  turtleScene.setProgress(0, questions.length);
+
   let index = 0;
   let questionStarted = Date.now();
   let turtleStep = 0;
@@ -99,6 +112,7 @@ export function renderCuuChuongGame(
       tracker.recordRound(ok, Date.now() - questionStarted);
       if (ok) {
         turtleStep++;
+        turtleScene.setProgress(turtleStep, questions.length);
         speakVietnamese('Chính xác');
         stage.setGameFeedback('correct');
       } else {
@@ -167,6 +181,7 @@ export function renderCuuChuongGame(
   return () => {
     window.removeEventListener('keydown', onKeyDown);
     timer.stop();
+    turtleScene.dispose();
     stage.cleanup();
   };
 }

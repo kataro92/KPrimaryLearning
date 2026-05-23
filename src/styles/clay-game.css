@@ -77,19 +77,15 @@
   box-shadow: 0 3px 0 rgba(0, 0, 0, 0.15);
 }
 
-/* Trống đồng */
-.drum-face {
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #fde68a, #b45309 72%);
-  box-shadow: var(--shadow-clay-deep);
-  border: 3px solid rgba(124, 58, 237, 0.15);
+/* Trống đồng — đáp án bia đá */
+.drum-puzzle .stone-tablet {
+  border: 2px solid rgba(124, 58, 237, 0.22);
+  background: linear-gradient(180deg, #faf5ff, #ede9fe);
 }
 
-.drum-slot {
-  background: rgba(255, 255, 255, 0.35);
-  border-radius: 50%;
+.drum-puzzle .stone-tablet span {
   font-family: var(--font-display);
-  font-weight: 900;
+  color: var(--clay-foreground);
 }
 
 /* Văn miếu — rùa */
@@ -170,10 +166,8 @@
   border: 2px solid #b45309;
 }
 
-.lantern-card__face {
-  background: rgba(255, 255, 255, 0.95);
+.lantern-card__face.vocab-play-card {
   color: var(--clay-foreground);
-  border: 2px solid var(--clay-warning);
 }
 
 .lantern-pairs {

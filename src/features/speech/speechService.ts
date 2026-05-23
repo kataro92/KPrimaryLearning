@@ -1,62 +1,59 @@
-import { loadSettings } from '@/data/storage/settingsStore';
+import { getTtsOrchestrator } from './ttsOrchestrator';
+import { NEURAL_TTS_ENABLED, TTS_MODEL_ID } from './neural/modelConfig';
+import type { SpeechBackend, SpeechProvider, TtsRuntimeSnapshot } from './types';
 
-export type SpeechProvider = 'webspeech';
-export type SpeechBackend = 'webgpu' | 'wasm' | 'webspeech-only' | 'unavailable';
+export { TTS_MODEL_ID, NEURAL_TTS_ENABLED };
 
+export type { SpeechBackend, SpeechProvider, TtsRuntimeSnapshot };
+export type { TtsRuntimeState } from './types';
+
+const orchestrator = getTtsOrchestrator();
+
+/** @deprecated Prefer TtsRuntimeSnapshot — kept for existing call sites. */
 export interface SpeechRuntimeStatus {
   provider: SpeechProvider;
   backend: SpeechBackend;
   canSpeak: boolean;
   hasVietnameseVoice: boolean;
-}
-
-function detectSpeechBackend(): SpeechBackend {
-  if (typeof window === 'undefined') return 'unavailable';
-  if ('gpu' in navigator) return 'webgpu';
-  if (typeof WebAssembly === 'object') return 'wasm';
-  return 'webspeech-only';
-}
-
-function resolveVietnameseVoice(): SpeechSynthesisVoice | null {
-  const voices = window.speechSynthesis.getVoices();
-  return voices.find((v) => v.lang.startsWith('vi')) ?? null;
+  ttsState: TtsRuntimeSnapshot['state'];
 }
 
 export function getSpeechRuntimeStatus(): SpeechRuntimeStatus {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-    return {
-      provider: 'webspeech',
-      backend: 'unavailable',
-      canSpeak: false,
-      hasVietnameseVoice: false,
-    };
-  }
-
-  const vi = resolveVietnameseVoice();
+  const s = orchestrator.getSnapshot();
   return {
-    provider: 'webspeech',
-    backend: detectSpeechBackend(),
-    canSpeak: true,
-    hasVietnameseVoice: Boolean(vi),
+    provider: s.provider,
+    backend: s.backend,
+    canSpeak: s.canSpeak,
+    hasVietnameseVoice: s.hasVietnameseVoice,
+    ttsState: s.state,
   };
 }
 
-export function speakVietnamese(text: string, rate = 1): void {
-  const settings = loadSettings();
-  if (!settings.soundEnabled || !('speechSynthesis' in window)) return;
-  if (settings.ttsMode === 'webspeech' || settings.ttsMode === 'auto') {
-    window.speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = 'vi-VN';
-    utter.rate = rate;
-
-    const vi = resolveVietnameseVoice();
-    if (vi) utter.voice = vi;
-    window.speechSynthesis.speak(utter);
-  }
+export function getTtsRuntimeSnapshot(): TtsRuntimeSnapshot {
+  return orchestrator.getSnapshot();
 }
 
-if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-  window.speechSynthesis.getVoices();
-  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+export function subscribeTtsState(listener: (snapshot: TtsRuntimeSnapshot) => void): () => void {
+  return orchestrator.subscribe(listener);
+}
+
+/** Warm local TTS worker in background (safe to call from Home). */
+export function preloadLocalTts(): void {
+  orchestrator.preload();
+}
+
+export function cancelSpeech(): void {
+  orchestrator.cancel();
+}
+
+export function speakVietnamese(text: string, rate = 1): void {
+  orchestrator.speak(text, rate);
+}
+
+export function disposeSpeech(): void {
+  orchestrator.dispose();
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => disposeSpeech());
 }

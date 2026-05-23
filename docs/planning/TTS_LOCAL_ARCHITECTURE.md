@@ -1,104 +1,75 @@
-# TTS Local-First Architecture (To-Be)
+# TTS Local-First Architecture
 
 Last updated: 2026-05-22
 
 ## 1. Mục tiêu
 
-- Nâng cấp hệ thống TTS từ `Web Speech API` đơn giản sang kiến trúc **client-side local-first**.
-- Đảm bảo dữ liệu văn bản và voice sample không rời khỏi trình duyệt.
-- Tạo nền tảng để mở rộng sang voice cloning tiếng Việt khi model sẵn sàng.
+- Đọc tiếng Việt trong game **100% trên trình duyệt**, không gửi text lên server.
+- Phản hồi nhanh cho học sinh lớp 4; fallback khi thiết bị yếu hoặc lỗi model.
 
-## 2. Nguyên tắc áp dụng cho KVPrimaryFunLearning
+## 2. Giải pháp chính thức (đang dùng)
 
-- **Frontend-only:** không thêm backend suy luận TTS.
-- **Privacy-by-default:** không upload text/voice sample lên Internet.
-- **Progressive enhancement:** ưu tiên local neural engine, fallback về Web Speech để không vỡ luồng chơi hiện tại.
-- **Game-safe UX:** TTS không được block gameplay loop và timer.
+| Thành phần | Công nghệ | Vai trò |
+|------------|-----------|---------|
+| TTS neural tiếng Việt | `Xenova/mms-tts-vie` + `@huggingface/transformers` | Đọc câu trong game (`ttsMode: auto`) |
+| Runtime | Web Worker + ONNX (`q8`, WebGPU → WASM) | Không block UI |
+| Fallback | Web Speech API `vi-VN` | Khi neural lỗi / câu quá dài / `ttsMode: webspeech` |
+| Cache model | `env.useBrowserCache` (Transformers.js) | Lần sau tải nhanh hơn |
 
-## 3. Kiến trúc đề xuất
+**Không dùng:** viXTTS, SpeechT5 clone, WavLM embedding cho synthesis (đã gỡ).
+
+## 3. Kiến trúc
 
 ```text
-[UI Game + Overlay]
+[Game UI]
     |
-    +--> TTS Orchestrator (main thread)
+    +--> speechService / ttsOrchestrator
             |
-            +--> Local Neural TTS Worker (preferred)
-            |       - Transformers.js + ONNX Runtime Web
-            |       - Backend: WebGPU -> WASM fallback
-            |       - Inference non-blocking
+            +--> localTts.worker
+            |       └── MMS Vietnamese ONNX (mms-tts-vie)
             |
-            +--> Web Speech Provider (fallback compatibility)
-            |
-            +--> OPFS Cache Layer
-                    - Quantized model artifacts
-                    - Voice profile embeddings
-                    - Generation metadata
+            +--> webSpeechProvider (fallback)
 ```
 
-## 4. Luồng dữ liệu mục tiêu
+## 4. Luồng hoạt động
 
-### 4.1 Khởi tạo (first run)
-1. Kiểm tra OPFS xem đã có model quantized chưa.
-2. Nếu chưa có, tải model từ static hosting (CDN/GitHub Releases) rồi lưu OPFS.
-3. Khởi động worker và warm-up backend (`webgpu` nếu hỗ trợ, nếu không dùng `wasm`).
+### 4.1 Khởi tạo
+1. Bật **Giọng** trên Home → `preloadLocalTts()`.
+2. Worker tải MMS (lần đầu có progress `downloading-model`).
+3. State `ready` → có thể đọc neural.
 
-### 4.2 Chuẩn bị giọng mẫu
-1. Người dùng upload file `.wav` (10-20 giây).
-2. Web Audio API normalize về `mono + target sample rate`.
-3. Trích xuất `speaker embedding`, lưu OPFS theo profile local.
+### 4.2 Đọc câu
+1. `speakVietnamese(text)` → cancel request cũ.
+2. Câu ≤ 280 ký tự → worker synthesize → phát WAV.
+3. Lỗi / timeout → Web Speech `vi-VN`.
 
-### 4.3 Suy luận TTS
-1. UI gửi `text + speaker embedding id` vào worker.
-2. Worker chạy ONNX inference, trả về PCM/WAV bytes.
-3. Main thread phát audio qua `<audio>` hoặc `AudioBufferSourceNode`.
+### 4.3 File giọng mẫu (tùy chọn)
+- Upload trong modal **Nhân vật** → lưu OPFS local.
+- Chỉ dùng để **nghe lại mẫu** (phụ huynh/giáo viên), **không** đổi giọng đọc trong game.
 
-### 4.4 Fallback
-- Nếu worker/model/backend fail: fallback sang Web Speech API (`vi-VN`) để giữ trải nghiệm liên tục.
+## 5. Yêu cầu kỹ thuật
 
-## 5. Yêu cầu kỹ thuật bắt buộc
+- Worker tách main thread; states: `idle`, `downloading-model`, `warming-up`, `ready`, `generating`, `error`.
+- Cancel + timeout synthesize (20s) và init (180s).
+- `dispose()` khi `beforeunload`.
 
-- Worker tách riêng khỏi main thread để tránh lag UI.
-- Có progress states rõ ràng: `idle`, `downloading-model`, `warming-up`, `ready`, `generating`, `error`.
-- Có timeout và cancellation cho request TTS khi người chơi đổi câu hỏi nhanh.
-- Quản lý tài nguyên audio và worker lifecycle (dispose/recreate an toàn).
+## 6. File chính
 
-## 6. Định hướng tối ưu model
+- `src/features/speech/ttsOrchestrator.ts`
+- `src/features/speech/localTts.worker.ts`
+- `src/features/speech/neural/neuralTtsEngine.ts`
+- `src/features/speech/neural/modelConfig.ts`
+- `src/features/speech/providers/webSpeechProvider.ts`
+- `src/features/speech/voice/` — OPFS reference sample (preview only)
 
-- Mục tiêu dung lượng: ~150MB-300MB sau quantization (INT8 ưu tiên, INT4 nếu chất lượng chấp nhận được).
-- Ưu tiên quality phù hợp ngữ cảnh học sinh lớp 4: rõ, chậm vừa, dễ nghe.
-- Kiểm thử quality theo 3 kiểu câu: hướng dẫn, phản hồi đúng/sai, câu dài đọc hiểu.
+## 7. Rủi ro & giới hạn
 
-## 7. Lộ trình áp dụng theo pha
+- Lần đầu tải model + WASM ORT (~vài chục MB + ~23MB wasm).
+- Neural chậm hơn Web Speech trên máy yếu → fallback tự động.
+- MMS một giọng cố định; không voice cloning từ file upload.
 
-### Phase 0 - Foundation (không đổi gameplay)
-- Refactor `speechService` thành provider-based orchestrator.
-- Thêm backend detection (`webgpu`/`wasm`) + health status.
-- Thêm docs và telemetry local cho TTS path.
+## 8. Backlog (tùy chọn sau)
 
-### Phase 1 - Local neural runtime
-- Tích hợp worker + ONNX runtime web.
-- Hỗ trợ preload model + progress UI.
-- Chưa bắt buộc voice cloning, ưu tiên neural TTS tiếng Việt có sẵn.
-
-### Phase 2 - Voice cloning
-- Thêm luồng upload voice sample và trích xuất embedding.
-- Mapping profile người chơi -> voice profile local.
-- Thêm UX quản lý voice profile trong settings.
-
-### Phase 3 - Production hardening
-- Cache invalidation theo model version.
-- Resume download + integrity checksum.
-- Device compatibility matrix và fallback policy chi tiết.
-
-## 8. KPI và acceptance cho TTS mới
-
-- Thời gian khởi tạo lần đầu có model cache: <= 2s trên máy đã warm cache.
-- TTS generation cho câu ngắn (<= 15 từ): target <= 1.5s trên máy có WebGPU.
-- Main UI không bị drop frame đáng kể khi đang generate.
-- 100% luồng game vẫn có audio feedback (neural hoặc fallback Web Speech).
-
-## 9. Giới hạn hiện tại (honest status)
-
-- Codebase hiện tại vẫn đang chạy `Web Speech API` cho TTS runtime.
-- Chưa tích hợp model ONNX/Transformers.js trong nhánh hiện tại.
-- Tài liệu này là định hướng to-be để triển khai dần, không khai báo đã hoàn tất.
+- UI progress tải MMS trên Home.
+- Tốc độ đọc (`rate`) trên output neural.
+- Preset giọng thứ hai nếu có model MMS/VITS VN khác trên Hugging Face.

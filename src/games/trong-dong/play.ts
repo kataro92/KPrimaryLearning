@@ -1,6 +1,5 @@
 import { useAppStore } from '@/app/store';
 import type { SceneHost } from '@/core/rendering/sceneHost';
-import { hitRect } from '@/features/gameplay/pointerDrop';
 import { createSessionTracker } from '@/features/gameplay/sessionTracker';
 import type { PlayResult } from '@/features/gameplay/types';
 import { speakVietnamese } from '@/features/speech/speechService';
@@ -10,6 +9,7 @@ import { TimerEngine } from '@/core/engine/timerEngine';
 import { createGameStage } from '@/ui/gameStage/createGameStage';
 import { scheduleAfterAnswer } from '@/features/gameplay/roundUi';
 import { generateQuestions, timePerQuestionMs, type DrumQuestion } from './questions';
+import { DongSonDrumScene } from './dongSonDrumScene';
 
 export type { PlayResult };
 
@@ -38,22 +38,41 @@ export function renderTrongDongGame(
   });
 
   const stage = createGameStage(root, sceneHost, gameId, 'game-play--trong-dong');
+  sceneHost.setParallaxSway(false);
+  const heroHost = stage.root.querySelector<HTMLElement>('#game-hero')!;
+  heroHost.innerHTML = `
+    <div class="trong-dong-hero">
+      <div class="trong-dong-hero__canvas-host" id="dong-son-drum-canvas"></div>
+      <p class="trong-dong-hero__caption">Trống Đồng Đông Sơn</p>
+    </div>
+  `;
+  const drumMount = heroHost.querySelector<HTMLElement>('#dong-son-drum-canvas')!;
+  const drumScene = new DongSonDrumScene(drumMount);
+  const origSetGameFeedback = stage.setGameFeedback.bind(stage);
+  stage.setGameFeedback = (kind) => {
+    origSetGameFeedback(kind);
+    if (kind === 'correct') drumScene.celebrate();
+  };
+
   let index = 0;
   let questionStarted = Date.now();
   let roundLocked = false;
   let currentQuestion: DrumQuestion | null = null;
   let currentApply: ((choiceIndex: number) => void) | null = null;
 
-  const lockChoiceButtons = (pickedIndex?: number, correctIndex?: number) => {
-    const guide = stage.gameArea.querySelector<HTMLElement>('.drum-puzzle__guide');
-    if (guide) guide.textContent = 'Đã chọn đáp án, chờ câu tiếp theo…';
-    stage.gameArea.querySelectorAll<HTMLButtonElement>('.relic-chip').forEach((chip) => {
-      chip.disabled = true;
-      const i = Number(chip.dataset.i);
-      if (i === correctIndex) chip.classList.add('relic-chip--correct');
-      if (pickedIndex !== undefined && i === pickedIndex) chip.classList.add('relic-chip--picked');
+  const lockChoices = (pickedIndex?: number, correctIndex?: number) => {
+    stage.gameArea.querySelectorAll<HTMLButtonElement>('.stone-tablet').forEach((btn) => {
+      btn.disabled = true;
+      const i = Number(btn.dataset.i);
+      if (i === correctIndex) btn.classList.add('stone-tablet--reveal-ok');
+      if (pickedIndex !== undefined && i === pickedIndex && i !== correctIndex) {
+        btn.classList.add('stone-tablet--picked-bad');
+      }
+      if (pickedIndex !== undefined && i === pickedIndex && i === correctIndex) {
+        btn.classList.add('stone-tablet--picked-ok');
+      }
     });
-    stage.gameArea.querySelector('#relic-tray')?.classList.add('relic-tray--locked');
+    stage.gameArea.querySelector('.stone-row')?.classList.add('stone-row--locked');
   };
 
   const showQuestion = () => {
@@ -61,36 +80,35 @@ export function renderTrongDongGame(
     currentQuestion = q;
     roundLocked = false;
     stage.updateDots(index, questions.length);
+    stage.setFeedback('');
     stage.gameArea.innerHTML = `
       <div class="drum-puzzle">
         <p class="drum-puzzle__passage">${q.passage}</p>
         <p class="drum-puzzle__question">${q.prompt}</p>
-        <div class="drum-face" id="drum-face">
-          <div class="drum-slot" id="drum-slot" title="Thả mảnh ghép vào đây">?</div>
-        </div>
-        <p class="drum-puzzle__guide game-play__round-hint">Kéo đáp án vào giữa trống đồng · phím 1-4</p>
-        <div class="relic-tray" id="relic-tray">
+        <div class="stone-row" id="drum-choices">
           ${q.choices
             .map(
-              (c, i) =>
-                `<button type="button" class="relic-chip" data-i="${i}" data-label="${escapeAttr(c)}">${c}</button>`
+              (_, i) =>
+                `<button type="button" class="stone-tablet" data-i="${i}"><span></span></button>`
             )
             .join('')}
         </div>
+        <p class="game-play__round-hint">Chọn một đáp án hoặc bấm phím 1–4</p>
       </div>
     `;
 
+    stage.gameArea.querySelectorAll<HTMLButtonElement>('.stone-tablet').forEach((btn, i) => {
+      btn.querySelector('span')!.textContent = q.choices[i] ?? '';
+    });
+
     speakVietnamese(q.prompt);
-    const slot = stage.gameArea.querySelector<HTMLElement>('#drum-slot')!;
 
     const applyChoice = (choiceIndex: number) => {
       if (roundLocked) return;
       roundLocked = true;
       timer.stop();
-      const label = q.choices[choiceIndex] ?? '?';
       const ok = choiceIndex === q.correctIndex;
-      slot.textContent = label.length > 14 ? `${label.slice(0, 12)}…` : label;
-      lockChoiceButtons(choiceIndex, q.correctIndex);
+      lockChoices(choiceIndex, q.correctIndex);
       tracker.recordRound(ok, Date.now() - questionStarted);
       stage.setGameFeedback(ok ? 'correct' : 'wrong');
       index++;
@@ -102,28 +120,10 @@ export function renderTrongDongGame(
       applyChoice(choiceIndex);
     };
 
-    stage.gameArea.querySelectorAll<HTMLButtonElement>('.relic-chip').forEach((chip) => {
-      chip.addEventListener('pointerdown', (e) => {
+    stage.gameArea.querySelectorAll<HTMLButtonElement>('.stone-tablet').forEach((btn) => {
+      btn.addEventListener('click', () => {
         if (roundLocked) return;
-        e.preventDefault();
-        chip.classList.add('relic-chip--dragging');
-        chip.setPointerCapture(e.pointerId);
-      });
-      const end = (e: PointerEvent) => {
-        if (roundLocked) return;
-        chip.classList.remove('relic-chip--dragging');
-        if (chip.hasPointerCapture(e.pointerId)) chip.releasePointerCapture(e.pointerId);
-        const rect = slot.getBoundingClientRect();
-        if (hitRect(e.clientX, e.clientY, rect, 24)) {
-          const i = Number(chip.dataset.i);
-          applyChoice(i);
-        }
-      };
-      chip.addEventListener('pointerup', end);
-      chip.addEventListener('pointercancel', end);
-      chip.addEventListener('click', () => {
-        if (roundLocked) return;
-        const i = Number(chip.dataset.i);
+        const i = Number(btn.dataset.i);
         currentApply?.(i);
       });
     });
@@ -138,7 +138,7 @@ export function renderTrongDongGame(
         if (roundLocked || !currentQuestion) return;
         roundLocked = true;
         timer.stop();
-        lockChoiceButtons(undefined, currentQuestion.correctIndex);
+        lockChoices(undefined, currentQuestion.correctIndex);
         tracker.recordRound(false, Date.now() - questionStarted);
         stage.setGameFeedback('timeout');
         index++;
@@ -162,10 +162,7 @@ export function renderTrongDongGame(
   return () => {
     window.removeEventListener('keydown', onKeyDown);
     timer.stop();
+    drumScene.dispose();
     stage.cleanup();
   };
-}
-
-function escapeAttr(s: string): string {
-  return s.replace(/"/g, '&quot;');
 }

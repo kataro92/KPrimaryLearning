@@ -110,18 +110,22 @@ export function renderTrangNguyenToanGame(
     stage.setFeedback('');
     stage.gameArea.innerHTML = `
       <div class="temple-arena">
-        <div class="temple-arena__board" id="prompt">${q.prompt}</div>
+        <div class="temple-arena__board" id="prompt"></div>
         <div class="stone-row" id="stones">
           ${q.choices
             .map(
-              (c, i) =>
-                `<button type="button" class="stone-tablet" data-i="${i}"><span>${c}</span></button>`
+              (_, i) =>
+                `<button type="button" class="stone-tablet" data-i="${i}"><span></span></button>`
             )
             .join('')}
         </div>
         <p class="game-play__round-hint">Chọn bia đá hoặc bấm phím 1-4</p>
       </div>
     `;
+    stage.gameArea.querySelector<HTMLElement>('#prompt')!.textContent = q.prompt;
+    stage.gameArea.querySelectorAll<HTMLButtonElement>('.stone-tablet').forEach((btn, i) => {
+      btn.querySelector('span')!.textContent = q.choices[i] ?? '';
+    });
 
     stage.gameArea.querySelectorAll<HTMLButtonElement>('.stone-tablet').forEach((btn) => {
       btn.addEventListener('click', () => {

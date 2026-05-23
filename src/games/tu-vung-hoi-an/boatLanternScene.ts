@@ -4,6 +4,13 @@ import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { playSfx } from '@/features/audio/sfxService';
+import { fitModelToHeight, tryLoadGltfScene } from '@/core/assets/fitGltfModel';
+
+const BASE = import.meta.env.BASE_URL;
+const LANTERN_MODEL_URLS = [
+  `${BASE}models/tu-vung-hoi-an/paper-lantern.glb`,
+  `${BASE}models/tu-vung-hoi-an/scene.gltf`,
+] as const;
 
 interface HangingLantern {
   group: THREE.Group;
@@ -69,6 +76,7 @@ export class HoiAnBoatScene {
   );
   private readonly bgDark = new THREE.Color(0x050a1d);
   private readonly bgFestive = new THREE.Color(0x2b1c55);
+  private lanternTemplate: THREE.Group | null = null;
 
   constructor(mount: HTMLElement, totalPairs: number) {
     this.mount = mount;
@@ -103,7 +111,21 @@ export class HoiAnBoatScene {
 
     this.resize();
     window.addEventListener('resize', this.onResize);
+    void this.loadLanternTemplate();
     this.loop();
+  }
+
+  private async loadLanternTemplate(): Promise<void> {
+    const scene = await tryLoadGltfScene(LANTERN_MODEL_URLS);
+    if (this.disposed || !scene) return;
+    scene.traverse((node) => {
+      if (node instanceof THREE.Mesh) {
+        node.castShadow = true;
+        node.receiveShadow = false;
+      }
+    });
+    fitModelToHeight(scene, 0.52);
+    this.lanternTemplate = scene;
   }
 
   onCorrectPair(): void {
@@ -308,6 +330,15 @@ export class HoiAnBoatScene {
   }
 
   private makeLantern(): THREE.Group {
+    if (this.lanternTemplate) {
+      const group = this.lanternTemplate.clone(true);
+      const glow = new THREE.PointLight(0xffb347, 0.85, 3.4);
+      glow.position.y = -0.03;
+      group.add(glow);
+      this.lanternLights.push(glow);
+      return group;
+    }
+
     const group = new THREE.Group();
     const body = new THREE.Mesh(
       new THREE.SphereGeometry(0.14, 14, 12),

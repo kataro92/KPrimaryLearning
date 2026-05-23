@@ -7,6 +7,8 @@ import { getOrInitProgress } from '@/features/progress/userProgressStore';
 import { mountGameSprite } from '@/assets/gameSprites';
 import { formatScoreDisplay } from '@/features/scoring/scoreEngine';
 import { CharacterKnightScene } from '@/features/character/characterKnightScene';
+import { preloadLocalTts } from '@/features/speech/speechService';
+import { mountVoiceProfilePanel } from '@/features/speech/voice/mountVoiceProfilePanel';
 
 let activeKnightScene: CharacterKnightScene | null = null;
 
@@ -66,11 +68,13 @@ export function renderHomeScreen(root: HTMLElement): void {
     document.documentElement.classList.toggle('large-text', on);
   };
   applyLargeText(settings.largeText);
+  if (settings.soundEnabled) preloadLocalTts();
 
   root.querySelector('#opt-sound')!.addEventListener('change', (e) => {
     const s = loadSettings();
     s.soundEnabled = (e.target as HTMLInputElement).checked;
     saveSettings(s);
+    if (s.soundEnabled) preloadLocalTts();
   });
   root.querySelector('#opt-sfx')!.addEventListener('change', (e) => {
     const s = loadSettings();
@@ -263,6 +267,13 @@ async function renderCharacterReport(profileId: string, reportBody: HTMLElement)
   const knightMount = reportBody.querySelector<HTMLElement>('#character-knight-mount');
   if (knightMount) {
     activeKnightScene = new CharacterKnightScene(knightMount, knightStats);
+  }
+
+  const statsPane = reportBody.querySelector<HTMLElement>('.character-report-stats');
+  if (statsPane) {
+    void mountVoiceProfilePanel(statsPane, profileId).catch(() => {
+      /* voice panel optional */
+    });
   }
 }
 

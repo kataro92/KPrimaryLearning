@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { disposeObject3D } from '@/core/assets/disposeObject3D';
 import { buildThemeDecor, GAME_THEMES } from './gameThemes';
 
 /** Canvas Three.js nền (2.5D) — đổi theme theo từng game */
@@ -141,15 +142,4 @@ export class SceneHost {
     this.renderer.dispose();
     this.canvas.remove();
   }
-}
-
-function disposeObject3D(obj: THREE.Object3D): void {
-  obj.traverse((node) => {
-    if (node instanceof THREE.Mesh) {
-      node.geometry.dispose();
-      const mat = node.material;
-      if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
-      else mat.dispose();
-    }
-  });
 }

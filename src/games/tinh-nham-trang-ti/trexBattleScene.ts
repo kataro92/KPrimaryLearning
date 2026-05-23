@@ -4,6 +4,13 @@ import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { playSfx } from '@/features/audio/sfxService';
+import { fitModelToHeight, tryLoadGltfScene } from '@/core/assets/fitGltfModel';
+
+const BASE = import.meta.env.BASE_URL;
+const TREX_MODEL_URLS = [
+  `${BASE}models/tinh-nham-trang-ti/trex.glb`,
+  `${BASE}models/tinh-nham-trang-ti/scene.gltf`,
+] as const;
 
 interface CannonBall {
   mesh: THREE.Mesh<THREE.SphereGeometry, THREE.MeshStandardMaterial>;
@@ -24,6 +31,7 @@ export class TrexBattleScene {
   private readonly mount: HTMLElement;
   private readonly clock = new THREE.Clock();
   private readonly trex = new THREE.Group();
+  private readonly proceduralLayer = new THREE.Group();
   private readonly cannon = new THREE.Group();
   private readonly stars = new THREE.Group();
   private readonly balls: CannonBall[] = [];
@@ -95,7 +103,27 @@ export class TrexBattleScene {
     this.scene.add(this.stars, this.cannon, this.trex);
     this.resize();
     window.addEventListener('resize', this.onResize);
+    void this.loadGltfTrex();
     this.loop();
+  }
+
+  private async loadGltfTrex(): Promise<void> {
+    const model = await tryLoadGltfScene(TREX_MODEL_URLS);
+    if (this.disposed || !model) return;
+    model.traverse((node) => {
+      if (node instanceof THREE.Mesh) {
+        node.castShadow = true;
+        node.receiveShadow = false;
+      }
+    });
+    fitModelToHeight(model, 2.75);
+    model.rotation.y = -Math.PI / 2;
+    model.position.set(0.15, 0, 0);
+    this.proceduralLayer.visible = false;
+    this.trex.add(model);
+    this.head = model;
+    this.jaw = model;
+    this.tail = model;
   }
 
   onCorrectAnswer(): void {
@@ -184,23 +212,24 @@ export class TrexBattleScene {
   }
 
   private buildTrex(): void {
+    this.trex.add(this.proceduralLayer);
     const body = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.4, 1.1), this.bodyMat);
     body.position.set(0, 1.5, 0);
     body.castShadow = true;
     this.addOutline(body, 0.03);
-    this.trex.add(body);
+    this.proceduralLayer.add(body);
     this.addScalesOn(body, 34, 0.035, 0.06, 0xb91c1c);
 
     const belly = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.7, 0.9), this.bellyMat);
     belly.position.set(0.1, 1.1, 0.05);
     this.addOutline(belly, 0.02);
-    this.trex.add(belly);
+    this.proceduralLayer.add(belly);
 
     const neck = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.8, 0.85), this.bodyMat);
     neck.position.set(0.95, 2.0, 0);
     neck.rotation.z = -0.16;
     this.addOutline(neck, 0.028);
-    this.trex.add(neck);
+    this.proceduralLayer.add(neck);
 
     this.head = new THREE.Group();
     const skull = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.7, 0.75), this.bodyMat);
@@ -214,7 +243,7 @@ export class TrexBattleScene {
     const eyeR = eyeL.clone();
     eyeR.position.z = -0.24;
     this.head.add(eyeL, eyeR);
-    this.trex.add(this.head);
+    this.proceduralLayer.add(this.head);
 
     this.jaw = new THREE.Group();
     const jaw = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.3, 0.7), this.bodyDarkMat);
@@ -227,23 +256,23 @@ export class TrexBattleScene {
       tooth.position.set(1.3 + i * 0.12, 2.05, -0.24 + (i % 2) * 0.48);
       this.jaw.add(tooth);
     }
-    this.trex.add(this.jaw);
+    this.proceduralLayer.add(this.jaw);
 
     for (const side of [-1, 1] as const) {
       const leg = new THREE.Mesh(new THREE.BoxGeometry(0.45, 1.0, 0.45), this.bodyDarkMat);
       leg.position.set(side * 0.55, 0.68, 0.18);
       leg.castShadow = true;
       this.addOutline(leg, 0.024);
-      this.trex.add(leg);
+      this.proceduralLayer.add(leg);
       const foot = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.2, 0.7), this.bodyDarkMat);
       foot.position.set(side * 0.55, 0.16, 0.38);
       this.addOutline(foot, 0.022);
-      this.trex.add(foot);
+      this.proceduralLayer.add(foot);
       for (let i = 0; i < 3; i++) {
         const claw = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.12, 8), this.toothMat);
         claw.rotation.x = Math.PI / 2;
         claw.position.set(side * (0.42 + i * 0.12), 0.08, 0.72);
-        this.trex.add(claw);
+        this.proceduralLayer.add(claw);
       }
     }
 
@@ -252,12 +281,12 @@ export class TrexBattleScene {
       arm.position.set(1.05, 1.58, side * 0.38);
       arm.rotation.z = side * 0.4;
       this.addOutline(arm, 0.022);
-      this.trex.add(arm);
+      this.proceduralLayer.add(arm);
       for (let i = 0; i < 2; i++) {
         const claw = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.08, 8), this.toothMat);
         claw.rotation.x = Math.PI / 2;
         claw.position.set(1.03, 1.3, side * (0.31 + i * 0.12));
-        this.trex.add(claw);
+        this.proceduralLayer.add(claw);
       }
     }
 
@@ -267,7 +296,7 @@ export class TrexBattleScene {
     tail.position.set(-1.8, 1.5, 0);
     this.addOutline(tail, 0.026);
     this.tail.add(tail);
-    this.trex.add(this.tail);
+    this.proceduralLayer.add(this.tail);
     this.addBackSpikes();
     this.addBodyStripes();
 
@@ -304,13 +333,13 @@ export class TrexBattleScene {
       const spike = new THREE.Mesh(new THREE.ConeGeometry(0.08 + i * 0.002, 0.22 + i * 0.02, 6), this.spikeMat);
       spike.position.set(x, 2.15 + i * 0.02, 0);
       spike.rotation.z = Math.PI;
-      this.trex.add(spike);
+      this.proceduralLayer.add(spike);
     });
     for (let i = 0; i < 4; i++) {
       const tSpike = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.16, 6), this.spikeMat);
       tSpike.position.set(-2.1 - i * 0.38, 1.82 - i * 0.1, 0);
       tSpike.rotation.z = Math.PI;
-      this.trex.add(tSpike);
+      this.proceduralLayer.add(tSpike);
     }
   }
 
@@ -320,11 +349,11 @@ export class TrexBattleScene {
       const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.9, 0.05), stripeMat);
       stripe.position.set(-0.7 + i * 0.27, 1.62, 0.56);
       stripe.rotation.z = 0.25;
-      this.trex.add(stripe);
+      this.proceduralLayer.add(stripe);
       const stripe2 = stripe.clone();
       stripe2.position.z = -0.56;
       stripe2.rotation.z = -0.25;
-      this.trex.add(stripe2);
+      this.proceduralLayer.add(stripe2);
     }
   }
 

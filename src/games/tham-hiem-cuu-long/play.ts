@@ -3,9 +3,11 @@ import type { SceneHost } from '@/core/rendering/sceneHost';
 import { createSessionTracker } from '@/features/gameplay/sessionTracker';
 import type { PlayResult } from '@/features/gameplay/types';
 import { getGameById } from '@/games/catalog';
-import { createTimerSfxState, syncTimerBar } from '@/features/gameplay/timerBar';
+import { createTimerSfxState } from '@/features/gameplay/timerBar';
+import { tickTimerSfx } from '@/features/audio/sfxService';
 import { TimerEngine } from '@/core/engine/timerEngine';
-import { scheduleAfterAnswer, setRoundHint, WAIT_NEXT_HINT } from '@/features/gameplay/roundUi';
+import { scheduleAfterAnswer } from '@/features/gameplay/roundUi';
+import { gameFeedbackLine } from '@/features/speech/interactiveText';
 import { playSfx } from '@/features/audio/sfxService';
 import { createGameStage } from '@/ui/gameStage/createGameStage';
 import { BINS, pickItems, timePerItemMs, type ClassifyItem } from './questions';
@@ -39,11 +41,46 @@ export function renderThamHiemCuuLongGame(
 
   const stage = createGameStage(root, sceneHost, gameId, 'game-play--cuu-long');
   const heroHost = stage.root.querySelector<HTMLElement>('#game-hero')!;
-  heroHost.innerHTML =
-    '<div class="fps-wrap"><div class="fps-crosshair">+</div><div class="fps-hit-marker" id="fps-hit-marker">✦</div></div>';
+  heroHost.innerHTML = `
+    <div class="fps-wrap" tabindex="-1">
+      <button type="button" class="fps-back-btn btn btn-secondary" id="fps-back">← Về</button>
+    </div>
+  `;
+
   const fpsMount = heroHost.querySelector<HTMLElement>('.fps-wrap')!;
-  const hitMarkerEl = heroHost.querySelector<HTMLElement>('#fps-hit-marker')!;
+  const backBtn = fpsMount.querySelector<HTMLElement>('#fps-back')!;
+  backBtn.addEventListener('click', () => {
+    sceneHost.resetTheme();
+    useAppStore.setScreen('home');
+  });
+
+  stage.feedbackEl.classList.add('fps-a11y-feedback');
+  stage.root.querySelector('.game-play__qa-pane')?.appendChild(stage.feedbackEl);
+
   const fpsScene = new FpsCrossbowScene(fpsMount);
+  const focusFps = () => {
+    requestAnimationFrame(() => fpsScene.focusControl());
+  };
+  focusFps();
+
+  const pushHudFeedback = (text: string, kind: 'ok' | 'bad' | 'neutral' = 'neutral') => {
+    fpsScene.setHudFeedback(text, kind);
+  };
+
+  const origSetFeedback = stage.setFeedback.bind(stage);
+  stage.setFeedback = (text, ok) => {
+    origSetFeedback(text, ok);
+    pushHudFeedback(text, ok === true ? 'ok' : ok === false ? 'bad' : 'neutral');
+  };
+
+  const origSetGameFeedback = stage.setGameFeedback.bind(stage);
+  stage.setGameFeedback = (kind) => {
+    origSetGameFeedback(kind);
+    const ok = kind === 'correct';
+    const text = gameFeedbackLine(gameId, kind);
+    pushHudFeedback(text, ok ? 'ok' : kind === 'wrong' || kind === 'timeout' ? 'bad' : 'neutral');
+  };
+
   let index = 0;
   let questionStarted = Date.now();
   let roundLocked = false;
@@ -65,43 +102,14 @@ export function renderThamHiemCuuLongGame(
         colorHex: optionColors[i]!,
       }));
     fpsScene.setOptions(currentOptions);
-
-    stage.updateDots(index, items.length);
+    fpsScene.setHudQuestion(item.label);
+    fpsScene.setHudProgress(index, index, items.length);
     stage.setFeedback('');
-    stage.gameArea.innerHTML = `
-      <div class="fps-quiz">
-        <p class="fps-quiz__prompt">Bắn vào đáp án đúng cho vật phẩm: <strong>${item.label}</strong></p>
-        <div class="fps-quiz__options">
-          ${currentOptions
-            .map(
-              (o) =>
-                `<button type="button" class="fps-option" data-id="${o.id}" style="--opt-color:#${o.colorHex.toString(16).padStart(6, '0')}">
-                  <span class="fps-option__code">${o.code}</span>
-                  <span>${o.label}</span>
-                </button>`
-            )
-            .join('')}
-        </div>
-        <p class="fps-quiz__hint">Ngắm vào bảng A/B/C cùng màu với đáp án bên dưới · Click/Space để bắn</p>
-      </div>
-    `;
-
-    const lockFpsOptions = (pickedId?: string) => {
-      const correctId = currentItem?.bin;
-      stage.gameArea.querySelector('.fps-quiz__options')?.classList.add('round-choices--locked');
-      stage.gameArea.querySelectorAll<HTMLButtonElement>('.fps-option').forEach((btn) => {
-        btn.disabled = true;
-        if (btn.dataset.id === correctId) btn.classList.add('round-btn--correct');
-        if (pickedId && btn.dataset.id === pickedId) btn.classList.add('round-btn--picked');
-      });
-      setRoundHint(stage.gameArea, '.fps-quiz__hint', WAIT_NEXT_HINT);
-    };
 
     submitAnswer = async (binId: string) => {
       if (!currentItem || roundLocked) return;
       roundLocked = true;
       timer.stop();
-      lockFpsOptions(binId);
       const ok = currentItem.bin === binId;
       fpsScene.markAnswer(binId, ok);
       tracker.recordRound(ok, Date.now() - questionStarted);
@@ -115,35 +123,31 @@ export function renderThamHiemCuuLongGame(
       );
     };
 
-    stage.gameArea.querySelectorAll<HTMLButtonElement>('.fps-option').forEach((btn) => {
-      btn.addEventListener('click', () => void submitAnswer?.(btn.dataset.id!));
-    });
-
     currentShoot = () => {
       const hitId = fpsScene.shoot();
-      hitMarkerEl.classList.remove('fps-hit-marker--ok', 'fps-hit-marker--bad');
-      void hitMarkerEl.offsetWidth;
       if (hitId) {
-        hitMarkerEl.classList.add('fps-hit-marker--ok');
+        fpsScene.flashHit(true);
         void submitAnswer?.(hitId);
       } else {
-        hitMarkerEl.classList.add('fps-hit-marker--bad');
+        fpsScene.flashHit(false);
         stage.setFeedback('Bắn trượt rồi, ngắm lại nhé!');
         playSfx('miss');
       }
     };
 
+    focusFps();
+
     questionStarted = Date.now();
     timer.start(
       perMs,
       (remaining) => {
-        syncTimerBar(stage.timerFillEl, remaining, perMs, timerSfx);
+        fpsScene.setHudTimer(remaining / perMs);
+        tickTimerSfx(remaining / perMs, timerSfx);
       },
       () => {
         if (roundLocked || !currentItem) return;
         roundLocked = true;
         timer.stop();
-        lockFpsOptions();
         stage.setGameFeedback('timeout');
         tracker.recordRound(false, Date.now() - questionStarted);
         index++;
@@ -182,10 +186,6 @@ export function renderThamHiemCuuLongGame(
   const answerByIndex = async (idx: number) => {
     const opt = currentOptions[idx];
     if (!opt || roundLocked) return;
-    const btn = stage.gameArea.querySelector<HTMLButtonElement>(`.fps-option[data-id="${opt.id}"]`);
-    btn?.classList.add('fps-option--active');
-    await Promise.resolve();
-    btn?.classList.remove('fps-option--active');
     await submitAnswer?.(opt.id);
   };
 
@@ -195,6 +195,7 @@ export function renderThamHiemCuuLongGame(
   fpsMount.addEventListener('click', onShootClick);
   window.addEventListener('keydown', onKeyDown);
 
+  pushHudFeedback(gameFeedbackLine(gameId, 'start'), 'neutral');
   showItem(items[0]);
   return () => {
     fpsMount.removeEventListener('click', onShootClick);
