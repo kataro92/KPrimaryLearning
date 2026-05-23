@@ -34,7 +34,7 @@ Last updated: 2026-05-23
   - Cancel/timeout/preload worker từ Home khi bật giọng.
   - Mỗi game đọc câu hỏi/lượt khi hiển thị (tôn trọng toggle Giọng); game ghép thẻ Hội An chỉ đọc hướng dẫn mở đầu vì không có câu hỏi từng lượt.
   - SFX qua Web Audio API (`sfxService.ts`, toggle `sfxEnabled`).
-  - Nhạc nền procedural theo từng game (`bgmService.ts`, toggle `musicEnabled`); tự duck khi TTS đang phát; fade in/out khi vào/ra game.
+  - Nhạc nền file OGG riêng cho từng game (`public/audio/bgm/`, Eric Matyas / soundimage.org, CC BY); phát qua `HTMLAudioElement` trong `bgmService.ts` (toggle `musicEnabled`); tự duck khi TTS đang phát; fade in/out khi vào/ra game.
   - Tài liệu: `docs/planning/TTS_LOCAL_ARCHITECTURE.md`.
 - Deployment:
   - GitHub Actions tự động build và publish lên GitHub Pages khi push `main`.

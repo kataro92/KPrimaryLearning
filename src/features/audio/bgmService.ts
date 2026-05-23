@@ -1,6 +1,6 @@
 import { loadSettings } from '@/data/storage/settingsStore';
 import { subscribeTtsState } from '@/features/speech/speechService';
-import { getAudioContext, resumeAudioContext } from './audioContext';
+import { resumeAudioContext } from './audioContext';
 
 export type BgmGameId =
   | 'trang-nguyen-toan'
@@ -13,89 +13,59 @@ export type BgmGameId =
   | 'tham-hiem-cuu-long'
   | 'tinh-nham-trang-ti';
 
-interface BgmTheme {
-  rootHz: number;
-  /** Semitone offsets forming a calm pentatonic palette. */
-  scale: number[];
-  wave: OscillatorType;
-  bpm: number;
-  /** Master gain for this theme (0–1). */
-  level: number;
-  filterHz: number;
+interface BgmTrack {
+  file: string;
+  title: string;
+  volume: number;
 }
 
-const THEMES: Record<BgmGameId, BgmTheme> = {
+const BGM_BASE = `${import.meta.env.BASE_URL}audio/bgm/`;
+
+const TRACKS: Record<BgmGameId, BgmTrack> = {
   'trang-nguyen-toan': {
-    rootHz: 261.63,
-    scale: [0, 2, 4, 7, 9, 7, 4, 2],
-    wave: 'sine',
-    bpm: 68,
-    level: 0.11,
-    filterHz: 900,
+    file: 'trang-nguyen-toan.ogg',
+    title: 'Mech Street Fighters',
+    volume: 0.32,
   },
   'net-chu-rong-tien': {
-    rootHz: 293.66,
-    scale: [0, 3, 5, 7, 10, 7, 5, 3],
-    wave: 'triangle',
-    bpm: 64,
-    level: 0.1,
-    filterHz: 1100,
+    file: 'net-chu-rong-tien.ogg',
+    title: 'Arcade Adventures',
+    volume: 0.3,
   },
   'tu-vung-hoi-an': {
-    rootHz: 196,
-    scale: [0, 2, 4, 7, 9, 12, 9, 7],
-    wave: 'sine',
-    bpm: 72,
-    level: 0.12,
-    filterHz: 850,
+    file: 'tu-vung-hoi-an.ogg',
+    title: 'Bustling Village',
+    volume: 0.3,
   },
   'trong-dong': {
-    rootHz: 110,
-    scale: [0, 2, 5, 7, 10, 7, 5, 2],
-    wave: 'triangle',
-    bpm: 60,
-    level: 0.13,
-    filterHz: 650,
+    file: 'trong-dong.ogg',
+    title: 'Of Knights and Kings',
+    volume: 0.3,
   },
   'hinh-hoc-thang-long': {
-    rootHz: 164.81,
-    scale: [0, 2, 4, 7, 9, 4, 7, 9],
-    wave: 'sine',
-    bpm: 70,
-    level: 0.1,
-    filterHz: 950,
+    file: 'hinh-hoc-thang-long.ogg',
+    title: 'Fantasy Game Background',
+    volume: 0.28,
   },
   'doc-hieu-su-viet': {
-    rootHz: 174.61,
-    scale: [0, 3, 5, 7, 10, 7, 5, 3],
-    wave: 'triangle',
-    bpm: 66,
-    level: 0.11,
-    filterHz: 800,
+    file: 'doc-hieu-su-viet.ogg',
+    title: 'Dreaming in Puzzles',
+    volume: 0.28,
   },
   'cuu-chuong-van-mieu': {
-    rootHz: 123.47,
-    scale: [0, 4, 7, 11, 7, 4, 0, 4],
-    wave: 'sine',
-    bpm: 62,
-    level: 0.1,
-    filterHz: 750,
+    file: 'cuu-chuong-van-mieu.ogg',
+    title: "Spells-a-Brewin'",
+    volume: 0.28,
   },
   'tham-hiem-cuu-long': {
-    rootHz: 130.81,
-    scale: [0, 2, 5, 7, 9, 7, 5, 2],
-    wave: 'triangle',
-    bpm: 74,
-    level: 0.12,
-    filterHz: 880,
+    file: 'tham-hiem-cuu-long.ogg',
+    title: 'Urban Assault',
+    volume: 0.34,
   },
   'tinh-nham-trang-ti': {
-    rootHz: 196,
-    scale: [0, 2, 4, 7, 9, 12, 9, 4],
-    wave: 'triangle',
-    bpm: 78,
-    level: 0.11,
-    filterHz: 1000,
+    file: 'tinh-nham-trang-ti.ogg',
+    title: 'Coin-Op Chaos',
+    volume: 0.32,
   },
 };
 
@@ -104,68 +74,62 @@ const DUCK_GAIN = 0.35;
 const FADE_MS = 480;
 
 let activeGameId: BgmGameId | null = null;
+let audio: HTMLAudioElement | null = null;
+let baseVolume = 0.3;
+let fadeTimer: ReturnType<typeof setInterval> | null = null;
 let stopping = false;
-let masterGain: GainNode | null = null;
-let filterNode: BiquadFilterNode | null = null;
-let schedulerId: ReturnType<typeof setInterval> | null = null;
-let stepIndex = 0;
-let nextNoteTime = 0;
 let ttsUnsub: (() => void) | null = null;
 let duckTarget = NORMAL_GAIN;
 
-function semitoneHz(base: number, semitones: number): number {
-  return base * 2 ** (semitones / 12);
+function effectiveVolume(): number {
+  return baseVolume * duckTarget;
 }
 
-function notePeak(theme: BgmTheme): number {
-  return theme.level * 0.55;
-}
-
-function playPadNote(
-  ctx: AudioContext,
-  freq: number,
-  start: number,
-  duration: number,
-  peak: number,
-  wave: OscillatorType
-): void {
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.type = wave;
-  osc.frequency.value = freq;
-  const attack = 0.08;
-  const release = Math.max(0.12, duration - attack);
-  gain.gain.setValueAtTime(0.0001, start);
-  gain.gain.exponentialRampToValueAtTime(peak, start + attack);
-  gain.gain.exponentialRampToValueAtTime(0.0001, start + attack + release);
-  osc.connect(gain);
-  gain.connect(filterNode!);
-  osc.start(start);
-  osc.stop(start + duration + 0.05);
-}
-
-function scheduleNotes(ctx: AudioContext, theme: BgmTheme): void {
-  const beatSec = 60 / theme.bpm;
-  const noteLen = beatSec * 1.6;
-  const lookahead = 0.18;
-
-  while (nextNoteTime < ctx.currentTime + lookahead) {
-    const semitone = theme.scale[stepIndex % theme.scale.length]!;
-    const freq = semitoneHz(theme.rootHz, semitone);
-    playPadNote(ctx, freq, nextNoteTime, noteLen, notePeak(theme), theme.wave);
-    nextNoteTime += beatSec;
-    stepIndex += 1;
+function clearFadeTimer(): void {
+  if (fadeTimer !== null) {
+    clearInterval(fadeTimer);
+    fadeTimer = null;
   }
 }
 
+function fadeTo(target: number, durationMs: number, onDone?: () => void): void {
+  clearFadeTimer();
+  if (!audio) {
+    onDone?.();
+    return;
+  }
+  const startVol = audio.volume;
+  const start = performance.now();
+  fadeTimer = setInterval(() => {
+    if (!audio) {
+      clearFadeTimer();
+      onDone?.();
+      return;
+    }
+    const t = Math.min(1, (performance.now() - start) / durationMs);
+    audio.volume = startVol + (target - startVol) * t;
+    if (t >= 1) {
+      clearFadeTimer();
+      onDone?.();
+    }
+  }, 16);
+}
+
+function teardownAudio(): void {
+  clearFadeTimer();
+  if (audio) {
+    audio.pause();
+    audio.src = '';
+    audio = null;
+  }
+  activeGameId = null;
+  duckTarget = NORMAL_GAIN;
+  stopping = false;
+}
+
 function applyDuck(): void {
-  if (!masterGain) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
-  const t = ctx.currentTime;
-  masterGain.gain.cancelScheduledValues(t);
-  masterGain.gain.setValueAtTime(masterGain.gain.value, t);
-  masterGain.gain.linearRampToValueAtTime(duckTarget, t + 0.12);
+  if (!audio) return;
+  fadeTo(effectiveVolume(), 120);
 }
 
 function ensureTtsDuck(): void {
@@ -176,64 +140,27 @@ function ensureTtsDuck(): void {
   });
 }
 
-function teardownNodes(): void {
-  if (schedulerId !== null) {
-    clearInterval(schedulerId);
-    schedulerId = null;
-  }
-  if (masterGain) {
-    try {
-      masterGain.disconnect();
-    } catch {
-      /* ignore */
-    }
-    masterGain = null;
-  }
-  if (filterNode) {
-    try {
-      filterNode.disconnect();
-    } catch {
-      /* ignore */
-    }
-    filterNode = null;
-  }
-  stepIndex = 0;
-  nextNoteTime = 0;
-  duckTarget = NORMAL_GAIN;
-}
-
-function fadeOutAndStop(): void {
-  if (stopping) return;
-  stopping = true;
-  const ctx = getAudioContext();
-  if (!masterGain || !ctx) {
-    teardownNodes();
-    activeGameId = null;
-    stopping = false;
-    return;
-  }
-  const t = ctx.currentTime;
-  masterGain.gain.cancelScheduledValues(t);
-  masterGain.gain.setValueAtTime(masterGain.gain.value, t);
-  masterGain.gain.linearRampToValueAtTime(0.0001, t + FADE_MS / 1000);
-  window.setTimeout(() => {
-    teardownNodes();
-    activeGameId = null;
-    stopping = false;
-  }, FADE_MS + 40);
-}
-
 /** Resume audio context — safe to call from user-gesture handlers. */
 export function resumeBgm(): void {
   resumeAudioContext();
+  if (!audio || !loadSettings().musicEnabled) return;
+  if (audio.paused) {
+    void audio.play().then(() => {
+      if (audio && audio.volume < effectiveVolume() * 0.5) {
+        fadeTo(effectiveVolume(), FADE_MS);
+      }
+    }).catch(() => {
+      /* autoplay blocked until gesture */
+    });
+  }
 }
 
 /** Start looping ambient BGM for a game (no-op if music disabled or same track). */
 export function startBgm(gameId: string): void {
   if (!loadSettings().musicEnabled) return;
-  if (!(gameId in THEMES)) return;
+  if (!(gameId in TRACKS)) return;
   const id = gameId as BgmGameId;
-  if (activeGameId === id && schedulerId !== null) {
+  if (activeGameId === id && audio) {
     resumeBgm();
     return;
   }
@@ -242,49 +169,35 @@ export function startBgm(gameId: string): void {
   stopping = false;
   resumeBgm();
 
-  const ctx = getAudioContext(true);
-  if (!ctx) return;
-  if (ctx.state === 'suspended') void ctx.resume();
-
-  const theme = THEMES[id];
-  filterNode = ctx.createBiquadFilter();
-  filterNode.type = 'lowpass';
-  filterNode.frequency.value = theme.filterHz;
-  filterNode.Q.value = 0.6;
-
-  masterGain = ctx.createGain();
-  masterGain.gain.value = 0.0001;
-  filterNode.connect(masterGain);
-  masterGain.connect(ctx.destination);
-
-  const t = ctx.currentTime;
-  masterGain.gain.linearRampToValueAtTime(theme.level, t + FADE_MS / 1000);
-
+  const track = TRACKS[id];
+  baseVolume = track.volume;
+  const el = new Audio(`${BGM_BASE}${track.file}`);
+  el.loop = true;
+  el.preload = 'auto';
+  el.volume = 0.0001;
+  audio = el;
   activeGameId = id;
-  stepIndex = 0;
-  nextNoteTime = ctx.currentTime + 0.05;
   ensureTtsDuck();
 
-  schedulerId = setInterval(() => {
-    if (!loadSettings().musicEnabled) {
-      stopBgm();
-      return;
-    }
-    const liveCtx = getAudioContext();
-    if (!liveCtx || liveCtx.state !== 'running' || !filterNode) return;
-    scheduleNotes(liveCtx, theme);
-  }, 120);
+  void el.play().then(() => {
+    fadeTo(effectiveVolume(), FADE_MS);
+  }).catch(() => {
+    /* autoplay blocked until gesture; resumeBgm will retry */
+  });
 }
 
 /** Fade out and stop BGM. Pass `fadeMs = 0` for immediate stop. */
 export function stopBgm(fadeMs = FADE_MS): void {
   if (fadeMs <= 0) {
     stopping = false;
-    teardownNodes();
-    activeGameId = null;
+    teardownAudio();
     return;
   }
-  fadeOutAndStop();
+  if (stopping || !audio) return;
+  stopping = true;
+  fadeTo(0, fadeMs, () => {
+    teardownAudio();
+  });
 }
 
 /** Stop duck subscription when app unloads (optional cleanup). */

@@ -148,6 +148,14 @@ SKETCHFAB_API_TOKEN=your_token npm run fetch:models
 
 See `public/models/*/README.md` per game. Missing files fall back to procedural geometry.
 
+### Third-party audio (BGM)
+
+| Scope | Asset | Source | License |
+| --- | --- | --- | --- |
+| All 9 games (per-game track) | Background music OGG | [Eric Matyas — soundimage.org](https://soundimage.org) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+
+See `public/audio/bgm/README.md` for track titles and download URLs per game.
+
 ## Liên hệ
 
 - Repository: [https://github.com/kataro92/KPrimaryLearning](https://github.com/kataro92/KPrimaryLearning)
