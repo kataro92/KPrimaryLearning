@@ -83,6 +83,8 @@ export function renderTinhNhamGame(
       </div>
     `;
 
+    speakVietnamese(q.text);
+
     const answerEl = stage.gameArea.querySelector<HTMLInputElement>('#answer')!;
     const submit = () => {
       if (locked) return;

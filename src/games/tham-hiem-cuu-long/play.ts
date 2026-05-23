@@ -8,6 +8,7 @@ import { tickTimerSfx } from '@/features/audio/sfxService';
 import { TimerEngine } from '@/core/engine/timerEngine';
 import { scheduleAfterAnswer } from '@/features/gameplay/roundUi';
 import { gameFeedbackLine } from '@/features/speech/interactiveText';
+import { speakVietnamese } from '@/features/speech/speechService';
 import { playSfx } from '@/features/audio/sfxService';
 import { createGameStage } from '@/ui/gameStage/createGameStage';
 import { BINS, pickItems, timePerItemMs, type ClassifyItem } from './questions';
@@ -105,6 +106,7 @@ export function renderThamHiemCuuLongGame(
     fpsScene.setHudQuestion(item.label);
     fpsScene.setHudProgress(index, index, items.length);
     stage.setFeedback('');
+    speakVietnamese(`Phân loại: ${item.label}`);
 
     submitAnswer = async (binId: string) => {
       if (!currentItem || roundLocked) return;

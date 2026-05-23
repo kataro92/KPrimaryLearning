@@ -103,6 +103,8 @@ export function renderHinhHocThangLongGame(
       </div>
     `;
 
+    speakVietnamese(`${task.label} thuộc dạng hình nào?`);
+
     const quiz = stage.gameArea.querySelector<HTMLElement>('.shape-quiz')!;
     const choiceBtns = stage.gameArea.querySelectorAll<HTMLButtonElement>('.shape-choice');
 

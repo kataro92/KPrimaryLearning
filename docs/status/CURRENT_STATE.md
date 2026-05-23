@@ -32,6 +32,7 @@ Last updated: 2026-05-23
   - Upload giọng mẫu OPFS: chỉ nghe lại trong modal Nhân vật (không clone giọng).
   - `ttsMode` mặc định `auto`; câu > 280 ký tự → Web Speech.
   - Cancel/timeout/preload worker từ Home khi bật giọng.
+  - Mỗi game đọc câu hỏi/lượt khi hiển thị (tôn trọng toggle Giọng); game ghép thẻ Hội An chỉ đọc hướng dẫn mở đầu vì không có câu hỏi từng lượt.
   - SFX qua Web Audio API (`sfxService.ts`, toggle `sfxEnabled`).
   - Nhạc nền procedural theo từng game (`bgmService.ts`, toggle `musicEnabled`); tự duck khi TTS đang phát; fade in/out khi vào/ra game.
   - Tài liệu: `docs/planning/TTS_LOCAL_ARCHITECTURE.md`.

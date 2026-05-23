@@ -92,6 +92,8 @@ export function renderCuuChuongGame(
       </div>
     `;
 
+    speakVietnamese(`${q.text} bằng bao nhiêu?`);
+
     let buf = '';
     const display = stage.gameArea.querySelector<HTMLElement>('#answer-display')!;
     keyInput = (n: string) => {
