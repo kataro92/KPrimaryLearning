@@ -3,7 +3,10 @@ export interface HistoryPassage {
   statements: { text: string; isTrue: boolean }[];
 }
 
-/** Ngân hàng đọc hiểu lịch sử lớp 4 — ~200 nhận định đúng/sai học thuật */
+import { HISTORY_SUPPLEMENT_DATA } from './historySupplement';
+import { HISTORY_SUPPLEMENT_EXTRA_DATA } from './historySupplementExtra';
+
+/** Ngân hàng đọc hiểu lịch sử lớp 4 — nhận định đúng/sai học thuật (HK1/HK2) */
 const PASSAGE_DATA: [string, [string, boolean][]][] = [
   [
     'Nhà nước Văn Lang thời các vua Hùng là nhà nước đầu tiên của nước ta. Người dân khi đó sống bằng trồng lúa nước, chăn nuôi và làm nghề thủ công.',
@@ -380,6 +383,8 @@ const PASSAGE_DATA: [string, [string, boolean][]][] = [
       ['Không cần biết ai tham gia sự kiện.', false],
     ],
   ],
+  ...HISTORY_SUPPLEMENT_DATA,
+  ...HISTORY_SUPPLEMENT_EXTRA_DATA,
 ];
 
 export const HISTORY_PASSAGES: HistoryPassage[] = PASSAGE_DATA.map(([passage, statements]) => ({

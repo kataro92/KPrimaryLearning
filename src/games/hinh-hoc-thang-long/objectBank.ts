@@ -7,7 +7,9 @@ export interface ObjectItem {
   minLevel: 1 | 2 | 3;
 }
 
-/** 100 đồ vật — nhận dạng hình học (tên không gợi ý dạng hình). */
+import { OBJECT_SUPPLEMENT } from './objectSupplement';
+
+/** Đồ vật nhận dạng hình học (tên không gợi ý dạng hình). */
 export const OBJECT_BANK: ObjectItem[] = [
   { id: 'o001', label: 'Cửa sổ nhà', shape: 'square', minLevel: 1 },
   { id: 'o002', label: 'Viên gạch lát sân', shape: 'square', minLevel: 1 },
@@ -111,6 +113,7 @@ export const OBJECT_BANK: ObjectItem[] = [
   { id: 'o098', label: 'Cánh diều rồng', shape: 'triangle', minLevel: 3 },
   { id: 'o099', label: 'Miếng dorito', shape: 'triangle', minLevel: 3 },
   { id: 'o100', label: 'Khối mica tím', shape: 'triangle', minLevel: 3 },
+  ...OBJECT_SUPPLEMENT,
 ];
 
 export const OBJECT_BANK_SIZE = OBJECT_BANK.length;

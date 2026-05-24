@@ -1,15 +1,30 @@
-export interface MathQuestion {
-  text: string;
-  answer: number;
-}
+import { MATH_BANK, type MathQuestion } from './mathBank';
+import { MATH_BANK_EXTRA } from './mathBankExtra';
+
+export type { MathQuestion };
 
 function randInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 export function generateQuestions(count: number, level: 1 | 2 | 3): MathQuestion[] {
   const qs: MathQuestion[] = [];
   const seen = new Set<string>();
+  for (const q of shuffle([...MATH_BANK, ...MATH_BANK_EXTRA])) {
+    if (seen.has(q.text)) continue;
+    seen.add(q.text);
+    qs.push(q);
+    if (qs.length >= count) return qs;
+  }
   let attempts = 0;
   while (qs.length < count && attempts < count * 24) {
     const q = generateOne(level);

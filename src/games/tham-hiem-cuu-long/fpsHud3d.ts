@@ -13,23 +13,42 @@ interface TextPlate {
   frame?: THREE.Mesh;
 }
 
-/** Căn HUD theo hàng 3 ô A/B/C (x ±2.9, y 2, z -8.2). */
+/** Căn HUD theo hàng 3 mục tiêu (x ±2.9, y 2, z -8.2). */
 const TARGET_ROW_Y = 2.0;
 const TARGET_ROW_Z = -8.2;
 const TARGET_SPAN_X = 5.8;
 const HUD_Z = TARGET_ROW_Z + 0.12;
 
 const STATUS_Y = TARGET_ROW_Y + 2.65;
-const QUESTION_Y = TARGET_ROW_Y - 1.62;
-const FEEDBACK_Y = TARGET_ROW_Y - 2.22;
+const QUESTION_Y = TARGET_ROW_Y - 2.28;
+const FEEDBACK_Y = TARGET_ROW_Y - 3.12;
 const FEEDBACK_Z = TARGET_ROW_Z + 1.65;
 
 const QUESTION_PLATE_W = TARGET_SPAN_X + 1.15;
-const QUESTION_PLATE_H = 0.64;
+/** Tấm cao hơn để chữ câu hỏi đọc rõ; canvas khớp tỉ lệ w/h tránh bẹt chữ. */
+const QUESTION_PLATE_H = 2.0;
+
+function canvasHeightForPlate(cw: number, pw: number, ph: number): number {
+  return Math.round(cw * (ph / pw));
+}
 const TIMER_BAR_W = TARGET_SPAN_X * 0.78;
 const TIMER_BAR_H = 0.12;
 const DOT_SIZE = 0.14;
 const DOT_SPACING = 0.22;
+
+function drawTallCenteredText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  cx: number,
+  cy: number,
+  scaleY: number
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(1, scaleY);
+  ctx.fillText(text, 0, 0);
+  ctx.restore();
+}
 
 function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
   const words = text.split(/\s+/);
@@ -178,9 +197,10 @@ export class FpsHud3d {
   }
 
   private buildQuestionPlate(): void {
+    const cw = 2048;
     this.questionPlate = this.createTextPlate(
-      1024,
-      176,
+      cw,
+      canvasHeightForPlate(cw, QUESTION_PLATE_W, QUESTION_PLATE_H),
       QUESTION_PLATE_W,
       QUESTION_PLATE_H,
       new THREE.Vector3(0, QUESTION_Y, HUD_Z),
@@ -257,18 +277,18 @@ export class FpsHud3d {
 
   private paintQuestion(text: string): void {
     const { ctx, texture, w, h } = this.questionPlate;
-    drawPanelBg(ctx, w, h);
+    drawPanelBg(ctx, w, h, 'rgba(15, 23, 42, 0.94)', 'rgba(251, 191, 36, 0.62)');
     ctx.fillStyle = '#e2e8f0';
-    ctx.font = 'bold 34px system-ui, sans-serif';
+    ctx.font = 'bold 56px system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('Phân loại:', w / 2, h * 0.27);
+    drawTallCenteredText(ctx, 'Phân loại:', w / 2, h * 0.2, 1.75);
     ctx.fillStyle = '#fde68a';
-    ctx.font = 'bold 52px system-ui, sans-serif';
-    const lines = wrapLines(ctx, text, w - 56);
-    const lineH = 54;
-    const startY = h * 0.63 - ((lines.length - 1) * lineH) / 2;
-    lines.forEach((line, i) => ctx.fillText(line, w / 2, startY + i * lineH));
+    ctx.font = 'bold 56px system-ui, sans-serif';
+    const lines = wrapLines(ctx, text, w - 120);
+    const lineH = 112;
+    const startY = h * 0.62 - ((lines.length - 1) * lineH) / 2;
+    lines.forEach((line, i) => drawTallCenteredText(ctx, line, w / 2, startY + i * lineH, 2));
     texture.needsUpdate = true;
   }
 
@@ -300,10 +320,18 @@ export class FpsHud3d {
 export function createCrosshair3d(): THREE.Group {
   const g = new THREE.Group();
   g.position.set(0, 0, -0.55);
-  const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.92, toneMapped: false });
-  const h = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.11, 0.004), mat);
-  const v = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.018, 0.004), mat.clone());
-  g.add(h, v);
+  const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, toneMapped: false });
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.028, 0.042, 24), mat);
+  const dot = new THREE.Mesh(new THREE.CircleGeometry(0.006, 12), mat.clone());
+  const h = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.07, 0.003), mat.clone());
+  h.position.x = 0.055;
+  const h2 = h.clone();
+  h2.position.x = -0.055;
+  const v = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.014, 0.003), mat.clone());
+  v.position.y = 0.055;
+  const v2 = v.clone();
+  v2.position.y = -0.055;
+  g.add(ring, dot, h, h2, v, v2);
   return g;
 }
 

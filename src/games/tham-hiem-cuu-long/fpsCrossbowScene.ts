@@ -3,8 +3,15 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { fitModelToHeight, tryLoadGltfScene } from '@/core/assets/fitGltfModel';
 import { playSfx } from '@/features/audio/sfxService';
 import { createCrosshair3d, createHitFlashRig, FpsHud3d } from './fpsHud3d';
+
+const BASE = import.meta.env.BASE_URL;
+const CROSSBOW_MODEL_URLS = [
+  `${BASE}models/tham-hiem-cuu-long/crossbow/crossbow.glb`,
+  `${BASE}models/tham-hiem-cuu-long/crossbow/scene.gltf`,
+] as const;
 
 export interface FpsOption {
   id: string;
@@ -18,8 +25,7 @@ interface Target {
   group: THREE.Group;
   core: THREE.Mesh;
   frame: THREE.Mesh;
-  labelPlane: THREE.Mesh;
-  codePlane: THREE.Mesh;
+  choicePlane: THREE.Mesh;
 }
 
 interface Projectile {
@@ -56,34 +62,67 @@ function makePixelTexture(a: string, b: string): THREE.CanvasTexture {
   return tex;
 }
 
-function makeTextTexture(text: string, bg = '#f8fafc', fg = '#0f172a'): THREE.Texture {
+function wrapCanvasLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+  const words = text.split(/\s+/);
+  const lines: string[] = [];
+  let line = '';
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = test;
+    }
+  }
+  if (line) lines.push(line);
+  return lines.length > 0 ? lines : [text];
+}
+
+const CHOICE_FACE_W = 1.58;
+const CHOICE_FACE_H = 1.48;
+
+/** Nhãn lựa chọn trực tiếp trên mặt bia mục tiêu (không dùng A/B/C). */
+function makeChoiceFaceTexture(label: string, accentHex: number): THREE.Texture {
   const canvas = document.createElement('canvas');
-  canvas.width = 1400;
-  canvas.height = 320;
+  canvas.width = 1024;
+  canvas.height = Math.round(canvas.width * (CHOICE_FACE_H / CHOICE_FACE_W));
   const ctx = canvas.getContext('2d')!;
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = fg;
-  ctx.font = '900 124px Arial, sans-serif';
+  const r = (accentHex >> 16) & 255;
+  const g = (accentHex >> 8) & 255;
+  const b = accentHex & 255;
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+  ctx.beginPath();
+  ctx.roundRect(28, 28, canvas.width - 56, canvas.height - 56, 32);
+  ctx.fill();
+  ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.95)`;
+  ctx.lineWidth = 14;
+  ctx.stroke();
+  ctx.fillStyle = '#f8fafc';
+  ctx.font = 'bold 168px system-ui, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(text.toUpperCase(), canvas.width / 2, canvas.height / 2);
+  const lines = wrapCanvasLines(ctx, label, canvas.width - 80);
+  const lineH = 176;
+  const startY = canvas.height / 2 - ((lines.length - 1) * lineH) / 2;
+  lines.forEach((ln, i) => ctx.fillText(ln, canvas.width / 2, startY + i * lineH));
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
+  tex.minFilter = THREE.LinearFilter;
   return tex;
 }
 
-function makeCodeTexture(code: string): THREE.Texture {
+function makeSkyTexture(): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
-  canvas.width = 256;
+  canvas.width = 4;
   canvas.height = 256;
   const ctx = canvas.getContext('2d')!;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#ffffff';
-  ctx.font = '900 180px Arial, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(code, canvas.width / 2, canvas.height / 2 + 6);
+  const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  grad.addColorStop(0, '#7dd3fc');
+  grad.addColorStop(0.45, '#bae6fd');
+  grad.addColorStop(1, '#e0f2fe');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
   return tex;
@@ -105,7 +144,9 @@ export class FpsCrossbowScene {
   private highlightUntil = 0;
   private highlightColor = 0xffffff;
   private bowGroup = new THREE.Group();
+  private proceduralBow = new THREE.Group();
   private recoilUntil = 0;
+  private readonly skyTexture: THREE.CanvasTexture;
   private trail: THREE.Line;
   private trailUntil = 0;
   private trailFrom = new THREE.Vector3();
@@ -139,21 +180,27 @@ export class FpsCrossbowScene {
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.12;
+    this.renderer.toneMappingExposure = 1.18;
     this.setCappedRenderSize(w, h);
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x87ceeb);
+    this.skyTexture = makeSkyTexture();
+    this.scene.background = this.skyTexture;
+    this.scene.fog = new THREE.Fog(0xc8e6ff, 11, 30);
     this.camera = new THREE.PerspectiveCamera(65, w / h, 0.1, 100);
     this.camera.position.set(0, 1.15, 3.8);
 
-    const ambient = new THREE.AmbientLight(0xffffff, 0.9);
-    const hemi = new THREE.HemisphereLight(0xffffff, 0xb9d5ff, 0.42);
-    const dir = new THREE.DirectionalLight(0xffffff, 0.8);
-    dir.position.set(4, 6, 3);
-    dir.castShadow = true;
-    dir.shadow.mapSize.set(2048, 2048);
-    dir.shadow.bias = -0.0005;
-    this.scene.add(ambient, hemi, dir, this.world);
+    const ambient = new THREE.AmbientLight(0xfff7ed, 0.55);
+    const hemi = new THREE.HemisphereLight(0x93c5fd, 0x4ade80, 0.48);
+    const sun = new THREE.DirectionalLight(0xfff4e0, 1.05);
+    sun.position.set(5, 9, 4);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.bias = -0.0004;
+    sun.shadow.camera.near = 0.5;
+    sun.shadow.camera.far = 40;
+    const fill = new THREE.DirectionalLight(0xbfdbfe, 0.35);
+    fill.position.set(-4, 3, 2);
+    this.scene.add(ambient, hemi, sun, fill, this.world);
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
     this.bloomPass = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.3, 0.45, 0.88);
@@ -162,6 +209,7 @@ export class FpsCrossbowScene {
 
     this.buildMinecraftBackdrop();
     this.buildCrossbow();
+    void this.loadCrossbowModel();
     this.hud = new FpsHud3d();
     this.hud.attachToWorld(this.world);
     this.camera.add(createCrosshair3d());
@@ -223,29 +271,32 @@ export class FpsCrossbowScene {
       const group = new THREE.Group();
       const frame = new THREE.Mesh(
         new THREE.BoxGeometry(1.95, 1.95, 0.5),
-        new THREE.MeshLambertMaterial({ color: 0x78350f })
+        new THREE.MeshStandardMaterial({ color: 0x5c3d1e, roughness: 0.82, metalness: 0.04 })
       );
+      frame.castShadow = true;
+      frame.receiveShadow = true;
       const core = new THREE.Mesh(
         new THREE.BoxGeometry(1.62, 1.62, 0.34),
-        new THREE.MeshLambertMaterial({ color: opt.colorHex })
+        new THREE.MeshStandardMaterial({
+          color: opt.colorHex,
+          roughness: 0.55,
+          metalness: 0.08,
+          emissive: opt.colorHex,
+          emissiveIntensity: 0.12,
+        })
       );
       core.position.z = 0.14;
-      const labelTex = makeTextTexture(opt.label, '#0f172a', '#f8fafc');
-      const labelPlane = new THREE.Mesh(
-        new THREE.PlaneGeometry(3.35, 0.86),
-        new THREE.MeshBasicMaterial({ map: labelTex, transparent: true })
+      core.castShadow = true;
+      const choiceTex = makeChoiceFaceTexture(opt.label, opt.colorHex);
+      const choicePlane = new THREE.Mesh(
+        new THREE.PlaneGeometry(CHOICE_FACE_W, CHOICE_FACE_H),
+        new THREE.MeshBasicMaterial({ map: choiceTex, transparent: true, toneMapped: false })
       );
-      labelPlane.position.set(0, 1.9, 0.1);
-      const codeTex = makeCodeTexture(opt.code);
-      const codePlane = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.95, 0.95),
-        new THREE.MeshBasicMaterial({ map: codeTex, transparent: true })
-      );
-      codePlane.position.set(0, 0.14, 0.34);
-      group.add(frame, core, labelPlane, codePlane);
+      choicePlane.position.set(0, 0.08, 0.36);
+      group.add(frame, core, choicePlane);
       group.position.set(xPositions[idx] ?? 0, 2.0, -8.2);
       this.world.add(group);
-      this.targets.push({ option: opt, group, core, frame, labelPlane, codePlane });
+      this.targets.push({ option: opt, group, core, frame, choicePlane });
     });
   }
 
@@ -281,8 +332,11 @@ export class FpsCrossbowScene {
   markAnswer(answerId: string, ok: boolean): void {
     const target = this.targets.find((t) => t.option.id === answerId);
     if (!target) return;
-    (target.core.material as THREE.MeshLambertMaterial).color.setHex(ok ? 0x22c55e : 0xef4444);
-    (target.frame.material as THREE.MeshLambertMaterial).color.setHex(ok ? 0x166534 : 0x7f1d1d);
+    const coreMat = target.core.material as THREE.MeshStandardMaterial;
+    coreMat.color.setHex(ok ? 0x22c55e : 0xef4444);
+    coreMat.emissive.setHex(ok ? 0x166534 : 0x7f1d1d);
+    coreMat.emissiveIntensity = ok ? 0.35 : 0.28;
+    (target.frame.material as THREE.MeshStandardMaterial).color.setHex(ok ? 0x166534 : 0x7f1d1d);
     this.flash(ok ? 0x22c55e : 0xef4444);
   }
 
@@ -322,6 +376,15 @@ export class FpsCrossbowScene {
     this.projectiles = [];
     this.trail.geometry.dispose();
     (this.trail.material as THREE.Material).dispose();
+    this.skyTexture.dispose();
+    this.proceduralBow.traverse((node) => {
+      if (node instanceof THREE.Mesh) {
+        node.geometry.dispose();
+        const mat = node.material;
+        if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
+        else mat.dispose();
+      }
+    });
     this.renderer.dispose();
     this.mount.querySelector('.fps-canvas')?.remove();
   }
@@ -333,9 +396,10 @@ export class FpsCrossbowScene {
     const mountainTex = makePixelTexture('#94a3b8', '#64748b');
     const ground = new THREE.Mesh(
       new THREE.BoxGeometry(24, 0.8, 24),
-      new THREE.MeshLambertMaterial({ map: grassTex })
+      new THREE.MeshStandardMaterial({ map: grassTex, roughness: 0.92, metalness: 0 })
     );
     ground.position.set(0, -0.4, -6);
+    ground.receiveShadow = true;
     this.world.add(ground);
 
     // Dải sông chạy giữa thung lũng
@@ -399,10 +463,33 @@ export class FpsCrossbowScene {
       new THREE.MeshLambertMaterial({ map: woodTex })
     );
     arm.position.z = -0.25;
-    this.bowGroup.add(body, arm);
+    this.proceduralBow.add(body, arm);
+    this.bowGroup.add(this.proceduralBow);
     this.bowGroup.position.set(0.52, -0.34, -0.72);
     this.camera.add(this.bowGroup);
     this.scene.add(this.camera);
+  }
+
+  private async loadCrossbowModel(): Promise<void> {
+    const root = await tryLoadGltfScene(CROSSBOW_MODEL_URLS);
+    if (!root || this.disposed) return;
+    fitModelToHeight(root, 0.62);
+    root.rotation.set(0, Math.PI * 0.5, 0);
+    root.position.set(0.08, -0.06, -0.12);
+    root.traverse((node) => {
+      if (node instanceof THREE.Mesh) {
+        node.castShadow = false;
+        node.receiveShadow = false;
+        const mats = Array.isArray(node.material) ? node.material : [node.material];
+        for (const m of mats) {
+          if (m instanceof THREE.MeshStandardMaterial) {
+            m.roughness = Math.min(0.9, m.roughness + 0.15);
+          }
+        }
+      }
+    });
+    this.proceduralBow.visible = false;
+    this.bowGroup.add(root);
   }
 
   private onPointerEnter = (e: PointerEvent) => {
@@ -471,7 +558,7 @@ export class FpsCrossbowScene {
     this.targets.forEach((t) => {
       t.core.position.z = 0.14;
       t.frame.rotation.y = 0;
-      t.codePlane.rotation.y = 0;
+      t.choicePlane.rotation.y = 0;
     });
     const recoil = now < this.recoilUntil ? (this.recoilUntil - now) / 110 : 0;
     this.bowGroup.position.z = -0.72 + recoil * 0.12;
@@ -487,9 +574,8 @@ export class FpsCrossbowScene {
       this.scene.fog = new THREE.Fog(this.highlightColor, 7, 23);
       this.bloomPass.strength = 0.55;
     } else {
-      // Sương nền nhẹ để có chiều sâu xa gần
-      this.scene.fog = new THREE.Fog(0xdbeafe, 10, 28);
-      this.bloomPass.strength = 0.3;
+      this.scene.fog = new THREE.Fog(0xc8e6ff, 11, 30);
+      this.bloomPass.strength = 0.28;
     }
     this.clouds.forEach((c, i) => {
       c.position.x += 0.002 + i * 0.00008;
@@ -508,11 +594,15 @@ export class FpsCrossbowScene {
 
   private clearTargets(): void {
     this.targets.forEach((t) => {
-      [t.core, t.frame, t.labelPlane, t.codePlane].forEach((m) => {
+      [t.core, t.frame, t.choicePlane].forEach((m) => {
         m.geometry.dispose();
         const mat = m.material;
         if (Array.isArray(mat)) mat.forEach((mm) => mm.dispose());
-        else mat.dispose();
+        else {
+          const basic = mat as THREE.MeshBasicMaterial;
+          if (basic.map) basic.map.dispose();
+          mat.dispose();
+        }
       });
       t.group.removeFromParent();
     });

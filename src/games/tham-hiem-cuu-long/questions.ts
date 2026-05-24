@@ -1,3 +1,5 @@
+import { ITEMS_SUPPLEMENT } from './itemsSupplement';
+
 export interface ClassifyItem {
   id: string;
   label: string;
@@ -42,6 +44,7 @@ export const ITEMS: ClassifyItem[] = [
   { id: '28', label: 'Rau đay', emoji: '🥗', bin: 'thuc-vat' },
   { id: '29', label: 'Sét đánh', emoji: '⚡', bin: 'hien-tuong' },
   { id: '30', label: 'Ếch đồng', emoji: '🐸', bin: 'dong-vat' },
+  ...ITEMS_SUPPLEMENT,
 ];
 
 export function itemCount(level: 1 | 2 | 3): number {

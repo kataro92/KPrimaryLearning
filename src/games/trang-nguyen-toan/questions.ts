@@ -1,8 +1,7 @@
-export interface McqQuestion {
-  prompt: string;
-  choices: string[];
-  correctIndex: number;
-}
+import { MCQ_BANK, type McqQuestion } from './mcqBank';
+import { MCQ_BANK_EXTRA } from './mcqBankExtra';
+
+export type { McqQuestion };
 
 function randInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -38,6 +37,12 @@ function buildMcq(prompt: string, answer: number, extraWrong: number[] = []): Mc
 export function generateMcqQuestions(count: number, level: 1 | 2 | 3): McqQuestion[] {
   const qs: McqQuestion[] = [];
   const seen = new Set<string>();
+  for (const q of shuffle([...MCQ_BANK, ...MCQ_BANK_EXTRA])) {
+    if (seen.has(q.prompt)) continue;
+    seen.add(q.prompt);
+    qs.push(q);
+    if (qs.length >= count) return qs;
+  }
   let attempts = 0;
   while (qs.length < count && attempts < count * 24) {
     const q = generateOne(level);

@@ -1,3 +1,6 @@
+import { VOCAB_SUPPLEMENT } from './vocabSupplement';
+import { VOCAB_SUPPLEMENT_EXTRA } from './vocabSupplementExtra';
+
 export interface VocabPair {
   en: string;
   vi: string;
@@ -43,6 +46,8 @@ export const VOCAB_PAIRS: VocabPair[] = [
   { en: 'fraction', vi: 'phân số', emoji: '➗', level: 3 },
   { en: 'protect', vi: 'bảo vệ', emoji: '🛡️', level: 3 },
   { en: 'dolphin', vi: 'cá heo', emoji: '🐬', level: 3 },
+  ...VOCAB_SUPPLEMENT,
+  ...VOCAB_SUPPLEMENT_EXTRA,
 ];
 
 export function pairCount(level: 1 | 2 | 3): number {

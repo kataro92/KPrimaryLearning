@@ -1,6 +1,6 @@
 # Current System State
 
-Last updated: 2026-05-23
+Last updated: 2026-05-24
 
 ## Product Snapshot
 
@@ -15,7 +15,7 @@ Last updated: 2026-05-23
 - Game Văn Miếu: hero rùa 3D glTF da xanh (texture PBR Turtle.001, bóng đổ) tiến về bia khi trả lời đúng (fallback procedural xanh).
 - Game Trống Đồng: hero 3D glTF (Sketchfab CC BY) + fallback procedural; đáp án dạng bia đá (thống nhất Trạng Nguyên); trả lời đúng có tiếng đánh trống + hiệu ứng nền rực rỡ, trống quay mặt về người chơi, hoa văn sáng lên.
 - Game Thăng Long: 100 đồ vật, mỗi lượt 10–14 câu; 100 mẫu 3D riêng + vật liệu ảnh (Poly Haven CC0 + họa tiết); tên không gợi ý dạng hình; chọn đáp án (không kéo-thả).
-- Game Cửu Long (FPS nỏ): toàn màn hình; câu hỏi cố định trên bảng gỗ phía trên mục tiêu A/B/C (không theo camera); timer/phản hồi/chấm tiến độ gắn camera; nỏ vẫn ngắm/bắn tự do; đáp án trên bảng mục tiêu tĩnh; các game DOM khác: câu hỏi cố định phía trên lựa chọn (không animation).
+- Game Cửu Long (FPS nỏ): toàn màn hình; câu hỏi cố định trên bảng gỗ lớn (cao gấp đôi) dưới hàng mục tiêu; nhãn lựa chọn (Động vật / Thực vật / Hiện tượng) trực tiếp trên mặt bia — không còn A/B/C; HUD timer/tiến độ cố định trong scene; nỏ glTF Minecraft (Sketchfab CC BY, `models/tham-hiem-cuu-long/crossbow/`, fallback voxel); ngắm/bắn tự do; các game DOM khác: câu hỏi cố định phía trên lựa chọn (không animation).
 - Có popup "Nhân vật" hiển thị tổng quan lượt chơi, độ chính xác, điểm và thống kê theo từng game (lọc theo profile đang chọn), kèm hiệp sĩ 3D (giáp/trang bị tăng theo chỉ số).
 - Hệ điểm 0-10 (làm tròn 0.5), sao, xếp loại và mở khóa danh hiệu 1 -> 2 -> 3.
 - Quy tắc mở khóa hiện hành: đạt `score >= 7` sẽ mở bậc kế tiếp (nếu còn).
@@ -40,6 +40,7 @@ Last updated: 2026-05-23
   - GitHub Actions tự động build và publish lên GitHub Pages khi push `main`.
   - Base path production: `/KPrimaryLearning/`.
 - Build status: `npm run build` pass (có warning chunk size).
+- Ngân hàng câu hỏi lớp 4 (HK1/HK2): **55 nguồn đề** (2020–2025) trong `docs/content/EXAM_SOURCES_GRADE4.md` + `scripts/exam-sources-grade4.json`; mỗi game có ngân hàng gốc + `*Supplement*` + `*Extra*` (~300+ mục/game); sinh lại: `npm run generate:questions`.
 
 ## Known Gaps
 

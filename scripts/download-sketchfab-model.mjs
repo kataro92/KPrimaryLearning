@@ -51,6 +51,12 @@ const MODELS = [
     outFile: 'fishing-boat.glb',
     name: 'Fishing Boat',
   },
+  {
+    uid: 'c071665dc11846ffb69665411cbad428',
+    outDir: join(ROOT, 'public/models/tham-hiem-cuu-long/crossbow'),
+    outFile: 'crossbow.glb',
+    name: 'Crossbow (Minecraft) — Kosha_',
+  },
 ];
 
 const token = process.env.SKETCHFAB_API_TOKEN?.trim();

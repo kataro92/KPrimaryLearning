@@ -1,7 +1,7 @@
-export interface PassageRound {
-  passage: string;
-  questions: { prompt: string; choices: string[]; correctIndex: number }[];
-}
+import { SCIENCE_SUPPLEMENT, type PassageRound } from './scienceSupplement';
+import { SCIENCE_SUPPLEMENT_EXTRA } from './scienceSupplementExtra';
+
+export type { PassageRound };
 
 const ROUNDS: PassageRound[] = [
   {
@@ -119,6 +119,8 @@ const ROUNDS: PassageRound[] = [
       },
     ],
   },
+  ...SCIENCE_SUPPLEMENT,
+  ...SCIENCE_SUPPLEMENT_EXTRA,
 ];
 
 function shuffle<T>(arr: T[]): T[] {

@@ -2,6 +2,9 @@ import type { SpellingChallenge } from './challengeTypes';
 import { LEVEL1_BANK } from './banks/level1Bank';
 import { LEVEL2_BANK } from './banks/level2Bank';
 import { LEVEL3_BANK } from './banks/level3Bank';
+import { LEVEL1_SUPPLEMENT } from './banks/level1Supplement';
+import { LEVEL2_SUPPLEMENT } from './banks/level2Supplement';
+import { LEVEL3_SUPPLEMENT } from './banks/level3Supplement';
 
 export type { SpellingChallenge } from './challengeTypes';
 
@@ -14,9 +17,9 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-const LEVEL1 = LEVEL1_BANK;
-const LEVEL2 = LEVEL2_BANK;
-const LEVEL3 = LEVEL3_BANK;
+const LEVEL1 = [...LEVEL1_BANK, ...LEVEL1_SUPPLEMENT];
+const LEVEL2 = [...LEVEL2_BANK, ...LEVEL2_SUPPLEMENT];
+const LEVEL3 = [...LEVEL3_BANK, ...LEVEL3_SUPPLEMENT];
 
 export function generateChallenges(count: number, level: 1 | 2 | 3): SpellingChallenge[] {
   const bank = level === 1 ? LEVEL1 : level === 2 ? LEVEL2 : LEVEL3;
