@@ -4,16 +4,17 @@ export { ANSWER_FEEDBACK_MS };
 
 export const WAIT_NEXT_HINT = 'Đã trả lời, chờ câu tiếp theo…';
 
-/** Chờ phản hồi / hoạt hoạ rồi sang câu tiếp hoặc kết thúc phiên */
+/** Chờ phản hồi / hoạt hoạ rồi sang câu tiếp hoặc kết thúc phiên. Trả về hàm hủy timeout. */
 export function scheduleAfterAnswer(
   isLast: boolean,
   onNext: () => void,
   onDone: () => void | Promise<void>
-): void {
-  setTimeout(() => {
+): () => void {
+  const id = setTimeout(() => {
     if (isLast) void Promise.resolve(onDone());
     else onNext();
   }, ANSWER_FEEDBACK_MS);
+  return () => clearTimeout(id);
 }
 
 export function setRoundHint(root: ParentNode, selector: string, text: string): void {

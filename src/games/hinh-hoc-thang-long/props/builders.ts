@@ -1,6 +1,9 @@
 import * as THREE from 'three';
+import type { ObjectShape } from '../objectBank';
+import { getObjectItem, resolveBuilderId } from '../objectResolver';
 import { C, MatBag } from './materials';
 import { box, cone, cyl, disposeGroup, fitProp, mesh } from './helpers';
+import { orientPropForShape } from './orientProp';
 import { applyObjectSkins } from './skinApplier';
 
 type BuildFn = (g: THREE.Group, m: MatBag) => void;
@@ -666,14 +669,36 @@ const BUILDERS: Record<string, BuildFn> = {
   o091, o092, o093, o094, o095, o096, o097, o098, o099, o100,
 };
 
-export function buildObjectProp(objectId: string): THREE.Group {
+export function resolvePropBuilderId(
+  objectId: string,
+  label?: string,
+  shape?: ObjectShape
+): string {
+  const item = getObjectItem(objectId);
+  return resolveBuilderId(
+    objectId,
+    label ?? item?.label ?? '',
+    shape ?? item?.shape ?? 'square'
+  );
+}
+
+export function buildObjectProp(
+  objectId: string,
+  label?: string,
+  shape?: ObjectShape
+): THREE.Group {
+  const item = getObjectItem(objectId);
+  const resolvedShape = shape ?? item?.shape ?? 'square';
+  const builderId = resolvePropBuilderId(objectId, label, resolvedShape);
   const g = new THREE.Group();
   const m = new MatBag();
-  const fn = BUILDERS[objectId] ?? BUILDERS.o001;
+  const fn = BUILDERS[builderId] ?? BUILDERS.o001;
   fn(g, m);
-  applyObjectSkins(g, objectId);
+  applyObjectSkins(g, builderId);
   fitProp(g);
+  orientPropForShape(g, resolvedShape);
   (g as THREE.Group & { __matBag?: MatBag }).__matBag = m;
+  (g as THREE.Group & { __builderId?: string }).__builderId = builderId;
   return g;
 }
 

@@ -8,7 +8,7 @@ import { tickTimerSfx } from '@/features/audio/sfxService';
 import { TimerEngine } from '@/core/engine/timerEngine';
 import { scheduleAfterAnswer } from '@/features/gameplay/roundUi';
 import { gameFeedbackLine } from '@/features/speech/interactiveText';
-import { speakVietnamese } from '@/features/speech/speechService';
+import { cancelSpeech, speakVietnamese } from '@/features/speech/speechService';
 import { playSfx } from '@/features/audio/sfxService';
 import { createGameStage } from '@/ui/gameStage/createGameStage';
 import { BINS, pickItems, timePerItemMs, type ClassifyItem } from './questions';
@@ -50,10 +50,8 @@ export function renderThamHiemCuuLongGame(
 
   const fpsMount = heroHost.querySelector<HTMLElement>('.fps-wrap')!;
   const backBtn = fpsMount.querySelector<HTMLElement>('#fps-back')!;
-  backBtn.addEventListener('click', () => {
-    sceneHost.resetTheme();
-    useAppStore.setScreen('home');
-  });
+  let sessionActive = true;
+  let cancelAfterAnswer: (() => void) | null = null;
 
   stage.feedbackEl.classList.add('fps-a11y-feedback');
   stage.root.querySelector('.game-play__qa-pane')?.appendChild(stage.feedbackEl);
@@ -65,6 +63,7 @@ export function renderThamHiemCuuLongGame(
   focusFps();
 
   const pushHudFeedback = (text: string, kind: 'ok' | 'bad' | 'neutral' = 'neutral') => {
+    if (!sessionActive) return;
     fpsScene.setHudFeedback(text, kind);
   };
 
@@ -91,7 +90,28 @@ export function renderThamHiemCuuLongGame(
   const optionCodes: Array<'A' | 'B' | 'C'> = ['A', 'B', 'C'];
   let submitAnswer: ((binId: string) => Promise<void>) | null = null;
 
+  const stopSession = () => {
+    if (!sessionActive) return;
+    sessionActive = false;
+    cancelAfterAnswer?.();
+    cancelAfterAnswer = null;
+    fpsMount.removeEventListener('click', onShootClick);
+    window.removeEventListener('keydown', onKeyDown);
+    timer.stop();
+    cancelSpeech();
+    fpsScene.dispose();
+  };
+
+  const exitToHome = () => {
+    stopSession();
+    sceneHost.resetTheme();
+    useAppStore.setScreen('home');
+  };
+
+  backBtn.addEventListener('click', exitToHome);
+
   const showItem = (item: ClassifyItem) => {
+    if (!sessionActive) return;
     roundLocked = false;
     currentItem = item;
     currentOptions = [...BINS]
@@ -109,7 +129,7 @@ export function renderThamHiemCuuLongGame(
     speakVietnamese(`Phân loại: ${item.label}`);
 
     submitAnswer = async (binId: string) => {
-      if (!currentItem || roundLocked) return;
+      if (!sessionActive || !currentItem || roundLocked) return;
       roundLocked = true;
       timer.stop();
       const ok = currentItem.bin === binId;
@@ -118,14 +138,19 @@ export function renderThamHiemCuuLongGame(
       stage.setGameFeedback(ok ? 'correct' : 'wrong');
       index++;
       const last = index >= items.length;
-      scheduleAfterAnswer(
+      cancelAfterAnswer?.();
+      cancelAfterAnswer = scheduleAfterAnswer(
         last,
         () => showItem(items[index]),
-        () => tracker.finish().then(onDone)
+        () => {
+          if (!sessionActive) return;
+          void tracker.finish().then(onDone);
+        }
       );
     };
 
     currentShoot = () => {
+      if (!sessionActive) return;
       const hitId = fpsScene.shoot();
       if (hitId) {
         fpsScene.flashHit(true);
@@ -143,21 +168,26 @@ export function renderThamHiemCuuLongGame(
     timer.start(
       perMs,
       (remaining) => {
+        if (!sessionActive) return;
         fpsScene.setHudTimer(remaining / perMs);
         tickTimerSfx(remaining / perMs, timerSfx);
       },
       () => {
-        if (roundLocked || !currentItem) return;
+        if (!sessionActive || roundLocked || !currentItem) return;
         roundLocked = true;
         timer.stop();
         stage.setGameFeedback('timeout');
         tracker.recordRound(false, Date.now() - questionStarted);
         index++;
         const last = index >= items.length;
-        scheduleAfterAnswer(
+        cancelAfterAnswer?.();
+        cancelAfterAnswer = scheduleAfterAnswer(
           last,
           () => showItem(items[index]),
-          () => tracker.finish().then(onDone)
+          () => {
+            if (!sessionActive) return;
+            void tracker.finish().then(onDone);
+          }
         );
       }
     );
@@ -166,7 +196,7 @@ export function renderThamHiemCuuLongGame(
   let currentShoot: (() => void) | null = null;
 
   const onKeyDown = (e: KeyboardEvent) => {
-    if (roundLocked) return;
+    if (!sessionActive || roundLocked) return;
     if (e.key === ' ' || e.key === 'Enter') {
       e.preventDefault();
       currentShoot?.();
@@ -192,7 +222,8 @@ export function renderThamHiemCuuLongGame(
   };
 
   const onShootClick = () => {
-    if (!roundLocked) currentShoot?.();
+    if (!sessionActive || roundLocked) return;
+    currentShoot?.();
   };
   fpsMount.addEventListener('click', onShootClick);
   window.addEventListener('keydown', onKeyDown);
@@ -200,10 +231,7 @@ export function renderThamHiemCuuLongGame(
   pushHudFeedback(gameFeedbackLine(gameId, 'start'), 'neutral');
   showItem(items[0]);
   return () => {
-    fpsMount.removeEventListener('click', onShootClick);
-    window.removeEventListener('keydown', onKeyDown);
-    timer.stop();
-    fpsScene.dispose();
+    stopSession();
     stage.cleanup();
   };
 }

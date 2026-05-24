@@ -458,46 +458,81 @@ const CHTR_EXTRA = [
 CHTR_WORDS.push(...CHTR_EXTRA);
 DGR_WORDS.push(...LN_WORDS);
 
-const SPELL_CTX_EXTRA = [
-  ['Em viết chữ ', '.'],
-  ['Câu văn có từ ', ' rất hay.'],
-  ['Bạn Nam đọc to từ ', '.'],
-  ['Trong bài tập có từ ', '.'],
-  ['Cô giáo hướng dẫn viết ', '.'],
+const SPELL_CTX_UNIVERSAL = [
+  ['Cô giáo đọc từ ', ' cho lớp nghe.'],
+  ['Em tập viết chữ ', '.'],
+  ['Trong bài có từ ', '.'],
+  ['Các bạn đọc to từ ', '.'],
   ['Sách giáo khoa có từ ', '.'],
-  ['Em chọn từ ', ' cho đúng.'],
-  ['Đoạn thơ có chữ ', ' rất đẹp.'],
+  ['Cô hướng dẫn viết từ ', '.'],
+  ['Em chọn đúng từ ', '.'],
+  ['Đoạn văn có chữ ', ' rất hay.'],
 ];
 
-function buildSpellingBank(words, hint, contexts, target = 150) {
+function parseSpellingBankFile(relPath) {
+  const text = readFileSync(join(ROOT, relPath), 'utf8');
+  const items = [];
+  const re =
+    /before:\s*'((?:\\'|[^'])*)',\s*after:\s*'((?:\\'|[^'])*)',\s*answer:\s*'((?:\\'|[^'])*)',\s*distractors:\s*\[([^\]]*)\]/g;
+  let m;
+  while ((m = re.exec(text))) {
+    const distractors = [...m[4].matchAll(/'((?:\\'|[^'])*)'/g)].map((x) => x[1].replace(/\\'/g, "'"));
+    items.push({
+      before: m[1].replace(/\\'/g, "'"),
+      after: m[2].replace(/\\'/g, "'"),
+      answer: m[3].replace(/\\'/g, "'"),
+      distractors,
+    });
+  }
+  return items;
+}
+
+function fullSentence(before, answer, after) {
+  return `${before}${answer}${after}`.replace(/\s+/g, ' ').trim();
+}
+
+/** Loại khung câu gắn sai nghĩa (sinh tự động cũ) */
+function isValidSpellingSentence(before, answer, after) {
+  const sent = fullSentence(before, answer, after);
+  if (/Bạn Nam học rất .+ \./.test(sent) && !['chăm', 'chăm chỉ', 'siêng', 'siêng năng'].includes(answer)) return false;
+  if (/Chúng em đến .+ học\./.test(sent) && answer !== 'trường') return false;
+  if (/Trên bầu trời có .+ \./.test(sent) && !['sao', 'sao băng', 'sao chổi', 'mây', 'sương mù'].includes(answer)) return false;
+  if (/Bé Lan rất .+ \./.test(sent) && !['xinh', 'xinh đẹp', 'ngoan'].includes(answer)) return false;
+  if (/Hôm nay trời .+ quang\./.test(sent)) return false;
+  if (/Chúng em .+ ơn thầy/.test(sent) && answer !== 'biết') return false;
+  if (/Việc này rất .+ \./.test(sent) && !['dễ', 'khó', 'hay', 'đẹp'].includes(answer)) return false;
+  if (sent.includes('  ')) return false;
+  return true;
+}
+
+function buildSpellingSupplement(words, hint, mainBankRelPath, target = 150) {
+  const main = parseSpellingBankFile(mainBankRelPath);
+  const mainKeys = new Set(main.map((c) => `${c.before}|${c.answer}|${c.after}`));
+  const ctxByAnswer = new Map(main.map((c) => [c.answer, [c.before, c.after]]));
   const out = [];
-  const ctxSamples = [...(contexts.length ? contexts : [['', '.']]), ...SPELL_CTX_EXTRA];
+  let u = 0;
   let i = 0;
-  while (out.length < target) {
+  while (out.length < target && i < words.length * 4) {
     const [answer, ...distractors] = words[i % words.length];
-    const [before, after] = ctxSamples[out.length % ctxSamples.length];
-    const key = `${before}|${answer}|${after}`;
-    if (!out.some((o) => `${o.before}|${o.answer}|${o.after}` === key)) {
-      out.push({ before, after, answer, distractors: distractors.slice(0, 3), hint });
-    }
     i++;
-    if (i > target * words.length * 2) break;
+    let before;
+    let after;
+    if (ctxByAnswer.has(answer) && !out.some((o) => o.answer === answer)) {
+      [before, after] = ctxByAnswer.get(answer);
+    } else {
+      [before, after] = SPELL_CTX_UNIVERSAL[u % SPELL_CTX_UNIVERSAL.length];
+      u++;
+    }
+    if (!isValidSpellingSentence(before, answer, after)) {
+      [before, after] = SPELL_CTX_UNIVERSAL[u % SPELL_CTX_UNIVERSAL.length];
+      u++;
+    }
+    const key = `${before}|${answer}|${after}`;
+    if (mainKeys.has(key) || out.some((o) => `${o.before}|${o.answer}|${o.after}` === key)) continue;
+    out.push({ before, after, answer, distractors: distractors.slice(0, 3), hint });
   }
   return out;
 }
-
-const SX_CTX = SX_WORDS.map((w, i) => [
-  i % 3 === 0 ? 'Trên bầu trời có ' : i % 3 === 1 ? 'Bé Lan rất ' : 'Hôm nay trời ',
-  i % 3 === 0 ? '.' : i % 3 === 1 ? '.' : ' quang.',
-]);
-const CHTR_CTX = CHTR_WORDS.map((_, i) => [
-  i % 2 === 0 ? 'Bạn Nam học rất ' : 'Chúng em đến ',
-  i % 2 === 0 ? '.' : ' học.',
-]);
-const DGR_CTX = DGR_WORDS.map((_, i) => [
-  i % 2 === 0 ? 'Chúng em ' : 'Việc này rất ',
-  i % 2 === 0 ? ' ơn thầy cô.' : '.',
-]);
 
 // ——— Tiếng Anh ———
 const EN_VI_PAIRS = [
@@ -1122,27 +1157,6 @@ writeTs(
     .map((q) => `  { text: '${esc(q.text)}', answer: ${q.answer} },`)
     .join('\n')}\n];`
 );
-
-const l1 = buildSpellingBank(SX_WORDS, 's / x', SX_CTX, 200);
-const l2 = buildSpellingBank(CHTR_WORDS, 'ch / tr', CHTR_CTX, 200);
-const l3 = buildSpellingBank(DGR_WORDS, 'd / gi / r / đ', DGR_CTX, 200);
-
-for (const [level, bank, hint] of [
-  ['1', l1, 's / x'],
-  ['2', l2, 'ch / tr'],
-  ['3', l3, 'd / gi / r / đ'],
-]) {
-  writeTs(
-    `src/games/net-chu-rong-tien/banks/level${level}Supplement.ts`,
-    "import type { SpellingChallenge } from '../challengeTypes';",
-    `/** Bổ sung HK1/HK2 — ${bank.length} câu (${hint}) */\nexport const LEVEL${level}_SUPPLEMENT: SpellingChallenge[] = [\n${bank
-      .map(
-        (c) =>
-          `  { before: '${esc(c.before)}', after: '${esc(c.after)}', answer: '${esc(c.answer)}', distractors: [${c.distractors.map((d) => `'${esc(d)}'`).join(', ')}], hint: '${hint}' },`
-      )
-      .join('\n')}\n];`
-  );
-}
 
 const vocabLines = EN_VI_PAIRS.map(([en, vi, emoji], i) => {
   const level = i < 50 ? 1 : i < 120 ? 2 : 3;

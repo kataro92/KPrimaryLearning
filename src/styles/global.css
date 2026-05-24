@@ -161,17 +161,20 @@ h1 {
 .game-card__art {
   flex: 0 0 auto;
   width: 100%;
-  min-height: 108px;
+  min-height: 118px;
   border-radius: 0;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, #e0f2fe 0%, #f8fafc 100%);
+  background: #f1f5f9;
 }
 
 .game-card--tile .game-card__art .game-sprite__svg--card {
-  max-height: 88px;
+  width: 100%;
+  max-height: none;
+  min-height: 118px;
+  object-fit: cover;
 }
 
 .game-card__body {
@@ -1054,11 +1057,12 @@ h1 {
 }
 
 .game-sprite__svg--thumb {
-  max-height: 120px;
+  max-height: 140px;
+  border-radius: 12px;
 }
 
 .game-sprite__svg--card {
-  max-height: 64px;
+  display: block;
 }
 
 .game-play__arena {

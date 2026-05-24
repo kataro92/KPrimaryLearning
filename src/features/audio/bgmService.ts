@@ -4,7 +4,6 @@ import { resumeAudioContext } from './audioContext';
 
 export type BgmGameId =
   | 'trang-nguyen-toan'
-  | 'net-chu-rong-tien'
   | 'tu-vung-hoi-an'
   | 'trong-dong'
   | 'hinh-hoc-thang-long'
@@ -26,11 +25,6 @@ const TRACKS: Record<BgmGameId, BgmTrack> = {
     file: 'trang-nguyen-toan.ogg',
     title: 'Mech Street Fighters',
     volume: 0.32,
-  },
-  'net-chu-rong-tien': {
-    file: 'net-chu-rong-tien.ogg',
-    title: 'Arcade Adventures',
-    volume: 0.3,
   },
   'tu-vung-hoi-an': {
     file: 'tu-vung-hoi-an.ogg',

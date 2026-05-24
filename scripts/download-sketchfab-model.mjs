@@ -57,6 +57,18 @@ const MODELS = [
     outFile: 'crossbow.glb',
     name: 'Crossbow (Minecraft) — Kosha_',
   },
+  {
+    uid: 'a2274ddb30c245e4b00c931ba3dff81b',
+    outDir: join(ROOT, 'public/models/hinh-hoc-thang-long/props'),
+    outFile: 'o023.glb',
+    name: 'Low-poly dice (xúc xắc) — CC Attribution',
+  },
+  {
+    uid: '11a147c2811b435292792505745714a8',
+    outDir: join(ROOT, 'public/models/hinh-hoc-thang-long/props'),
+    outFile: 'o072.glb',
+    name: 'Low Poly Pizza Slice — CC Attribution',
+  },
 ];
 
 const token = process.env.SKETCHFAB_API_TOKEN?.trim();

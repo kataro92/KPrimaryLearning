@@ -1,6 +1,9 @@
 import * as THREE from 'three';
+import { disposeObject3D } from '@/core/assets/disposeObject3D';
 import type { ObjectShape } from './objectBank';
-import { buildObjectProp, disposeObjectProp } from './props/builders';
+import { getObjectItem } from './objectResolver';
+import { buildObjectProp, disposeObjectProp, resolvePropBuilderId } from './props/builders';
+import { clonePropGltf, loadPropGltfTemplate } from './props/gltfProps';
 import { applyObjectSkins } from './props/skinApplier';
 import { preloadPropTextures } from './props/textureLibrary';
 
@@ -11,7 +14,7 @@ const SHAPE_YAW: Record<ObjectShape, number> = {
   triangle: -Math.PI / 2,
 };
 
-/** Minh họa 3D riêng cho từng đồ vật (100 mẫu) — cột trái. */
+/** Minh họa 3D riêng cho từng đồ vật — cột trái. */
 export class ShapePreviewScene {
   private readonly renderer: THREE.WebGLRenderer;
   private readonly scene: THREE.Scene;
@@ -26,7 +29,9 @@ export class ShapePreviewScene {
   private rafId = 0;
   private disposed = false;
   private currentObjectId = '';
+  private currentShape: ObjectShape = 'square';
   private spinOffsetY = 0;
+  private loadGeneration = 0;
 
   constructor(mount: HTMLElement) {
     this.mount = mount;
@@ -88,23 +93,49 @@ export class ShapePreviewScene {
   setObject(objectId: string, shape: ObjectShape): void {
     if (this.disposed) return;
     if (objectId === this.currentObjectId && this.hasPropMesh()) return;
+
+    const item = getObjectItem(objectId);
+    const label = item?.label ?? '';
+    const builderId = resolvePropBuilderId(objectId, label, shape);
+
     this.currentObjectId = objectId;
+    this.currentShape = shape;
     this.spinOffsetY = SHAPE_YAW[shape];
     this.clearPivot();
-    const prop = buildObjectProp(objectId);
-    prop.rotation.y = this.spinOffsetY;
-    this.pivot.add(prop);
+
+    const procedural = buildObjectProp(objectId, label, shape);
+    procedural.rotation.y = this.spinOffsetY;
+    this.pivot.add(procedural);
     this.rim.intensity = 0.75 + (objectId.charCodeAt(1) % 5) * 0.05;
     this.propLight.intensity = 1.15 + (objectId.charCodeAt(2) % 4) * 0.08;
+
+    const gen = ++this.loadGeneration;
+    void loadPropGltfTemplate(builderId).then((template) => {
+      if (this.disposed || gen !== this.loadGeneration || this.currentObjectId !== objectId) return;
+      if (!template) return;
+      this.clearPivot();
+      const model = clonePropGltf(template, shape);
+      model.rotation.y = this.spinOffsetY;
+      this.pivot.add(model);
+      void preloadPropTextures().then(() => {
+        if (!this.disposed && this.currentObjectId === objectId) {
+          applyObjectSkins(model, builderId);
+        }
+      });
+    });
   }
 
   private refreshCurrentSkins(): void {
     const prop = this.pivot.children.find((c): c is THREE.Group => c instanceof THREE.Group);
-    if (prop && this.currentObjectId) applyObjectSkins(prop, this.currentObjectId);
+    if (!prop || !this.currentObjectId) return;
+    const builderId = resolvePropBuilderId(this.currentObjectId, getObjectItem(this.currentObjectId)?.label, this.currentShape);
+    applyObjectSkins(prop, builderId);
   }
 
   dispose(): void {
+    if (this.disposed) return;
     this.disposed = true;
+    this.loadGeneration++;
     cancelAnimationFrame(this.rafId);
     window.removeEventListener('resize', this.onResize);
     this.clearPivot();
@@ -123,7 +154,11 @@ export class ShapePreviewScene {
     for (const child of toRemove) {
       if (child === this.propLight) continue;
       this.pivot.remove(child);
-      if (child instanceof THREE.Group) disposeObjectProp(child);
+      if (child instanceof THREE.Group) {
+        const bag = child as THREE.Group & { __matBag?: unknown };
+        if (bag.__matBag) disposeObjectProp(child);
+        else disposeObject3D(child);
+      }
     }
   }
 
@@ -141,6 +176,8 @@ export class ShapePreviewScene {
     this.pivot.rotation.y = this.spinOffsetY + t * 0.72;
     this.pivot.position.y = 0.78 + Math.sin(t * 2) * 0.035;
     this.renderer.render(this.scene, this.camera);
-    this.rafId = requestAnimationFrame(this.loop);
+    if (!this.disposed) {
+      this.rafId = requestAnimationFrame(this.loop);
+    }
   };
 }

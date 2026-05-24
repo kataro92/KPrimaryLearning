@@ -1,7 +1,6 @@
 import './styles/global.css';
 import './styles/clay.css';
 import './styles/clay-game.css';
-import './styles/clay-themes.css';
 import { App } from './app/App';
 
 const mount = document.querySelector<HTMLElement>('#app');

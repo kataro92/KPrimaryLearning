@@ -7,12 +7,6 @@ const LINES: Record<string, Record<FeedbackKind, string[]>> = {
     timeout: ['Hết giờ rồi, thử câu sau nhé!', 'Cố thêm chút, con làm được ngay.'],
     start: ['Chạm bia đá đúng để ghi điểm Trạng Nguyên!'],
   },
-  'net-chu-rong-tien': {
-    correct: ['Nét chữ đẹp lắm, con làm rất khéo.', 'Rồng Tiên khen con viết ngày càng chuẩn.', 'Giỏi quá! Thêm một câu đúng rồi.'],
-    wrong: ['Thử lại chữ này nhé, con sắp đúng rồi.', 'Không sao, mình thử lại nhé!', 'Sai một chút thôi, câu sau sẽ tốt hơn.'],
-    timeout: ['Hết giờ rồi, thử câu sau nhé!', 'Cố thêm nhé, con đang tiến bộ.'],
-    start: ['Gõ từng khối chữ — Mario chạy trên đường gạch giống luyện gõ máy!'],
-  },
   'tu-vung-hoi-an': {
     correct: ['Đèn lồng sáng lên vì con ghép đúng!', 'Tuyệt lắm! Con vừa tìm đúng từ mới.', 'Đi tiếp nào, Hội An còn nhiều thử thách.'],
     wrong: ['Chưa khớp, thử cặp khác nhé!', 'Không sao, mình thử lại nhé!', 'Gần đúng rồi, con bình tĩnh làm lại.'],
@@ -47,7 +41,7 @@ const LINES: Record<string, Record<FeedbackKind, string[]>> = {
     correct: ['Phân loại chuẩn quá, nhà thám hiểm nhí ơi!', 'Con vừa khám phá đúng một vùng mới.', 'Xuồng đầy hàng rồi!'],
     wrong: ['Chưa đúng loại, thử món tiếp theo!', 'Không sao, mình thử lại nhé!', 'Gần đúng rồi, con bình tĩnh làm lại.'],
     timeout: ['Hết giờ rồi, thử câu sau nhé!', 'Cố thêm chút nữa nhé!'],
-    start: ['Cầm nỏ, ngắm thật chuẩn và bắn vào đáp án đúng!'],
+    start: ['Ngắm thật chuẩn và bấm vào đáp án đúng!'],
   },
   'tinh-nham-trang-ti': {
     correct: ['Nhẩm nhanh quá! Trạng Tí cũng bất ngờ.', 'Đúng rồi! Con vừa vượt thêm một mốc.', 'Chuỗi 5! Trạng Tí xuất chúng!'],

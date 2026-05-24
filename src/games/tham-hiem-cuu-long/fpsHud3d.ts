@@ -320,18 +320,12 @@ export class FpsHud3d {
 export function createCrosshair3d(): THREE.Group {
   const g = new THREE.Group();
   g.position.set(0, 0, -0.55);
-  const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, toneMapped: false });
-  const ring = new THREE.Mesh(new THREE.RingGeometry(0.028, 0.042, 24), mat);
-  const dot = new THREE.Mesh(new THREE.CircleGeometry(0.006, 12), mat.clone());
-  const h = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.07, 0.003), mat.clone());
-  h.position.x = 0.055;
-  const h2 = h.clone();
-  h2.position.x = -0.055;
-  const v = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.014, 0.003), mat.clone());
-  v.position.y = 0.055;
-  const v2 = v.clone();
-  v2.position.y = -0.055;
-  g.add(ring, dot, h, h2, v, v2);
+  const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.92, toneMapped: false });
+  const arm = 0.018;
+  const thick = 0.0014;
+  const h = new THREE.Mesh(new THREE.BoxGeometry(arm * 2, thick, thick), mat);
+  const v = new THREE.Mesh(new THREE.BoxGeometry(thick, arm * 2, thick), mat.clone());
+  g.add(h, v);
   return g;
 }
 

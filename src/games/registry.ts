@@ -2,7 +2,6 @@ import type { SceneHost } from '@/core/rendering/sceneHost';
 import { renderCuuChuongGame } from './cuu-chuong-van-mieu/play';
 import { renderDocHieuSuVietGame } from './doc-hieu-su-viet/play';
 import { renderHinhHocThangLongGame } from './hinh-hoc-thang-long/play';
-import { renderNetChuRongTienGame } from './net-chu-rong-tien/play';
 import { renderThamHiemCuuLongGame } from './tham-hiem-cuu-long/play';
 import { renderTinhNhamGame } from './tinh-nham-trang-ti/play';
 import { renderTrongDongGame } from './trong-dong/play';
@@ -13,7 +12,6 @@ export const PLAYABLE_GAME_IDS = new Set([
   'tinh-nham-trang-ti',
   'trang-nguyen-toan',
   'cuu-chuong-van-mieu',
-  'net-chu-rong-tien',
   'hinh-hoc-thang-long',
   'tu-vung-hoi-an',
   'trong-dong',
@@ -31,7 +29,6 @@ const RENDERERS: Record<string, GameRenderer> = {
   'tinh-nham-trang-ti': renderTinhNhamGame,
   'trang-nguyen-toan': renderTrangNguyenToanGame,
   'cuu-chuong-van-mieu': renderCuuChuongGame,
-  'net-chu-rong-tien': renderNetChuRongTienGame,
   'hinh-hoc-thang-long': renderHinhHocThangLongGame,
   'tu-vung-hoi-an': renderTuVungHoiAnGame,
   'trong-dong': renderTrongDongGame,

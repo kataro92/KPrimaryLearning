@@ -3,15 +3,8 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
-import { fitModelToHeight, tryLoadGltfScene } from '@/core/assets/fitGltfModel';
 import { playSfx } from '@/features/audio/sfxService';
 import { createCrosshair3d, createHitFlashRig, FpsHud3d } from './fpsHud3d';
-
-const BASE = import.meta.env.BASE_URL;
-const CROSSBOW_MODEL_URLS = [
-  `${BASE}models/tham-hiem-cuu-long/crossbow/crossbow.glb`,
-  `${BASE}models/tham-hiem-cuu-long/crossbow/scene.gltf`,
-] as const;
 
 export interface FpsOption {
   id: string;
@@ -143,9 +136,6 @@ export class FpsCrossbowScene {
   private raycaster = new THREE.Raycaster();
   private highlightUntil = 0;
   private highlightColor = 0xffffff;
-  private bowGroup = new THREE.Group();
-  private proceduralBow = new THREE.Group();
-  private recoilUntil = 0;
   private readonly skyTexture: THREE.CanvasTexture;
   private trail: THREE.Line;
   private trailUntil = 0;
@@ -164,7 +154,7 @@ export class FpsCrossbowScene {
     const h = mount.clientHeight || 360;
     mount.tabIndex = -1;
     mount.setAttribute('role', 'application');
-    mount.setAttribute('aria-label', 'Khung ngắm nỏ — di chuột để ngắm, bấm Space hoặc click để bắn');
+    mount.setAttribute('aria-label', 'Khung ngắm — di chuột để ngắm, bấm Space hoặc click để chọn đáp án');
     const canvas = document.createElement('canvas');
     canvas.className = 'fps-canvas';
     mount.appendChild(canvas);
@@ -208,8 +198,7 @@ export class FpsCrossbowScene {
     this.composer.addPass(new OutputPass());
 
     this.buildMinecraftBackdrop();
-    this.buildCrossbow();
-    void this.loadCrossbowModel();
+    this.scene.add(this.camera);
     this.hud = new FpsHud3d();
     this.hud.attachToWorld(this.world);
     this.camera.add(createCrosshair3d());
@@ -301,18 +290,12 @@ export class FpsCrossbowScene {
   }
 
   shoot(): string | null {
-    this.recoilUntil = performance.now() + 110;
+    if (this.disposed) return null;
     this.playShotSound();
     this.raycaster.setFromCamera(new THREE.Vector2(0, 0), this.camera);
     const dir = new THREE.Vector3();
-    const right = new THREE.Vector3();
     this.camera.getWorldDirection(dir);
-    right.crossVectors(dir, this.camera.up).normalize();
-    this.trailFrom = this.camera.position
-      .clone()
-      .add(dir.clone().multiplyScalar(0.8))
-      .add(right.clone().multiplyScalar(0.18))
-      .add(new THREE.Vector3(0, -0.08, 0));
+    this.trailFrom = this.camera.position.clone().add(dir.clone().multiplyScalar(0.35));
     this.trailTo = this.camera.position.clone().add(dir.clone().multiplyScalar(14));
     this.trailUntil = performance.now() + 120;
     const hits = this.raycaster.intersectObjects(this.targets.map((t) => t.core), false);
@@ -341,6 +324,7 @@ export class FpsCrossbowScene {
   }
 
   dispose(): void {
+    if (this.disposed) return;
     this.disposed = true;
     cancelAnimationFrame(this.rafId);
     this.mount.removeEventListener('pointermove', this.onPointerMove);
@@ -377,15 +361,9 @@ export class FpsCrossbowScene {
     this.trail.geometry.dispose();
     (this.trail.material as THREE.Material).dispose();
     this.skyTexture.dispose();
-    this.proceduralBow.traverse((node) => {
-      if (node instanceof THREE.Mesh) {
-        node.geometry.dispose();
-        const mat = node.material;
-        if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
-        else mat.dispose();
-      }
-    });
+    this.composer?.dispose();
     this.renderer.dispose();
+    this.camera.removeFromParent();
     this.mount.querySelector('.fps-canvas')?.remove();
   }
 
@@ -450,46 +428,6 @@ export class FpsCrossbowScene {
       this.world.add(cloud);
       this.clouds.push(cloud);
     }
-  }
-
-  private buildCrossbow(): void {
-    const woodTex = makePixelTexture('#92400e', '#78350f');
-    const body = new THREE.Mesh(
-      new THREE.BoxGeometry(0.32, 0.16, 0.78),
-      new THREE.MeshLambertMaterial({ map: woodTex })
-    );
-    const arm = new THREE.Mesh(
-      new THREE.BoxGeometry(0.85, 0.08, 0.12),
-      new THREE.MeshLambertMaterial({ map: woodTex })
-    );
-    arm.position.z = -0.25;
-    this.proceduralBow.add(body, arm);
-    this.bowGroup.add(this.proceduralBow);
-    this.bowGroup.position.set(0.52, -0.34, -0.72);
-    this.camera.add(this.bowGroup);
-    this.scene.add(this.camera);
-  }
-
-  private async loadCrossbowModel(): Promise<void> {
-    const root = await tryLoadGltfScene(CROSSBOW_MODEL_URLS);
-    if (!root || this.disposed) return;
-    fitModelToHeight(root, 0.62);
-    root.rotation.set(0, Math.PI * 0.5, 0);
-    root.position.set(0.08, -0.06, -0.12);
-    root.traverse((node) => {
-      if (node instanceof THREE.Mesh) {
-        node.castShadow = false;
-        node.receiveShadow = false;
-        const mats = Array.isArray(node.material) ? node.material : [node.material];
-        for (const m of mats) {
-          if (m instanceof THREE.MeshStandardMaterial) {
-            m.roughness = Math.min(0.9, m.roughness + 0.15);
-          }
-        }
-      }
-    });
-    this.proceduralBow.visible = false;
-    this.bowGroup.add(root);
   }
 
   private onPointerEnter = (e: PointerEvent) => {
@@ -560,9 +498,6 @@ export class FpsCrossbowScene {
       t.frame.rotation.y = 0;
       t.choicePlane.rotation.y = 0;
     });
-    const recoil = now < this.recoilUntil ? (this.recoilUntil - now) / 110 : 0;
-    this.bowGroup.position.z = -0.72 + recoil * 0.12;
-    this.bowGroup.rotation.x = -recoil * 0.2;
     if (now < this.trailUntil) {
       this.trail.geometry.setFromPoints([this.trailFrom, this.trailTo]);
       const m = this.trail.material as THREE.LineBasicMaterial;
@@ -589,7 +524,9 @@ export class FpsCrossbowScene {
     this.hitFlash.tick(now);
     this.hud.updateFacing(this.camera);
     this.composer.render();
-    this.rafId = requestAnimationFrame(this.loop);
+    if (!this.disposed) {
+      this.rafId = requestAnimationFrame(this.loop);
+    }
   };
 
   private clearTargets(): void {
@@ -618,24 +555,16 @@ export class FpsCrossbowScene {
   }
 
   private spawnProjectile(from: THREE.Vector3, to: THREE.Vector3): void {
-    const body = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.014, 0.014, 0.42, 6),
-      new THREE.MeshLambertMaterial({ color: 0x78350f })
+    const core = new THREE.Mesh(
+      new THREE.SphereGeometry(0.028, 8, 8),
+      new THREE.MeshBasicMaterial({ color: 0xf8fafc, toneMapped: false })
     );
-    body.rotation.z = Math.PI / 2;
-    const tip = new THREE.Mesh(
-      new THREE.ConeGeometry(0.028, 0.12, 6),
-      new THREE.MeshLambertMaterial({ color: 0xe2e8f0 })
+    const glow = new THREE.Mesh(
+      new THREE.SphereGeometry(0.05, 8, 8),
+      new THREE.MeshBasicMaterial({ color: 0x7dd3fc, transparent: true, opacity: 0.45, toneMapped: false })
     );
-    tip.rotation.z = -Math.PI / 2;
-    tip.position.x = 0.24;
-    const fletch = new THREE.Mesh(
-      new THREE.BoxGeometry(0.06, 0.08, 0.02),
-      new THREE.MeshLambertMaterial({ color: 0xef4444 })
-    );
-    fletch.position.x = -0.2;
     const g = new THREE.Group();
-    g.add(body, tip, fletch);
+    g.add(glow, core);
     g.position.copy(from);
     this.scene.add(g);
     const mid = from.clone().lerp(to, 0.5);

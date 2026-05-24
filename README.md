@@ -22,7 +22,7 @@ Website game học tập lớp 4 (frontend-only) với trải nghiệm 3D, tập
 ## Giới thiệu
 
 - Nền tảng web game học tập cho học sinh lớp 4.
-- Hiện có **9/9 game** playable theo luồng: Welcome -> Home -> Game Select -> Gameplay -> Result/Celebration.
+- Hiện có **8/8 game** playable theo luồng: Welcome -> Home -> Game Select -> Gameplay -> Result/Celebration.
 - Persistence local qua IndexedDB (`profile`, `progress`, `sessions`) và localStorage (`kv_settings`).
 - Demo online: [https://kataro92.github.io/KPrimaryLearning/](https://kataro92.github.io/KPrimaryLearning/)
 

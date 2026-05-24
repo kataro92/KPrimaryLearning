@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { buildMarioTypingBackdrop } from '@/games/net-chu-rong-tien/marioWorld';
 import { createSpritePlane } from './gameSpritePlane';
 
 export interface GameTheme {
@@ -8,7 +7,6 @@ export interface GameTheme {
 }
 
 export const GAME_THEMES: Record<string, GameTheme> = {
-  'net-chu-rong-tien': { background: 0x5c94fc, accents: [0xc84c0c, 0xe52521, 0xf8b800] },
   'tu-vung-hoi-an': { background: 0xfff4d6, accents: [0xf59e0b, 0xdc2626, 0xfbbf24] },
   'tham-hiem-cuu-long': { background: 0xd1fae5, accents: [0x059669, 0x0ea5e9, 0x78350f] },
   'hinh-hoc-thang-long': { background: 0xe2e8f0, accents: [0x64748b, 0xb45309, 0x1e40af] },
@@ -23,9 +21,7 @@ export function buildThemeDecor(themeId: string): THREE.Object3D[] {
   const theme = GAME_THEMES[themeId] ?? GAME_THEMES['trang-nguyen-toan'];
   const objs: THREE.Object3D[] = [];
 
-  if (themeId === 'net-chu-rong-tien') {
-    objs.push(...buildMarioTypingBackdrop());
-  } else if (themeId === 'trang-nguyen-toan') {
+  if (themeId === 'trang-nguyen-toan') {
     /* Canvas 3D robot trong khung hero — không dùng sprite phẳng */
   } else {
     objs.push(createSpritePlane(themeId));

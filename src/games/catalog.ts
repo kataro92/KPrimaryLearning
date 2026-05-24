@@ -30,14 +30,6 @@ export const GAMES: GameDefinition[] = [
     },
   },
   {
-    id: 'net-chu-rong-tien',
-    title: 'Nét Chữ Rồng Tiên',
-    subject: 'Tiếng Việt',
-    description: 'Gõ chữ kiểu Mario — đường gạch 2.5D',
-    playHint: 'Gõ đúng từng khối chữ — Mario chạy trên đường gạch tới lâu đài (hỗ trợ tiếng Việt có dấu).',
-    achievements: { 1: 'Mầm Nét Đẹp', 2: 'Bút Non Tài Hoa', 3: 'Rồng Tiên Thư Pháp' },
-  },
-  {
     id: 'tu-vung-hoi-an',
     title: 'Hành Trình Từ Vựng Hội An',
     subject: 'Tiếng Anh',
@@ -81,8 +73,8 @@ export const GAMES: GameDefinition[] = [
     id: 'tham-hiem-cuu-long',
     title: 'Nhà Thám Hiểm Cửu Long',
     subject: 'Khoa học',
-    description: 'FPS bắn nỏ chọn đáp án đúng',
-    playHint: 'Ngắm bằng chuột, bắn nỏ vào đáp án đúng (click/Space) hoặc bấm 1-3.',
+    description: 'FPS ngắm và chọn đáp án đúng',
+    playHint: 'Ngắm bằng chuột, bấm vào đáp án đúng (click/Space) hoặc bấm 1-3.',
     achievements: { 1: 'Bạn Đồng Xanh', 2: 'Thám Hiểm Miệt Vườn', 3: 'Sứ Giả Cửu Long' },
   },
   {
