@@ -1,0 +1,10 @@
+Model Information:
+* title:	Traffic Cone
+* source:	https://sketchfab.com/3d-models/774f986b5ea5432f99a1d06d6e1c4c9b
+* author:	https://sketchfab.com/Dasamura
+
+Model License:
+* license type:	CC Attribution
+* requirements:	Author must be credited per Sketchfab / Creative Commons terms.
+
+Game: Hình Học Thăng Long (builder o082)

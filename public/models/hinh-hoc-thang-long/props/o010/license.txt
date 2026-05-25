@@ -1,0 +1,10 @@
+Model Information:
+* title:	Sushi tray
+* source:	https://sketchfab.com/3d-models/c76c23f8e5b348ba837bfd6def526dcd
+* author:	https://sketchfab.com/1-3D.com
+
+Model License:
+* license type:	CC Attribution-ShareAlike
+* requirements:	Author must be credited per Sketchfab / Creative Commons terms.
+
+Game: Hình Học Thăng Long (builder o010)

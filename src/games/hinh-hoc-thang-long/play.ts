@@ -5,14 +5,19 @@ import type { PlayResult } from '@/features/gameplay/types';
 import { getGameById } from '@/games/catalog';
 import { createTimerSfxState, syncTimerBar } from '@/features/gameplay/timerBar';
 import { TimerEngine } from '@/core/engine/timerEngine';
-import { scheduleAfterAnswer, setRoundHint, WAIT_NEXT_HINT } from '@/features/gameplay/roundUi';
+import { bindGameLifecycle, createGameSession } from '@/features/gameplay/gameSession';
+import { setRoundHint, WAIT_NEXT_HINT } from '@/features/gameplay/roundUi';
 import { speakVietnamese } from '@/features/speech/speechService';
 import { createGameStage } from '@/ui/gameStage/createGameStage';
-import { traitForObject } from './objectTraits';
+import { choiceCountForLevel } from './shapeCatalog';
+import { questionPromptText, speechQuestionText } from './questionLabel';
 import { generateTasks, timePerTaskMs, type ShapeTask } from './questions';
-import { preloadPropTextures } from './props/textureLibrary';
-import { ShapePreviewScene } from './shapePreviewScene';
-import { ThangLongCastleScene } from './thangLongCastleScene';
+import { CastleBuildView } from './castleBuildView';
+import {
+  clearSketchIllustrationCache,
+  preloadSketchIllustrationsAsync,
+} from './sketchIllustrationCache';
+import { SketchbookView, type SketchbookPage } from './sketchbookView';
 
 export type { PlayResult };
 
@@ -40,54 +45,69 @@ export function renderHinhHocThangLongGame(
     startedAt,
   });
 
+  const session = createGameSession();
   const stage = createGameStage(root, sceneHost, gameId, 'game-play--thang-long');
   sceneHost.setParallaxSway(false);
+
   const heroHost = stage.root.querySelector<HTMLElement>('#game-hero')!;
   heroHost.innerHTML = `
-    <div class="thang-long-hero">
-      <div class="shape-preview-wrap">
-        <div class="shape-preview__canvas-host" id="shape-preview-canvas"></div>
-        <div class="shape-preview__caption">
-          <p class="shape-preview__name" id="shape-preview-name">Đồ vật</p>
-          <p class="shape-preview__trait" id="shape-preview-trait"></p>
-        </div>
-      </div>
-      <div class="thang-long-castle-wrap">
-        <div class="thang-long-castle-status" id="thang-long-castle-status">
-          Thành cổ đang xây · 0/${tasks.length} mảnh
-        </div>
-      </div>
+    <div class="thang-long-visual">
+      <div class="thang-long-visual__castle" id="castle-mount"></div>
+      <div class="thang-long-visual__sketch" id="sketchbook-mount"></div>
     </div>
   `;
-  const previewMount = heroHost.querySelector<HTMLElement>('#shape-preview-canvas')!;
-  const previewName = heroHost.querySelector<HTMLElement>('#shape-preview-name')!;
-  const previewTrait = heroHost.querySelector<HTMLElement>('#shape-preview-trait')!;
-  const castleMount = heroHost.querySelector<HTMLElement>('.thang-long-castle-wrap')!;
-  const castleStatusEl = heroHost.querySelector<HTMLElement>('#thang-long-castle-status')!;
-  void preloadPropTextures();
-  const shapePreview = new ShapePreviewScene(previewMount);
-  const castleScene = new ThangLongCastleScene(castleMount, tasks.length);
+  const castleMount = heroHost.querySelector<HTMLElement>('#castle-mount')!;
+  const sketchMount = heroHost.querySelector<HTMLElement>('#sketchbook-mount')!;
+  castleMount.replaceChildren();
+  sketchMount.replaceChildren();
+  const castle = new CastleBuildView(castleMount, tasks.length);
+  const sketchbook = new SketchbookView(sketchMount, tasks.length);
+  const sketchPages: SketchbookPage[] = tasks.map((t) => ({
+    objectId: t.objectId,
+    label: t.label,
+    shape: t.shape,
+  }));
 
   let index = 0;
+  let booting = true;
+  let disposed = false;
+  let correctCount = 0;
   let questionStarted = Date.now();
   let currentTask: ShapeTask | null = null;
   let locked = false;
-  let correctCount = 0;
+  let flipping = false;
 
-  const showTask = (task: ShapeTask) => {
+  const showTask = (task: ShapeTask, withFlip: boolean) => {
+    const page = { objectId: task.objectId, label: task.label, shape: task.shape };
+    if (withFlip && index > 0) {
+      flipping = true;
+      void sketchbook.flipToPage(page, index).then(() => {
+        flipping = false;
+        beginRound(task);
+      });
+      return;
+    }
+    sketchbook.showPage(page, index);
+    beginRound(task);
+  };
+
+  const beginRound = (task: ShapeTask) => {
     currentTask = task;
     locked = false;
+    const next = tasks[index + 1];
+    if (next) {
+      sketchbook.prewarmPage({
+        objectId: next.objectId,
+        label: next.label,
+        shape: next.shape,
+      });
+    }
     stage.updateDots(index, tasks.length);
-    shapePreview.setObject(task.objectId, task.shape);
-    previewName.textContent = task.label;
-    previewTrait.textContent = traitForObject(task.objectId);
     stage.setFeedback('');
 
     stage.gameArea.innerHTML = `
-      <div class="shape-quiz">
-        <p class="shape-quiz__prompt">
-          <strong class="shape-quiz__object">${escapeHtml(task.label)}</strong> thuộc dạng hình nào?
-        </p>
+      <div class="shape-quiz shape-quiz--choices-${choiceCountForLevel(level)}">
+        <p class="shape-quiz__prompt">${escapeHtml(questionPromptText(task.label))}</p>
         <div class="shape-quiz__choices" id="shape-choices">
           ${task.choices
             .map(
@@ -99,11 +119,11 @@ export function renderHinhHocThangLongGame(
             )
             .join('')}
         </div>
-        <p class="game-play__round-hint">Chọn một đáp án hoặc bấm phím 1–3</p>
+        <p class="game-play__round-hint">Chọn một đáp án hoặc bấm phím 1–${choiceCountForLevel(level)}</p>
       </div>
     `;
 
-    speakVietnamese(`${task.label} thuộc dạng hình nào?`);
+    speakVietnamese(speechQuestionText(task.label));
 
     const quiz = stage.gameArea.querySelector<HTMLElement>('.shape-quiz')!;
     const choiceBtns = stage.gameArea.querySelectorAll<HTMLButtonElement>('.shape-choice');
@@ -124,8 +144,17 @@ export function renderHinhHocThangLongGame(
       setRoundHint(stage.gameArea, '.game-play__round-hint', WAIT_NEXT_HINT);
     };
 
+    const advance = (last: boolean) => {
+      if (last) {
+        if (correctCount >= tasks.length) castle.setCelebration(true);
+        session.scheduleAfterAnswer(true, () => {}, () => tracker.finish().then(onDone));
+        return;
+      }
+      session.scheduleAfterAnswer(false, () => showTask(tasks[index], true), () => tracker.finish().then(onDone));
+    };
+
     const submitChoice = (choiceId: string) => {
-      if (locked) return;
+      if (locked || flipping) return;
       locked = true;
       timer.stop();
       const ok = choiceId === task.correctChoiceId;
@@ -134,22 +163,10 @@ export function renderHinhHocThangLongGame(
       stage.setGameFeedback(ok ? 'correct' : 'wrong');
       if (ok) {
         correctCount++;
-        castleScene.onCorrectAnswer();
-        castleStatusEl.textContent = `Thành cổ đang xây · ${correctCount}/${tasks.length} mảnh`;
-      } else {
-        castleScene.onWrongAnswer();
+        castle.addTier(correctCount);
       }
       index++;
-      const last = index >= tasks.length;
-      if (last && correctCount >= tasks.length) {
-        castleScene.onCompletedPerfect();
-        castleStatusEl.textContent = '🐉 Hoàn hảo! Rồng vàng hạ xuống trên nóc thành!';
-      }
-      scheduleAfterAnswer(
-        last,
-        () => showTask(tasks[index]),
-        () => tracker.finish().then(onDone)
-      );
+      advance(index >= tasks.length);
     };
 
     choiceBtns.forEach((btn) => {
@@ -163,25 +180,20 @@ export function renderHinhHocThangLongGame(
         syncTimerBar(stage.timerFillEl, remaining, perMs, timerSfx);
       },
       () => {
-        if (locked) return;
+        if (locked || flipping) return;
         locked = true;
         timer.stop();
         lockQuiz();
         stage.setGameFeedback('timeout');
         tracker.recordRound(false, Date.now() - questionStarted);
         index++;
-        const last = index >= tasks.length;
-        scheduleAfterAnswer(
-          last,
-          () => showTask(tasks[index]),
-          () => tracker.finish().then(onDone)
-        );
+        advance(index >= tasks.length);
       }
     );
   };
 
   const onKeyDown = (e: KeyboardEvent) => {
-    if (!currentTask || locked) return;
+    if (booting || !currentTask || locked || flipping) return;
     const idx = Number(e.key) - 1;
     if (idx >= 0 && idx < currentTask.choices.length) {
       e.preventDefault();
@@ -191,15 +203,77 @@ export function renderHinhHocThangLongGame(
   };
 
   window.addEventListener('keydown', onKeyDown);
-  showTask(tasks[0]);
-  return () => {
+
+  const showBootLoading = (done: number, total: number) => {
+    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+    stage.root.classList.add('game-play--thang-long-loading');
+    stage.gameArea.innerHTML = `
+      <div class="thang-long-preload" role="status" aria-live="polite">
+        <p class="thang-long-preload__title">Đang chuẩn bị sổ vẽ…</p>
+        <p class="thang-long-preload__hint">Vui lòng đợi một chút trước khi bắt đầu.</p>
+        <div class="thang-long-preload__bar" aria-hidden="true">
+          <div class="thang-long-preload__fill" style="width:${pct}%"></div>
+        </div>
+        <p class="thang-long-preload__pct">${total > 0 ? `${done} / ${total} tranh` : 'Đang đo khung vẽ…'}</p>
+      </div>
+    `;
+    stage.setFeedback('');
+  };
+
+  const hideBootLoading = () => {
+    booting = false;
+    stage.root.classList.remove('game-play--thang-long-loading');
+  };
+
+  const bootGame = async () => {
+    try {
+      showBootLoading(0, 0);
+      const { width, height } = await sketchbook.whenArtSizeReady();
+      if (disposed) return;
+
+      await preloadSketchIllustrationsAsync(
+        sketchPages,
+        width,
+        height,
+        (done, total) => {
+          if (disposed) return;
+          showBootLoading(done, total);
+        },
+        () => disposed
+      );
+      if (disposed) return;
+
+      await new Promise<void>((r) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => r()));
+      });
+      if (disposed) return;
+
+      hideBootLoading();
+      showTask(tasks[0], false);
+    } catch (err) {
+      console.error('[hinh-hoc-thang-long] boot failed', err);
+      if (!disposed) {
+        hideBootLoading();
+        showTask(tasks[0], false);
+      }
+    }
+  };
+
+  requestAnimationFrame(() => {
+    void bootGame();
+  });
+
+  return bindGameLifecycle(sceneHost, () => {
+    disposed = true;
     window.removeEventListener('keydown', onKeyDown);
     timer.stop();
-    shapePreview.dispose();
-    castleScene.dispose();
+    session.dispose();
+    clearSketchIllustrationCache();
+    castle.dispose();
+    sketchbook.dispose();
     sceneHost.setParallaxSway(true);
     stage.cleanup();
-  };
+  });
 }
 
 function escapeHtml(s: string): string {

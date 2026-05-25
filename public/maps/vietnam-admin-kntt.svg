@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Ban do keo-tha ? vung dat theo Hinh 1 SGK Lich su va Dia li 4 KNTT.
+  Anh nen: trace QA tu public/maps/sgk-kntt-grade4/page-16-admin-map-reference.png
+  TODO: thay <image> bang path vector hoa thu cong (khong ship scan NXB trong ban release).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" role="img" aria-label="Ban do hanh chinh Viet Nam">
+  <title>Ban do hanh chinh Viet Nam ? vung keo tha</title>
+  <image href="/KPrimaryLearning/maps/sgk-kntt-grade4/page-16-admin-map-reference.png" x="0" y="0" width="1000" height="700" preserveAspectRatio="xMidYMid meet"/>
+  <!-- Vung luc dia -->
+  <rect id="drop-bac-bo" data-region="bac-bo" data-label="Bac Bo" x="360" y="70" width="240" height="210" fill="rgba(59,130,246,0.12)" stroke="#2563eb" stroke-width="2" stroke-dasharray="6 4" rx="4"/>
+  <rect id="drop-trung-bo" data-region="trung-bo" data-label="Mien Trung" x="400" y="252" width="200" height="126" fill="rgba(234,179,8,0.12)" stroke="#ca8a04" stroke-width="2" stroke-dasharray="6 4" rx="4"/>
+  <rect id="drop-nam-bo" data-region="nam-bo" data-label="Nam Bo" x="380" y="364" width="220" height="196" fill="rgba(34,197,94,0.12)" stroke="#16a34a" stroke-width="2" stroke-dasharray="6 4" rx="4"/>
+  <rect id="drop-tay-nguyen" data-region="tay-nguyen" data-label="Tay Nguyen" x="500" y="308" width="140" height="112" fill="rgba(168,85,247,0.1)" stroke="#9333ea" stroke-width="2" stroke-dasharray="6 4" rx="4"/>
+  <!-- Bien Dong ? quan dao (bat buoc SGK) -->
+  <ellipse id="drop-hoang-sa" data-region="hoang-sa" data-label="Quan dao Hoang Sa" cx="760" cy="280" rx="60" ry="42" fill="rgba(239,68,68,0.15)" stroke="#dc2626" stroke-width="2"/>
+  <ellipse id="drop-truong-sa" data-region="truong-sa" data-label="Quan dao Truong Sa" cx="820" cy="448" rx="80" ry="56" fill="rgba(239,68,68,0.15)" stroke="#dc2626" stroke-width="2"/>
+  <ellipse id="drop-phu-quoc" data-region="phu-quoc" data-label="Dao Phu Quoc" cx="300" cy="498" rx="40" ry="28" fill="rgba(239,68,68,0.15)" stroke="#dc2626" stroke-width="2"/>
+  <ellipse id="drop-con-son" data-region="con-son" data-label="Dao Con Son" cx="340" cy="558" rx="30" ry="24" fill="rgba(239,68,68,0.12)" stroke="#dc2626" stroke-width="1.5"/>
+  <ellipse id="drop-bach-long-vi" data-region="bach-long-vi" data-label="Dao Bach Long Vi" cx="690" cy="157" rx="30" ry="21" fill="rgba(239,68,68,0.12)" stroke="#dc2626" stroke-width="1.5"/>
+  <ellipse id="drop-ly-son" data-region="ly-son" data-label="Dao Ly Son" cx="510" cy="343" rx="30" ry="21" fill="rgba(239,68,68,0.12)" stroke="#dc2626" stroke-width="1.5"/>
+  <ellipse id="drop-con-co" data-region="con-co" data-label="Dao Con Co" cx="570" cy="217" rx="30" ry="21" fill="rgba(239,68,68,0.12)" stroke="#dc2626" stroke-width="1.5"/>
+  <ellipse id="drop-phu-quy" data-region="phu-quy" data-label="Dao Phu Quy" cx="510" cy="413" rx="30" ry="21" fill="rgba(239,68,68,0.12)" stroke="#dc2626" stroke-width="1.5"/>
+  <ellipse id="drop-tho-chu" data-region="tho-chu" data-label="Quan dao Tho Chu" cx="220" cy="476" rx="40" ry="28" fill="rgba(239,68,68,0.12)" stroke="#dc2626" stroke-width="1.5"/>
+</svg>

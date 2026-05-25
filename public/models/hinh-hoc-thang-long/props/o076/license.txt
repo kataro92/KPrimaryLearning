@@ -1,0 +1,10 @@
+Model Information:
+* title:	Asian Conical Hat
+* source:	https://sketchfab.com/3d-models/4eed68df8fb84284a91f42a6c6e4569c
+* author:	https://sketchfab.com/MushyDay
+
+Model License:
+* license type:	CC Attribution
+* requirements:	Author must be credited per Sketchfab / Creative Commons terms.
+
+Game: Hình Học Thăng Long (builder o076)

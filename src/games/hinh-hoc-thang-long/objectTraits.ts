@@ -1,4 +1,4 @@
-/** Đặc điểm ngắn hiển thị dưới tên đồ vật (minh họa 3D). */
+/** Đặc điểm ngắn hiển thị dưới minh họa trong sổ vẽ. */
 export const OBJECT_TRAITS: Record<string, string> = {
   o001: 'Khung gỗ, kính trong, chia 4 ô',
   o002: 'Lát sân 4 viên gạch đất nung',

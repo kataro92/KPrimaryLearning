@@ -1,5 +1,5 @@
 import { SceneHost } from '@/core/rendering/sceneHost';
-import { useAppStore } from './store';
+import { useAppStore, type AppState } from './store';
 import { renderWelcomeScreen } from '@/ui/screens/welcomeScreen';
 import { renderHomeScreen } from '@/ui/screens/homeScreen';
 import { renderGameSelectScreen } from '@/ui/screens/gameSelectScreen';
@@ -14,6 +14,10 @@ export class App {
   private uiRoot: HTMLElement;
   private cleanupGame: (() => void) | null = null;
   private lastResult: PlayResult | null = null;
+  /** Tránh mount lại game khi store đổi nhưng vẫn đang chơi (cắt preload / flip). */
+  private activePlaySession: string | null = null;
+  private lastScreen: AppState['screen'] | null = null;
+  private playGeneration = 0;
 
   constructor(mount: HTMLElement) {
     mount.innerHTML = `
@@ -48,12 +52,27 @@ export class App {
   };
 
   private render(): void {
+    const { screen, selectedGameId, selectedAchievementLevel } = useAppStore.getState();
+    if (screen === 'game-play' && this.lastScreen !== 'game-play') {
+      this.playGeneration++;
+    }
+    this.lastScreen = screen;
+
+    const playSession =
+      screen === 'game-play' && selectedGameId
+        ? `${selectedGameId}:${selectedAchievementLevel}:${this.playGeneration}`
+        : null;
+
+    if (playSession && this.activePlaySession === playSession && this.cleanupGame) {
+      return;
+    }
+
     if (this.cleanupGame) {
       this.cleanupGame();
       this.cleanupGame = null;
     }
+    this.activePlaySession = playSession;
 
-    const { screen, selectedGameId } = useAppStore.getState();
     this.uiRoot.innerHTML = '';
     bindUiClickSounds(this.uiRoot);
 

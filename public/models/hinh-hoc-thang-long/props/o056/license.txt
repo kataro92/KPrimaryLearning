@@ -1,0 +1,10 @@
+Model Information:
+* title:	Chalkboard
+* source:	https://sketchfab.com/3d-models/84c2350e2e54442ea4b7066014759e97
+* author:	https://sketchfab.com/hellfa
+
+Model License:
+* license type:	CC Attribution
+* requirements:	Author must be credited per Sketchfab / Creative Commons terms.
+
+Game: Hình Học Thăng Long (builder o056)

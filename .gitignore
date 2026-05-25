@@ -1,5 +1,10 @@
 node_modules
 dist
+.venv/
+
+# SGK PDFs — local only (~GB), see pdfs/README.md
+pdfs/*.pdf
+scripts/data/sgk-content/*.json
 .DS_Store
 *.local
 .env

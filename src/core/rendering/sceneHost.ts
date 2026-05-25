@@ -14,6 +14,7 @@ export class SceneHost {
   private overlayGroup = new THREE.Group();
   private currentThemeId = 'default';
   private parallaxSway = true;
+  private activeGameTeardown: (() => void) | null = null;
 
   constructor(container: HTMLElement) {
     const w = container.clientWidth || window.innerWidth;
@@ -53,6 +54,17 @@ export class SceneHost {
 
     window.addEventListener('resize', this.onResize);
     this.loop();
+  }
+
+  /** Đăng ký hủy timer/3D/TTS — gọi khi ấn Về hoặc khi App unmount game. */
+  setActiveGameTeardown(fn: () => void): void {
+    this.activeGameTeardown = fn;
+  }
+
+  exitActiveGame(): void {
+    const fn = this.activeGameTeardown;
+    this.activeGameTeardown = null;
+    fn?.();
   }
 
   setGameTheme(gameId: string): void {

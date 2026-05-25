@@ -1,0 +1,26 @@
+{
+  "generated": "2026-05-24",
+  "ocrEnabled": true,
+  "books": [
+    {
+      "file": "tieng-viet-lop-4-tap-1-chan-troi-sang-tao.pdf",
+      "slug": "tieng-viet-lop-4-tap-1-chan-troi-sang-tao",
+      "path": "scripts/data/sgk-content/tieng-viet-lop-4-tap-1-chan-troi-sang-tao.json",
+      "pageCount": 155,
+      "pagesWithText": 155,
+      "ocrPages": 155,
+      "totalChars": 154920,
+      "extractQuality": "good"
+    },
+    {
+      "file": "tieng-viet-lop-4-tap-2-chan-troi-sang-tao-pdf.pdf",
+      "slug": "tieng-viet-lop-4-tap-2-chan-troi-sang-tao-pdf",
+      "path": "scripts/data/sgk-content/tieng-viet-lop-4-tap-2-chan-troi-sang-tao-pdf.json",
+      "pageCount": 143,
+      "pagesWithText": 143,
+      "ocrPages": 143,
+      "totalChars": 145902,
+      "extractQuality": "good"
+    }
+  ]
+}

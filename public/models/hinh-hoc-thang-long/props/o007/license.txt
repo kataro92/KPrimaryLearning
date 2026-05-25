@@ -1,0 +1,10 @@
+Model Information:
+* title:	Gift Box
+* source:	https://sketchfab.com/3d-models/33bb8031d7ac40758575835cec277761
+* author:	https://sketchfab.com/MaX3Dd
+
+Model License:
+* license type:	CC Attribution
+* requirements:	Author must be credited per Sketchfab / Creative Commons terms.
+
+Game: Hình Học Thăng Long (builder o007)

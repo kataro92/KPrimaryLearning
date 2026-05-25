@@ -1,4 +1,8 @@
 import { loadSettings } from '@/data/storage/settingsStore';
+import {
+  effectiveSpeechRate,
+  preferWebSpeechForCurrentPreset,
+} from '@/features/speech/ttsVoicePreset';
 import { stopBufferedAudio, playWavBuffer } from './audioPlayback';
 import {
   cancelWebSpeech,
@@ -91,14 +95,20 @@ class TtsOrchestrator {
     const requestId = ++this.speakRequestId;
     this.activeSpeakId = requestId;
 
-    if (settings.ttsMode === 'webspeech' || !supportsWorker()) {
+    const speechRate = effectiveSpeechRate(rate);
+    const useSystemVoice =
+      settings.ttsMode === 'webspeech' ||
+      !supportsWorker() ||
+      preferWebSpeechForCurrentPreset(settings);
+
+    if (useSystemVoice) {
       this.lastProvider = 'webspeech';
       this.notify();
-      speakWebSpeech(text, rate);
+      speakWebSpeech(text, speechRate);
       return;
     }
 
-    void this.speakAuto(text, rate, requestId);
+    void this.speakAuto(text, speechRate, requestId);
   }
 
   dispose(): void {

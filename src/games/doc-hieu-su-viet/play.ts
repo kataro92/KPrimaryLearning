@@ -7,7 +7,7 @@ import { getGameById } from '@/games/catalog';
 import { createTimerSfxState, syncTimerBar } from '@/features/gameplay/timerBar';
 import { TimerEngine } from '@/core/engine/timerEngine';
 import { createGameStage } from '@/ui/gameStage/createGameStage';
-import { scheduleAfterAnswer } from '@/features/gameplay/roundUi';
+import { bindGameLifecycle, createGameSession } from '@/features/gameplay/gameSession';
 import { generateQuestions, timePerQuestionMs } from './questions';
 import { ThanhGiongScene } from './thanhGiongScene';
 
@@ -37,6 +37,7 @@ export function renderDocHieuSuVietGame(
     startedAt,
   });
 
+  const session = createGameSession();
   const stage = createGameStage(root, sceneHost, gameId, 'game-play--su-viet');
   const heroHost = stage.root.querySelector<HTMLElement>('#game-hero')!;
   heroHost.innerHTML = `
@@ -88,7 +89,7 @@ export function renderDocHieuSuVietGame(
     index++;
     const last = index >= statements.length;
     if (last && correctCount === statements.length) giongScene.transformToLegend();
-    scheduleAfterAnswer(last, showQuestion, () => tracker.finish().then(onDone));
+    session.scheduleAfterAnswer(last, showQuestion, () => tracker.finish().then(onDone));
   };
 
   const showQuestion = () => {
@@ -138,7 +139,7 @@ export function renderDocHieuSuVietGame(
         updatePowerStatus();
         index++;
         const last = index >= statements.length;
-        scheduleAfterAnswer(last, showQuestion, () => tracker.finish().then(onDone));
+        session.scheduleAfterAnswer(last, showQuestion, () => tracker.finish().then(onDone));
       }
     );
   };
@@ -173,10 +174,11 @@ export function renderDocHieuSuVietGame(
   updatePowerStatus();
 
   showQuestion();
-  return () => {
+  return bindGameLifecycle(sceneHost, () => {
     window.removeEventListener('keydown', onKeyDown);
     timer.stop();
+    session.dispose();
     giongScene.dispose();
     stage.cleanup();
-  };
+  });
 }

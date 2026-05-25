@@ -8,6 +8,10 @@ import { mountGameSprite } from '@/assets/gameSprites';
 import { formatScoreDisplay } from '@/features/scoring/scoreEngine';
 import { CharacterKnightScene } from '@/features/character/characterKnightScene';
 import { preloadLocalTts } from '@/features/speech/speechService';
+import {
+  getPlayerLevelSnapshot,
+  renderPlayerLevelLadder,
+} from '@/features/progress/playerLevel';
 import { mountVoiceProfilePanel } from '@/features/speech/voice/mountVoiceProfilePanel';
 
 let activeKnightScene: CharacterKnightScene | null = null;
@@ -281,6 +285,13 @@ async function renderCharacterReport(profileId: string, reportBody: HTMLElement)
 
   const statsPane = reportBody.querySelector<HTMLElement>('.character-report-stats');
   if (statsPane) {
+    const levelSnap = getPlayerLevelSnapshot({
+      totalSessions,
+      avgScore,
+      unlockedTier3,
+      totalQuestions,
+    });
+    statsPane.insertAdjacentHTML('afterbegin', renderPlayerLevelLadder(levelSnap));
     void mountVoiceProfilePanel(statsPane, profileId).catch(() => {
       /* voice panel optional */
     });

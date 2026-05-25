@@ -1,0 +1,10 @@
+Model Information:
+* title:	Onigiri
+* source:	https://sketchfab.com/3d-models/6b52802c8b174df2a09f1775a7c69f89
+* author:	https://sketchfab.com/Nestaeric
+
+Model License:
+* license type:	CC Attribution
+* requirements:	Author must be credited per Sketchfab / Creative Commons terms.
+
+Game: Hình Học Thăng Long (builder o095)

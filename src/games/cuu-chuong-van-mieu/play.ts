@@ -6,7 +6,8 @@ import { speakVietnamese } from '@/features/speech/speechService';
 import { getGameById } from '@/games/catalog';
 import { createTimerSfxState, syncTimerBar } from '@/features/gameplay/timerBar';
 import { TimerEngine } from '@/core/engine/timerEngine';
-import { lockChoiceRow, scheduleAfterAnswer, setRoundHint, WAIT_NEXT_HINT } from '@/features/gameplay/roundUi';
+import { bindGameLifecycle, createGameSession } from '@/features/gameplay/gameSession';
+import { lockChoiceRow, setRoundHint, WAIT_NEXT_HINT } from '@/features/gameplay/roundUi';
 import { createGameStage } from '@/ui/gameStage/createGameStage';
 import {
   generateQuestions,
@@ -42,6 +43,7 @@ export function renderCuuChuongGame(
     startedAt,
   });
 
+  const session = createGameSession();
   const stage = createGameStage(root, sceneHost, gameId, 'game-play--van-mieu');
   sceneHost.setParallaxSway(false);
   const heroHost = stage.root.querySelector<HTMLElement>('#game-hero')!;
@@ -122,7 +124,7 @@ export function renderCuuChuongGame(
       }
       index++;
       const last = index >= questions.length;
-      scheduleAfterAnswer(
+      session.scheduleAfterAnswer(
         last,
         () => showQuestion(questions[index]),
         () => tracker.finish().then(onDone)
@@ -151,7 +153,7 @@ export function renderCuuChuongGame(
         tracker.recordRound(false, Date.now() - questionStarted);
         index++;
         const last = index >= questions.length;
-        scheduleAfterAnswer(
+        session.scheduleAfterAnswer(
           last,
           () => showQuestion(questions[index]),
           () => tracker.finish().then(onDone)
@@ -180,10 +182,11 @@ export function renderCuuChuongGame(
   window.addEventListener('keydown', onKeyDown);
 
   showQuestion(questions[0]);
-  return () => {
+  return bindGameLifecycle(sceneHost, () => {
     window.removeEventListener('keydown', onKeyDown);
     timer.stop();
+    session.dispose();
     turtleScene.dispose();
     stage.cleanup();
-  };
+  });
 }

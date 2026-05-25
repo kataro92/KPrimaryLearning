@@ -1,0 +1,10 @@
+Model Information:
+* title:	Medieval_Bread_Loaf_FBX
+* source:	https://sketchfab.com/3d-models/6c974828b9f4427bb4460287041c7f5f
+* author:	https://sketchfab.com/GetDeadEntertainment
+
+Model License:
+* license type:	CC Attribution
+* requirements:	Author must be credited per Sketchfab / Creative Commons terms.
+
+Game: Hình Học Thăng Long (builder o043)

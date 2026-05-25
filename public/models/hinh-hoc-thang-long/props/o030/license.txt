@@ -1,0 +1,10 @@
+Model Information:
+* title:	Lego Bricks
+* source:	https://sketchfab.com/3d-models/0292ebb0ac4d492c8b1f9be295bbe93a
+* author:	https://sketchfab.com/blackcube4
+
+Model License:
+* license type:	CC Attribution
+* requirements:	Author must be credited per Sketchfab / Creative Commons terms.
+
+Game: Hình Học Thăng Long (builder o030)

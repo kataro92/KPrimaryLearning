@@ -1,0 +1,10 @@
+Model Information:
+* title:	Drinking Milk
+* source:	https://sketchfab.com/3d-models/5b1e483e1f9d4d3d98bda551b7caef76
+* author:	https://sketchfab.com/mike3dmodel
+
+Model License:
+* license type:	CC Attribution
+* requirements:	Author must be credited per Sketchfab / Creative Commons terms.
+
+Game: Hình Học Thăng Long (builder o045)

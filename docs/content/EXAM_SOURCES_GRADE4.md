@@ -89,14 +89,23 @@ Phạm vi năm: **2020-2021 → 2024-2025** (đủ 5 năm học gần đây).
 | Biểu đồ, dãy số | GK1 | S17, S18 |
 | Đổi kg/g, km/m | HK1 | S04, S12 |
 
-### Tiếng Việt (game: Nét Chữ Rồng Tiên, Đọc Hiểu Sử)
+### Tiếng Việt (game: Bút Sen Việt, Đọc Hiểu Sử Việt)
 
 | Chủ đề | HK | Nguồn gợi ý |
 |--------|-----|-------------|
 | Phân biệt s/x, ch/tr, l/n, d/gi/r | HK1-2 | S03, S09, S20 |
 | Chính tả, quy tắc viết | HK1 | S09, S10 |
-| Đọc hiểu + đúng/sai | HK1 | S03, S32 |
+| Đọc hiểu + đúng/sai (lịch sử) | HK1 | S03, S32, S48 |
 | Lịch sử VN: Văn Lang → 1945 | HK1 | S07, S48 |
+
+### Lịch sử & Địa lí (game: Hành Trình Sử & Địa)
+
+| Chủ đề | HK | Nguồn gợi ý |
+|--------|-----|-------------|
+| Bản đồ Hình 1: đảo, quần đảo VN | HK1 | S07, S48, S50, SGK KNTT tr.16 |
+| Vùng miền: Bắc, Trung, Nam, Tây Nguyên | HK1-2 | S48, S50, S54 |
+| Địa phương em, bảo vệ môi trường | HK1 | S50 |
+| Lịch sử gắn địa danh (Bạch Đằng, Chi Lăng…) | HK1 | S07, S48 |
 
 ### Tiếng Anh (game: Hội An)
 

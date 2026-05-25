@@ -1,0 +1,11 @@
+Model Information:
+* title:	Low Poly Pizza Slice
+* source:	https://sketchfab.com/3d-models/low-poly-pizza-slice-11a147c2811b435292792505745714a8
+* author:	Bob (https://sketchfab.com/I_work_too_much)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Low Poly Pizza Slice" (https://sketchfab.com/3d-models/low-poly-pizza-slice-11a147c2811b435292792505745714a8) by Bob (https://sketchfab.com/I_work_too_much) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

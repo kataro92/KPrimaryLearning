@@ -1,0 +1,10 @@
+Model Information:
+* title:	Sandwich assembly
+* source:	https://sketchfab.com/3d-models/2ee0a6ea4b7547ad9ced7ec5aade37c9
+* author:	https://sketchfab.com/charalamboscharalambous8
+
+Model License:
+* license type:	CC Attribution
+* requirements:	Author must be credited per Sketchfab / Creative Commons terms.
+
+Game: Hình Học Thăng Long (builder o020)

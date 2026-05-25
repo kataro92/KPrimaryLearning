@@ -30,12 +30,16 @@ export interface PlaySession {
   durationMs: number;
 }
 
+export type TtsVoicePreset = 'female' | 'male' | 'cartoon';
+
 export interface AppSettings {
   soundEnabled: boolean;
   sfxEnabled: boolean;
   musicEnabled: boolean;
   largeText: boolean;
   ttsMode: 'auto' | 'webspeech';
+  /** Giọng đọc mặc định khi bật "Giọng" trên trang chủ. */
+  ttsVoicePreset: TtsVoicePreset;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -44,4 +48,5 @@ export const DEFAULT_SETTINGS: AppSettings = {
   musicEnabled: true,
   largeText: false,
   ttsMode: 'auto',
+  ttsVoicePreset: 'female',
 };

@@ -1,0 +1,67 @@
+{
+  "sourceUrl": "https://giaokhoaonline.com/tieng-viet-lop-4-tap-1-chan-troi-sang-tao/",
+  "sourceNote": "Mục lục công khai — đối chiếu SGK Tiếng Việt 4 CTST T1 (PDF local). Không sao chép nguyên văn.",
+  "pdfFile": "tieng-viet-lop-4-tap-1-chan-troi-sang-tao.pdf",
+  "series": "ctst",
+  "subject": "tieng-viet",
+  "volume": 1,
+  "semester": "hk1",
+  "themes": [
+    {
+      "themeId": "tuoi-nho-lam-viec-nho",
+      "title": "Tuổi nhỏ làm việc nhỏ",
+      "lessons": [
+        { "num": 1, "title": "Những ngày hè tươi đẹp", "page": 10 },
+        { "num": 2, "title": "Đoá hoa đồng thoại", "page": 15 },
+        { "num": 3, "title": "Gieo ngày mới", "page": 18 },
+        { "num": 4, "title": "Lên nương", "page": 23 },
+        { "num": 5, "title": "Cô bé ấy đã lớn", "page": 26 },
+        { "num": 6, "title": "Người thiếu niên anh hùng", "page": 30 },
+        { "num": 7, "title": "Sắc màu", "page": 33 },
+        { "num": 8, "title": "Mùa thu", "page": 37 }
+      ]
+    },
+    {
+      "themeId": "manh-ghep-yeu-thuong",
+      "title": "Mảnh ghép yêu thương",
+      "lessons": [
+        { "num": 1, "title": "Về thăm bà", "page": 41 },
+        { "num": 2, "title": "Ca dao về tình yêu thương", "page": 45 },
+        { "num": 3, "title": "Quả ngọt cuối mùa", "page": 49 },
+        { "num": 4, "title": "Thân thương xứ Vàm", "page": 54 },
+        { "num": 5, "title": "Một li sữa", "page": 58 },
+        { "num": 6, "title": "Vì Hoàng Sa – Trường Sa thân yêu", "page": 62 },
+        { "num": 7, "title": "Gió vườn", "page": 65 },
+        { "num": 8, "title": "Cây trái trong vườn Bác", "page": 70 }
+      ]
+    },
+    {
+      "themeId": "nhung-nguoi-tai-tri",
+      "title": "Những người tài trí",
+      "lessons": [
+        { "num": 1, "title": "Yết Kiêu", "page": 82 },
+        { "num": 2, "title": "Mạc Đĩnh Chi", "page": 86 },
+        { "num": 3, "title": "Sáng tháng Năm", "page": 89 },
+        { "num": 4, "title": "Trống đồng Đông Sơn", "page": 93 },
+        { "num": 5, "title": "Ai tài giỏi nhất?", "page": 96 },
+        { "num": 6, "title": "Kì quan đê biển", "page": 100 },
+        { "num": 7, "title": "Chuyện cổ về loài người", "page": 103 },
+        { "num": 8, "title": "Những mùa hoa trên cao nguyên đá", "page": 107 }
+      ]
+    },
+    {
+      "themeId": "nhung-uoc-mo-xanh",
+      "title": "Những ước mơ xanh",
+      "lessons": [
+        { "num": 1, "title": "Ở Vương quốc Tương Lai", "page": 111 },
+        { "num": 2, "title": "Cậu bé ham học hỏi", "page": 116 },
+        { "num": 3, "title": "Thuyền trưởng và bầy ong", "page": 119 },
+        { "num": 4, "title": "Cây táo đã nảy mầm", "page": 123 },
+        { "num": 5, "title": "Hái trăng trên đỉnh núi", "page": 127 },
+        { "num": 6, "title": "Hướng dẫn tham gia cuộc thi vẽ", "page": 131 },
+        { "num": 7, "title": "Nếu chúng mình có phép lạ", "page": 135 },
+        { "num": 8, "title": "Những giai điệu gió", "page": 139 }
+      ]
+    }
+  ]
+}

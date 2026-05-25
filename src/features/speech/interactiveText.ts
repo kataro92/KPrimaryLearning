@@ -7,6 +7,12 @@ const LINES: Record<string, Record<FeedbackKind, string[]>> = {
     timeout: ['Hết giờ rồi, thử câu sau nhé!', 'Cố thêm chút, con làm được ngay.'],
     start: ['Chạm bia đá đúng để ghi điểm Trạng Nguyên!'],
   },
+  'but-sen-viet': {
+    correct: ['Đúng rồi!', 'Giỏi lắm!', 'Chuẩn chính tả!'],
+    wrong: ['Chưa khớp, thử lại.', 'Sai rồi, gõ lại nhé.', 'Gần đúng rồi!'],
+    timeout: ['Hết giờ!', 'Thử câu sau nhé.'],
+    start: ['Gõ từ còn thiếu trong câu.'],
+  },
   'tu-vung-hoi-an': {
     correct: ['Đèn lồng sáng lên vì con ghép đúng!', 'Tuyệt lắm! Con vừa tìm đúng từ mới.', 'Đi tiếp nào, Hội An còn nhiều thử thách.'],
     wrong: ['Chưa khớp, thử cặp khác nhé!', 'Không sao, mình thử lại nhé!', 'Gần đúng rồi, con bình tĩnh làm lại.'],
@@ -23,13 +29,22 @@ const LINES: Record<string, Record<FeedbackKind, string[]>> = {
     correct: ['Khối hình này con xử lý rất chuẩn!', 'Thành Thăng Long đang dần hoàn thiện rồi.', 'Xây đúng! Thành cao thêm!'],
     wrong: ['Cố thêm chút nữa, con xây giỏi lắm.', 'Chưa khớp hình, thử lại nhé!', 'Không sao, mình thử lại nhé!'],
     timeout: ['Hết giờ rồi, thử câu sau nhé!', 'Cố thêm chút nữa nhé!'],
-    start: ['Nhìn đồ vật 3D bên trái, chọn hình vuông, chữ nhật hay tam giác.'],
+    start: [
+      'Nhìn tranh trong sổ vẽ, chọn đúng dạng hình học lớp 4.',
+      'Mở sổ vẽ bên trái, chọn tên hình cho đồ vật.',
+    ],
   },
   'doc-hieu-su-viet': {
     correct: ['Con đọc rất tốt, ý chính đúng rồi.', 'Hiểu sử giỏi lắm!', 'Thêm một câu nữa là mở trang sử mới.'],
     wrong: ['Bình tĩnh đọc lại, con sẽ làm được ngay.', 'Đọc kỹ đoạn văn nhé!', 'Không sao, mình thử lại nhé!'],
     timeout: ['Hết giờ rồi, thử câu sau nhé!', 'Cố thêm chút nữa nhé!'],
     start: ['Đọc đoạn sử, chạm tem Đúng hoặc Sai.'],
+  },
+  'hanh-trinh-su-dia': {
+    correct: ['Đúng vùng rồi! Con nhớ bản đồ giỏi lắm.', 'Giỏi quá! Thêm một thẻ nữa nhé.', 'Chuẩn SGK rồi!'],
+    wrong: ['Chưa đúng vùng, thử kéo lại nhé!', 'Đọc lại câu hỏi và thử vùng khác.', 'Không sao, mình thử lại!'],
+    timeout: ['Hết giờ rồi, thử câu sau nhé!', 'Cố thêm chút nữa nhé!'],
+    start: ['Kéo thẻ hoặc chạm đúng vùng trên bản đồ Việt Nam.'],
   },
   'cuu-chuong-van-mieu': {
     correct: ['Nhanh và đúng! Rùa Vàng cổ vũ con.', 'Giữ nhịp thật tốt, con làm rất chắc.', 'Rùa tiến thêm một bước!'],
@@ -48,6 +63,12 @@ const LINES: Record<string, Record<FeedbackKind, string[]>> = {
     wrong: ['Cố thêm câu nữa, danh hiệu đang chờ con.', 'Chưa khớp, gõ lại nhé!', 'Không sao, mình thử lại nhé!'],
     timeout: ['Hết giờ rồi, thử câu sau nhé!', 'Cố thêm chút nữa nhé!'],
     start: ['Gõ kết quả nhanh, bấm Trống! khi xong.'],
+  },
+  'dao-duc-nhi': {
+    correct: ['Việc làm đúng! Con biết cư xử tốt rồi.', 'Giỏi lắm! Bạn bè sẽ tin tưởng con.', 'Chuẩn đạo đức lớp 4!'],
+    wrong: ['Chưa phải cách tốt nhất, thử lại nhé.', 'Hãy nghĩ đến quyền và bổn phận của mình.', 'Không sao, đọc kỹ tình huống nhé!'],
+    timeout: ['Hết giờ rồi, thử tình huống sau nhé!'],
+    start: ['Đọc tình huống, chọn việc làm đúng.'],
   },
 };
 

@@ -1,0 +1,10 @@
+Model Information:
+* title:	Metal Ruler
+* source:	https://sketchfab.com/3d-models/ab7ec42dd8ae4112bf3118e64a979789
+* author:	https://sketchfab.com/RED2000
+
+Model License:
+* license type:	CC Attribution
+* requirements:	Author must be credited per Sketchfab / Creative Commons terms.
+
+Game: Hình Học Thăng Long (builder o040)

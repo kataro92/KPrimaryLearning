@@ -1,0 +1,258 @@
+/** Hành Trình Sử–Địa — bản đồ kéo thả, không 3D */
+.game-play--su-dia {
+  max-width: 100%;
+  min-height: 100vh;
+  padding: 8px 10px 14px;
+}
+
+.game-play--su-dia .game-play__content {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.game-play--su-dia .game-play__visual-pane {
+  display: none;
+}
+
+.game-play--su-dia .game-play__header {
+  background: linear-gradient(180deg, #1d4ed8 0%, #2563eb 45%, #dbeafe 100%);
+  border: 3px solid #1e3a8a;
+  border-radius: 10px;
+  padding: 8px 12px;
+  box-shadow: 0 4px 0 #1e3a8a;
+}
+
+.game-play--su-dia .game-play__title,
+.game-play--su-dia .game-play__subtitle {
+  color: #fff;
+  text-shadow: 1px 1px 0 #1e3a8a;
+}
+
+.game-play--su-dia .game-play__back {
+  background: #dbeafe;
+  border: 2px solid #1e3a8a;
+  color: #1e3a8a;
+  font-weight: 800;
+}
+
+.game-play--su-dia .progress-dots span.done {
+  background: #16a34a;
+}
+
+.game-play--su-dia .progress-dots span.current {
+  background: #fbbf24;
+}
+
+.game-play--su-dia .timer-bar {
+  background: #1e3a8a;
+  border: 2px solid #fbbf24;
+  border-radius: 8px;
+  height: 12px;
+}
+
+.game-play--su-dia .timer-bar__fill {
+  background: linear-gradient(90deg, #60a5fa, #bfdbfe);
+}
+
+.game-play--su-dia .game-play__arena {
+  margin: 0;
+  padding: 10px 8px 12px;
+  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+  border: 3px solid #2563eb;
+  border-radius: 12px;
+  box-shadow: 0 4px 0 #1d4ed8;
+}
+
+.game-play--su-dia .feedback {
+  color: #1e3a8a;
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.su-dia-play__prompt {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.su-dia-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  margin-bottom: 6px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-radius: 999px;
+  border: 2px solid #1e3a8a;
+}
+
+.su-dia-badge--dia {
+  background: #86efac;
+  color: #14532d;
+}
+
+.su-dia-badge--su {
+  background: #fecaca;
+  color: #7f1d1d;
+}
+
+.su-dia-badge--mix {
+  background: #fde68a;
+  color: #78350f;
+}
+
+.su-dia-play__text {
+  margin: 0;
+  font-size: clamp(0.95rem, 2.6vw, 1.1rem);
+  line-height: 1.45;
+  color: #1e293b;
+  font-weight: 700;
+}
+
+.su-dia-play__map {
+  margin: 6px 0;
+}
+
+.su-dia-map {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  aspect-ratio: 10 / 7;
+  border: 2px solid #1e3a8a;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #bfdbfe;
+  touch-action: none;
+}
+
+.su-dia-map__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+.su-dia-map__zones {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.su-dia-zone {
+  position: absolute;
+  pointer-events: auto;
+  margin: 0;
+  padding: 0;
+  min-width: 28px;
+  min-height: 28px;
+  border: 2px dashed rgba(37, 99, 235, 0.55);
+  border-radius: 6px;
+  background: rgba(96, 165, 250, 0.12);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.su-dia-zone--off {
+  opacity: 0.15;
+  pointer-events: none;
+}
+
+.su-dia-zone--hover {
+  background: rgba(250, 204, 21, 0.35);
+  border-color: #ca8a04;
+  border-style: solid;
+}
+
+.su-dia-zone--flash-ok {
+  background: rgba(34, 197, 94, 0.45);
+  border-color: #15803d;
+  border-style: solid;
+}
+
+.su-dia-zone--flash-bad {
+  background: rgba(239, 68, 68, 0.35);
+  border-color: #b91c1c;
+  border-style: solid;
+}
+
+.su-dia-zone__label {
+  display: block;
+  padding: 2px 3px;
+  font-size: clamp(0.45rem, 1.4vw, 0.62rem);
+  font-weight: 800;
+  line-height: 1.1;
+  color: #1e3a8a;
+  text-align: center;
+  pointer-events: none;
+  text-shadow: 0 0 3px #fff;
+}
+
+.su-dia-play__card-row {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.su-dia-play__hint {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  color: #475569;
+  font-weight: 600;
+}
+
+.su-dia-card-wrap {
+  position: relative;
+  min-height: 3.25rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.su-dia-card {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 8rem;
+  max-width: 92vw;
+  padding: 12px 18px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #1e3a8a;
+  background: linear-gradient(180deg, #fef9c3 0%, #fde047 100%);
+  border: 3px solid #1e3a8a;
+  border-radius: 10px;
+  box-shadow: 0 4px 0 #1e3a8a;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  z-index: 2;
+}
+
+.su-dia-card--dragging {
+  cursor: grabbing;
+  z-index: 10;
+  box-shadow: 0 8px 16px rgba(30, 58, 138, 0.35);
+}
+
+.su-dia-card--disabled {
+  opacity: 0.55;
+  pointer-events: none;
+  cursor: default;
+}
+
+.su-dia-card--shake {
+  animation: su-dia-shake 0.35s ease;
+}
+
+@keyframes su-dia-shake {
+  25% {
+    transform: translateX(-6px);
+  }
+  75% {
+    transform: translateX(6px);
+  }
+}

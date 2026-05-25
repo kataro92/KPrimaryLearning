@@ -1,4 +1,5 @@
-import { OBJECT_BANK, type ObjectItem, type ObjectShape } from './objectBank';
+import { OBJECT_BANK, type ObjectItem } from './objectBank';
+import type { ObjectShape } from './shapeCatalog';
 
 const BASE_ITEMS = OBJECT_BANK.filter((o) => parseInt(o.id.slice(1), 10) <= 100);
 
@@ -65,7 +66,10 @@ const KEYWORD_BUILDER: Array<{ keys: string[]; id: string }> = [
   { keys: ['flan'], id: 'o029' },
   { keys: ['khung ảnh', 'khung tranh'], id: 'o004' },
   { keys: ['lót bàn', 'lót ly'], id: 'o019' },
-  { keys: ['thẻ tên', 'thẻ học', 'thẻ nhớ', 'thẻ từ'], id: 'o044' },
+  { keys: ['thẻ tên', 'thẻ học', 'thẻ nhớ', 'thẻ từ', 'tên', 'nhớ'], id: 'o044' },
+  { keys: ['băng dính', 'dính cuộn'], id: 'o054' },
+  { keys: ['tay ghế', 'cánh tay ghế'], id: 'o039' },
+  { keys: ['thước kẻ'], id: 'o040' },
   { keys: ['sách'], id: 'o050' },
   { keys: ['thước'], id: 'o040' },
   { keys: ['hộp bút', 'khay bút', 'khay đựng bút'], id: 'o042' },
@@ -90,16 +94,31 @@ const KEYWORD_BUILDER: Array<{ keys: string[]; id: string }> = [
   { keys: ['onigiri'], id: 'o095' },
   { keys: ['dorito', 'snack'], id: 'o099' },
   { keys: ['mái nhà', 'mái ngói', 'mái chùa'], id: 'o068' },
-  { keys: ['cờ'], id: 'o069' },
+  { keys: ['cờ', 'cờ đỏ', 'sao vàng', 'quốc kỳ'], id: 'o069' },
+  { keys: ['đồng hồ'], id: 'o008' },
+  { keys: ['bánh chưng'], id: 'o005' },
+  { keys: ['rubik'], id: 'o013' },
+  { keys: ['xúc xắc'], id: 'o023' },
+  { keys: ['khăn quàng'], id: 'o026' },
+  { keys: ['quạt'], id: 'o061' },
+  { keys: ['remote', 'điều khiển'], id: 'o063' },
   { keys: ['lều'], id: 'o083' },
   { keys: ['núi'], id: 'o079' },
   { keys: ['đinh ba'], id: 'o082' },
+  { keys: ['hình tròn', 'mặt tròn'], id: 'o008' },
+  { keys: ['bình hành'], id: 'o066' },
+  { keys: ['hình thoi', 'gạch men'], id: 'o018' },
+  { keys: ['hình thang', 'mái nhà'], id: 'o068' },
 ];
 
 const SHAPE_DEFAULT: Record<ObjectShape, string> = {
   square: 'o003',
   rect: 'o040',
   triangle: 'o072',
+  parallelogram: 'o066',
+  rhombus: 'o018',
+  trapezoid: 'o068',
+  circle: 'o008',
 };
 
 export function getObjectItem(objectId: string): ObjectItem | undefined {
@@ -112,11 +131,12 @@ export function resolveBuilderId(objectId: string, label: string, shape: ObjectS
   if (num >= 1 && num <= 100) return objectId;
 
   const norm = normalizeObjectLabel(label);
+  const raw = label.toLowerCase().trim();
   const direct = LABEL_TO_BUILDER.get(norm);
   if (direct) return direct;
 
   for (const rule of KEYWORD_BUILDER) {
-    if (rule.keys.some((k) => norm.includes(k))) return rule.id;
+    if (rule.keys.some((k) => norm.includes(k) || raw.includes(k))) return rule.id;
   }
 
   for (const item of BASE_ITEMS) {

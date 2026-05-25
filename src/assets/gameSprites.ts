@@ -1,13 +1,16 @@
 /** Minh họa SVG 2D — thumbnail Home + màn chọn game */
 export const GAME_SPRITE_IDS = [
   'trang-nguyen-toan',
+  'but-sen-viet',
   'tu-vung-hoi-an',
   'trong-dong',
   'hinh-hoc-thang-long',
   'doc-hieu-su-viet',
+  'hanh-trinh-su-dia',
   'cuu-chuong-van-mieu',
   'tham-hiem-cuu-long',
   'tinh-nham-trang-ti',
+  'dao-duc-nhi',
 ] as const;
 
 export type GameSpriteId = (typeof GAME_SPRITE_IDS)[number];
@@ -48,6 +51,25 @@ const SPRITES: Record<GameSpriteId, string> = {
     <text x="100" y="82" text-anchor="middle" font-size="10" font-weight="800" fill="#fff" font-family="system-ui,sans-serif">B</text>
     <circle cx="122" cy="78" r="9" fill="#1e293b" stroke="#94a3b8" stroke-width="1.5"/>
     <text x="122" y="82" text-anchor="middle" font-size="10" font-weight="800" fill="#facc15" font-family="system-ui,sans-serif">C</text>
+  </svg>`,
+
+  'but-sen-viet': `<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bút Sen Việt">
+    <defs>
+      <linearGradient id="bs-bg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#fef3c7"/>
+        <stop offset="100%" stop-color="#fde68a"/>
+      </linearGradient>
+    </defs>
+    <rect width="200" height="120" fill="url(#bs-bg)" rx="12"/>
+    <rect x="24" y="28" width="112" height="64" rx="4" fill="#fff7ed" stroke="#b45309" stroke-width="2"/>
+    <line x1="36" y1="48" x2="124" y2="48" stroke="#78350f" stroke-width="2"/>
+    <line x1="36" y1="62" x2="108" y2="62" stroke="#a8a29e" stroke-width="2"/>
+    <rect x="72" y="54" width="36" height="18" rx="3" fill="#f8b800" stroke="#1a1a1a" stroke-width="1.5"/>
+    <text x="90" y="67" text-anchor="middle" font-size="11" font-weight="800" fill="#1a1a1a" font-family="system-ui,sans-serif">ê</text>
+    <path d="M148 88 L168 38 L178 88 Z" fill="#1c1917"/>
+    <rect x="160" y="28" width="8" height="14" fill="#dc2626"/>
+    <ellipse cx="164" cy="92" rx="10" ry="4" fill="#1c1917" opacity=".35"/>
+    <circle cx="42" cy="22" r="6" fill="#dc2626" opacity=".5"/>
   </svg>`,
 
   'tu-vung-hoi-an': `<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Từ vựng Hội An">
@@ -132,6 +154,24 @@ const SPRITES: Record<GameSpriteId, string> = {
     <circle cx="106" cy="74" r="6" fill="#f8fafc" opacity=".5"/>
     <circle cx="142" cy="72" r="6" fill="#f8fafc" opacity=".5"/>
     <rect x="72" y="94" width="56" height="8" rx="2" fill="#78716c"/>
+  </svg>`,
+
+  'hanh-trinh-su-dia': `<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Hành Trình Sử và Địa">
+    <defs>
+      <linearGradient id="sd-sea" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#93c5fd"/>
+        <stop offset="100%" stop-color="#2563eb"/>
+      </linearGradient>
+    </defs>
+    <rect width="200" height="120" fill="url(#sd-sea)" rx="12"/>
+    <path d="M72 88 L88 52 L104 68 L118 44 L132 72 L148 58 L162 88 Z" fill="#22c55e" stroke="#14532d" stroke-width="2"/>
+    <circle cx="158" cy="52" r="5" fill="#fde047" stroke="#ca8a04" stroke-width="1.5"/>
+    <circle cx="168" cy="72" r="6" fill="#fde047" stroke="#ca8a04" stroke-width="1.5"/>
+    <circle cx="42" cy="78" r="5" fill="#fde047" stroke="#ca8a04" stroke-width="1.5"/>
+    <rect x="78" y="94" width="44" height="14" rx="4" fill="#fef9c3" stroke="#1e3a8a" stroke-width="2"/>
+    <text x="100" y="104" text-anchor="middle" font-size="8" font-weight="800" fill="#1e3a8a" font-family="system-ui,sans-serif">Hoàng Sa</text>
+    <path d="M118 28 L128 38 L108 38 Z" fill="#fbbf24" stroke="#1e3a8a" stroke-width="1.5"/>
+    <line x1="118" y1="28" x2="100" y2="50" stroke="#1e3a8a" stroke-width="1.5" stroke-dasharray="3 2"/>
   </svg>`,
 
   'doc-hieu-su-viet': `<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Đọc hiểu Sử Việt">
@@ -243,6 +283,12 @@ const SPRITES: Record<GameSpriteId, string> = {
     <text x="100" y="82" text-anchor="middle" font-size="18" font-weight="800" fill="#ea580c" font-family="system-ui,sans-serif">12 − 5</text>
     <circle cx="152" cy="88" r="14" fill="#f97316" stroke="#c2410c" stroke-width="2"/>
     <text x="152" y="93" text-anchor="middle" font-size="11" font-weight="800" fill="#fff" font-family="system-ui,sans-serif">=7</text>
+  </svg>`,
+  'dao-duc-nhi': `<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Đạo Đức Nhí">
+    <rect width="200" height="120" fill="#fdf2f8" rx="12"/>
+    <path d="M100 28 C78 28 62 44 62 66 C62 88 78 98 100 98 C122 98 138 88 138 66 C138 44 122 28 100 28Z" fill="#f472b6" stroke="#db2777" stroke-width="2"/>
+    <path d="M100 42 C88 42 78 52 78 64 C78 76 88 82 100 88 C112 82 122 76 122 64 C122 52 112 42 100 42Z" fill="#fce7f3"/>
+    <text x="100" y="112" text-anchor="middle" font-size="11" font-weight="700" fill="#9d174d" font-family="system-ui,sans-serif">Đạo đức</text>
   </svg>`,
 };
 

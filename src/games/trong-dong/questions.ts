@@ -5,6 +5,7 @@ export type { PassageRound };
 
 const ROUNDS: PassageRound[] = [
   {
+    sgkRef: 'kh-van-hoa-dong-son',
     passage:
       'Trống đồng Đông Sơn là di sản văn hóa nổi tiếng của Việt Nam. Trên mặt trống thường có hình mặt trời ở giữa và các con vật xung quanh. Người xưa dùng trống trong lễ hội và sinh hoạt cộng đồng.',
     questions: [
@@ -26,6 +27,7 @@ const ROUNDS: PassageRound[] = [
     ],
   },
   {
+    sgkRef: 'kh-vat-chat-dong',
     passage:
       'Đồng là kim loại được người Việt cổ đúc thành trống, giáo, mũi tên. Khi đúc, thợ phải nấu đồng nóng chảy rồi đổ vào khuôn. Sau đó mới gọt, đánh bóng cho đẹp.',
     questions: [
@@ -42,6 +44,7 @@ const ROUNDS: PassageRound[] = [
     ],
   },
   {
+    sgkRef: 'kh-thoi-tiet',
     passage:
       'Thời tiết gồm nắng, mưa, gió, mây và thay đổi theo ngày. Con người cần theo dõi dự báo thời tiết để đi học, đi làm an toàn và bảo vệ mùa màng.',
     questions: [
@@ -68,6 +71,7 @@ const ROUNDS: PassageRound[] = [
     ],
   },
   {
+    sgkRef: 'kh-nuoc-ba-the',
     passage:
       'Nước có ba thể: rắn, lỏng và khí. Nước đá là thể rắn, nước thường là thể lỏng, hơi nước là thể khí. Khi đun nóng, nước bay hơi; khi làm lạnh, hơi nước ngưng tụ thành giọt.',
     questions: [
@@ -94,6 +98,7 @@ const ROUNDS: PassageRound[] = [
     ],
   },
   {
+    sgkRef: 'kh-am-thanh',
     passage:
       'Âm thanh do vật rung động tạo ra. Tai người nghe được âm thanh trong một giới hạn nhất định. Âm thanh quá to trong thời gian dài có thể ảnh hưởng đến thính giác.',
     questions: [

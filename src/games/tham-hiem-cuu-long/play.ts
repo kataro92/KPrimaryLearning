@@ -6,9 +6,9 @@ import { getGameById } from '@/games/catalog';
 import { createTimerSfxState } from '@/features/gameplay/timerBar';
 import { tickTimerSfx } from '@/features/audio/sfxService';
 import { TimerEngine } from '@/core/engine/timerEngine';
-import { scheduleAfterAnswer } from '@/features/gameplay/roundUi';
+import { bindGameLifecycle, createGameSession } from '@/features/gameplay/gameSession';
 import { gameFeedbackLine } from '@/features/speech/interactiveText';
-import { cancelSpeech, speakVietnamese } from '@/features/speech/speechService';
+import { speakVietnamese } from '@/features/speech/speechService';
 import { playSfx } from '@/features/audio/sfxService';
 import { createGameStage } from '@/ui/gameStage/createGameStage';
 import { BINS, pickItems, timePerItemMs, type ClassifyItem } from './questions';
@@ -40,6 +40,7 @@ export function renderThamHiemCuuLongGame(
     startedAt,
   });
 
+  const session = createGameSession();
   const stage = createGameStage(root, sceneHost, gameId, 'game-play--cuu-long');
   const heroHost = stage.root.querySelector<HTMLElement>('#game-hero')!;
   heroHost.innerHTML = `
@@ -51,7 +52,6 @@ export function renderThamHiemCuuLongGame(
   const fpsMount = heroHost.querySelector<HTMLElement>('.fps-wrap')!;
   const backBtn = fpsMount.querySelector<HTMLElement>('#fps-back')!;
   let sessionActive = true;
-  let cancelAfterAnswer: (() => void) | null = null;
 
   stage.feedbackEl.classList.add('fps-a11y-feedback');
   stage.root.querySelector('.game-play__qa-pane')?.appendChild(stage.feedbackEl);
@@ -93,18 +93,15 @@ export function renderThamHiemCuuLongGame(
   const stopSession = () => {
     if (!sessionActive) return;
     sessionActive = false;
-    cancelAfterAnswer?.();
-    cancelAfterAnswer = null;
+    session.dispose();
     fpsMount.removeEventListener('click', onShootClick);
     window.removeEventListener('keydown', onKeyDown);
     timer.stop();
-    cancelSpeech();
     fpsScene.dispose();
   };
 
   const exitToHome = () => {
-    stopSession();
-    sceneHost.resetTheme();
+    sceneHost.exitActiveGame();
     useAppStore.setScreen('home');
   };
 
@@ -138,8 +135,7 @@ export function renderThamHiemCuuLongGame(
       stage.setGameFeedback(ok ? 'correct' : 'wrong');
       index++;
       const last = index >= items.length;
-      cancelAfterAnswer?.();
-      cancelAfterAnswer = scheduleAfterAnswer(
+      session.scheduleAfterAnswer(
         last,
         () => showItem(items[index]),
         () => {
@@ -180,8 +176,7 @@ export function renderThamHiemCuuLongGame(
         tracker.recordRound(false, Date.now() - questionStarted);
         index++;
         const last = index >= items.length;
-        cancelAfterAnswer?.();
-        cancelAfterAnswer = scheduleAfterAnswer(
+        session.scheduleAfterAnswer(
           last,
           () => showItem(items[index]),
           () => {
@@ -230,8 +225,8 @@ export function renderThamHiemCuuLongGame(
 
   pushHudFeedback(gameFeedbackLine(gameId, 'start'), 'neutral');
   showItem(items[0]);
-  return () => {
+  return bindGameLifecycle(sceneHost, () => {
     stopSession();
     stage.cleanup();
-  };
+  });
 }

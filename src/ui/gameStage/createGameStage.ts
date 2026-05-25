@@ -65,7 +65,14 @@ export function createGameStage(
   const heroEl = root.querySelector<HTMLElement>('#game-hero')!;
   const feedbackFx3d = new StageFeedback3DFx(sceneHost);
   // Some games replace #game-hero with their own 3D preview (avoid static SVG overlay).
-  if (gameId !== 'hinh-hoc-thang-long' && gameId !== 'trong-dong' && gameId !== 'tham-hiem-cuu-long' && gameId !== 'cuu-chuong-van-mieu') {
+  if (
+    gameId !== 'hinh-hoc-thang-long' &&
+    gameId !== 'trong-dong' &&
+    gameId !== 'tham-hiem-cuu-long' &&
+    gameId !== 'cuu-chuong-van-mieu' &&
+    gameId !== 'dao-duc-nhi' &&
+    gameId !== 'but-sen-viet'
+  ) {
     mountGameSprite(heroEl, gameId, 'hero');
   }
 
@@ -75,7 +82,7 @@ export function createGameStage(
   });
 
   const onBack = () => {
-    sceneHost.resetTheme();
+    sceneHost.exitActiveGame();
     useAppStore.setScreen('home');
   };
   root.querySelector('#btn-back')!.addEventListener('click', onBack);

@@ -1,0 +1,11 @@
+Model Information:
+* title:	Low-poly dice
+* source:	https://sketchfab.com/3d-models/low-poly-dice-a2274ddb30c245e4b00c931ba3dff81b
+* author:	Animationguy303 (https://sketchfab.com/Animationguy303)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Low-poly dice" (https://sketchfab.com/3d-models/low-poly-dice-a2274ddb30c245e4b00c931ba3dff81b) by Animationguy303 (https://sketchfab.com/Animationguy303) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

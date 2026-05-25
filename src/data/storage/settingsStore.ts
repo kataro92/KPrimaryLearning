@@ -1,4 +1,5 @@
 import { AppSettings, DEFAULT_SETTINGS } from '../types';
+import { normalizeTtsVoicePreset } from '@/features/speech/ttsVoicePreset';
 
 const KEY = 'kv_settings';
 
@@ -12,6 +13,7 @@ export function loadSettings(): AppSettings {
     if (parsed.sfxEnabled === undefined && parsed.musicEnabled !== undefined) {
       merged.sfxEnabled = parsed.musicEnabled;
     }
+    merged.ttsVoicePreset = normalizeTtsVoicePreset(merged.ttsVoicePreset);
     return merged;
   } catch {
     return { ...DEFAULT_SETTINGS };

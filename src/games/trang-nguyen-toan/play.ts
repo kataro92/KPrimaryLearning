@@ -7,7 +7,7 @@ import { createTimerSfxState, syncTimerBar } from '@/features/gameplay/timerBar'
 import { TimerEngine } from '@/core/engine/timerEngine';
 import { speakVietnamese } from '@/features/speech/speechService';
 import { createGameStage } from '@/ui/gameStage/createGameStage';
-import { scheduleAfterAnswer } from '@/features/gameplay/roundUi';
+import { bindGameLifecycle, createGameSession } from '@/features/gameplay/gameSession';
 import {
   generateMcqQuestions,
   questionCount,
@@ -42,6 +42,7 @@ export function renderTrangNguyenToanGame(
     startedAt,
   });
 
+  const session = createGameSession();
   const stage = createGameStage(root, sceneHost, gameId, 'game-play--trang-nguyen');
   sceneHost.setParallaxSway(false);
 
@@ -97,7 +98,7 @@ export function renderTrangNguyenToanGame(
     stage.setGameFeedback(ok ? 'correct' : 'wrong');
     index++;
     const last = index >= questions.length;
-    scheduleAfterAnswer(
+    session.scheduleAfterAnswer(
       last,
       () => showQuestion(questions[index]),
       () => tracker.finish().then(onDone)
@@ -151,7 +152,7 @@ export function renderTrangNguyenToanGame(
         tracker.recordRound(false, Date.now() - questionStarted);
         index++;
         const last = index >= questions.length;
-        scheduleAfterAnswer(
+        session.scheduleAfterAnswer(
           last,
           () => showQuestion(questions[index]),
           () => tracker.finish().then(onDone)
@@ -171,11 +172,12 @@ export function renderTrangNguyenToanGame(
   window.addEventListener('keydown', onKeyDown);
 
   showQuestion(questions[0]);
-  return () => {
+  return bindGameLifecycle(sceneHost, () => {
     window.removeEventListener('keydown', onKeyDown);
     timer.stop();
+    session.dispose();
     mechaScene.dispose();
     sceneHost.setParallaxSway(true);
     stage.cleanup();
-  };
+  });
 }

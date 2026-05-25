@@ -7,7 +7,7 @@ import { getGameById } from '@/games/catalog';
 import { createTimerSfxState, syncTimerBar } from '@/features/gameplay/timerBar';
 import { TimerEngine } from '@/core/engine/timerEngine';
 import { createGameStage } from '@/ui/gameStage/createGameStage';
-import { scheduleAfterAnswer } from '@/features/gameplay/roundUi';
+import { bindGameLifecycle, createGameSession } from '@/features/gameplay/gameSession';
 import { generateQuestions, timePerQuestionMs, type DrumQuestion } from './questions';
 import { DongSonDrumScene } from './dongSonDrumScene';
 
@@ -37,6 +37,7 @@ export function renderTrongDongGame(
     startedAt,
   });
 
+  const session = createGameSession();
   const stage = createGameStage(root, sceneHost, gameId, 'game-play--trong-dong');
   sceneHost.setParallaxSway(false);
   const heroHost = stage.root.querySelector<HTMLElement>('#game-hero')!;
@@ -113,7 +114,7 @@ export function renderTrongDongGame(
       stage.setGameFeedback(ok ? 'correct' : 'wrong');
       index++;
       const last = index >= questions.length;
-      scheduleAfterAnswer(last, showQuestion, () => tracker.finish().then(onDone));
+      session.scheduleAfterAnswer(last, showQuestion, () => tracker.finish().then(onDone));
     };
     currentApply = (choiceIndex: number) => {
       if (q.choices[choiceIndex] == null) return;
@@ -143,7 +144,7 @@ export function renderTrongDongGame(
         stage.setGameFeedback('timeout');
         index++;
         const last = index >= questions.length;
-        scheduleAfterAnswer(last, showQuestion, () => tracker.finish().then(onDone));
+        session.scheduleAfterAnswer(last, showQuestion, () => tracker.finish().then(onDone));
       }
     );
   };
@@ -159,10 +160,11 @@ export function renderTrongDongGame(
   window.addEventListener('keydown', onKeyDown);
 
   showQuestion();
-  return () => {
+  return bindGameLifecycle(sceneHost, () => {
     window.removeEventListener('keydown', onKeyDown);
     timer.stop();
+    session.dispose();
     drumScene.dispose();
     stage.cleanup();
-  };
+  });
 }

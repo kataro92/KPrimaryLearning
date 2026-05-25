@@ -1158,6 +1158,27 @@ writeTs(
     .join('\n')}\n];`
 );
 
+const l1 = buildSpellingSupplement(SX_WORDS, 's / x', 'src/games/but-sen-viet/banks/level1Bank.ts', 200);
+const l2 = buildSpellingSupplement(CHTR_WORDS, 'ch / tr', 'src/games/but-sen-viet/banks/level2Bank.ts', 200);
+const l3 = buildSpellingSupplement(DGR_WORDS, 'd / gi / r / đ', 'src/games/but-sen-viet/banks/level3Bank.ts', 200);
+
+for (const [level, bank, hint] of [
+  ['1', l1, 's / x'],
+  ['2', l2, 'ch / tr'],
+  ['3', l3, 'd / gi / r / đ'],
+]) {
+  writeTs(
+    `src/games/but-sen-viet/banks/level${level}Supplement.ts`,
+    "import type { SpellingChallenge } from '../challengeTypes';",
+    `/** Bổ sung HK1/HK2 — ${bank.length} câu (${hint}) — cần QA trước khi bật trong questions.ts */\nexport const LEVEL${level}_SUPPLEMENT: SpellingChallenge[] = [\n${bank
+      .map(
+        (c) =>
+          `  { before: '${esc(c.before)}', after: '${esc(c.after)}', answer: '${esc(c.answer)}', distractors: [${c.distractors.map((d) => `'${esc(d)}'`).join(', ')}], hint: '${hint}' },`
+      )
+      .join('\n')}\n];`
+  );
+}
+
 const vocabLines = EN_VI_PAIRS.map(([en, vi, emoji], i) => {
   const level = i < 50 ? 1 : i < 120 ? 2 : 3;
   return `  { en: '${esc(en)}', vi: '${esc(vi)}', emoji: '${emoji}', level: ${level} as const },`;

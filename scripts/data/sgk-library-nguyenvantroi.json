@@ -1,0 +1,126 @@
+{
+  "source": "https://nguyenvantroipm.edu.vn/thu-vien/",
+  "filterGrade4": "https://nguyenvantroipm.edu.vn/thu-vien/?theloai=sach-giao-khoa&lop_hoc=L%E1%BB%9Bp+4",
+  "note": "KNTT và CTST cùng đề cương TT22/27 — dùng song song. Trường gọi CTST ĐHSP là «Cánh diều» trên site.",
+  "books": [
+    {
+      "id": "toan-cd-t1",
+      "title": "Toán 4 Tập 1 – Cánh Diều",
+      "series": "ctst",
+      "subject": "toan",
+      "volume": 1,
+      "semester": "hk1",
+      "pageUrl": "https://nguyenvantroipm.edu.vn/sach/toan-4-tap-1-canh-dieu/",
+      "downloadUrl": "https://nguyenvantroipm.edu.vn/wp-content/uploads/2025/08/Toan-4-T1.pdf?action=tai_ve",
+      "localFile": "Toan-4-T1-Canh-Dieu.pdf"
+    },
+    {
+      "id": "toan-cd-t2",
+      "title": "Toán 4 Tập 2 – Cánh Diều",
+      "series": "ctst",
+      "subject": "toan",
+      "volume": 2,
+      "semester": "hk2",
+      "pageUrl": "https://nguyenvantroipm.edu.vn/sach/toan-4-tap-2-canh-dieu/",
+      "downloadUrl": "https://nguyenvantroipm.edu.vn/wp-content/uploads/2025/08/Toan-4-T2.pdf?action=tai_ve",
+      "localFile": "Toan-4-T2-Canh-Dieu.pdf"
+    },
+    {
+      "id": "tv-ctst-t1",
+      "title": "Tiếng Việt 4 Tập 1 – Chân trời sáng tạo",
+      "series": "ctst",
+      "subject": "tieng-viet",
+      "volume": 1,
+      "semester": "hk1",
+      "pageUrl": "https://nguyenvantroipm.edu.vn/sach/tieng-viet-4-tap-1-chan-troi-sang-tao/",
+      "downloadUrl": "https://nguyenvantroipm.edu.vn/wp-content/uploads/2025/06/tieng-viet-lop-4-tap-1-chan-troi-sang-tao.pdf?action=tai_ve",
+      "localFile": "tieng-viet-lop-4-tap-1-chan-troi-sang-tao.pdf"
+    },
+    {
+      "id": "tv-ctst-t2",
+      "title": "Tiếng Việt 4 Tập 2 – Chân trời sáng tạo",
+      "series": "ctst",
+      "subject": "tieng-viet",
+      "volume": 2,
+      "semester": "hk2",
+      "pageUrl": "https://nguyenvantroipm.edu.vn/sach/tieng-viet-4-tap-2-chan-troi-sang-tao/",
+      "downloadUrl": "https://nguyenvantroipm.edu.vn/wp-content/uploads/2025/06/tieng-viet-lop-4-tap-2-chan-troi-sang-tao-pdf.pdf?action=tai_ve",
+      "localFile": "tieng-viet-lop-4-tap-2-chan-troi-sang-tao-pdf.pdf"
+    },
+    {
+      "id": "cong-nghe-cd",
+      "title": "Công nghệ 4 – Cánh diều",
+      "series": "ctst",
+      "subject": "cong-nghe",
+      "volume": 1,
+      "semester": "hk1",
+      "pageUrl": "https://nguyenvantroipm.edu.vn/sach/cong-nghe-4-canh-dieu/",
+      "downloadUrl": "https://nguyenvantroipm.edu.vn/wp-content/uploads/2025/05/Cong-nghe-4-Canh-dieu.pdf?action=tai_ve",
+      "localFile": "Cong-nghe-4-Canh-dieu.pdf"
+    },
+    {
+      "id": "tin-hoc-cd",
+      "title": "Tin học 4 – Cánh diều",
+      "series": "ctst",
+      "subject": "tin-hoc",
+      "volume": 1,
+      "semester": "hk1",
+      "pageUrl": "https://nguyenvantroipm.edu.vn/sach/tin-hoc-4-canh-dieu/",
+      "downloadUrl": "https://nguyenvantroipm.edu.vn/wp-content/uploads/2025/05/Tin-hoc-4-Canh-dieu.pdf?action=tai_ve",
+      "localFile": "Tin-hoc-4-Canh-dieu.pdf"
+    }
+  ],
+  "localOnly": [
+    {
+      "localFile": "SGK Toán 4 KNTT tập 1.pdf",
+      "series": "kntt",
+      "subject": "toan",
+      "volume": 1,
+      "semester": "hk1"
+    },
+    {
+      "localFile": "SGK Toán 4 CTST tập 2.pdf",
+      "series": "ctst",
+      "subject": "toan",
+      "volume": 2,
+      "semester": "hk2"
+    },
+    {
+      "localFile": "SGK Lịch sử và Địa lí 4 KNTT.pdf",
+      "series": "kntt",
+      "subject": "lich-su-dia-li",
+      "volume": 1,
+      "semester": "hk1"
+    },
+    {
+      "localFile": "SGK Lich su va Dia li 4 - CTST.pdf",
+      "series": "ctst",
+      "subject": "lich-su-dia-li",
+      "volume": 1,
+      "semester": "hk1"
+    },
+    {
+      "localFile": "SGK Dao duc 4 - CTST.pdf",
+      "series": "ctst",
+      "subject": "dao-duc"
+    },
+    {
+      "localFile": "SGK Cong nghe 4 - CTST.pdf",
+      "series": "ctst",
+      "subject": "cong-nghe"
+    },
+    {
+      "localFile": "2 Family and Friends 4.pdf",
+      "series": "english",
+      "subject": "tieng-anh"
+    }
+  ],
+  "wantedFromLibrary": [
+    "Khoa học 4 KNTT tập 1 & 2",
+    "Lịch sử và Địa lí 4 KNTT / CTST (nếu trường đăng thêm)",
+    "Toán 4 KNTT tập 2",
+    "Tiếng Việt 4 KNTT tập 1 & 2",
+    "Đạo đức 4",
+    "Âm nhạc / Mĩ thuật 4"
+  ]
+}

@@ -1,4 +1,10 @@
-import { OBJECT_BANK, type ObjectItem, type ObjectShape } from './objectBank';
+import { OBJECT_BANK, type ObjectItem } from './objectBank';
+import { resolveIllustrationBuilderId } from './illustrationResolver';
+import {
+  CHOICE_POOL_BY_LEVEL,
+  SHAPE_LABELS,
+  type ObjectShape,
+} from './shapeCatalog';
 
 export type { ObjectShape };
 
@@ -17,12 +23,6 @@ export interface ShapeTask {
   correctChoiceId: string;
 }
 
-const CHOICE_DEFS: Array<{ shape: ObjectShape; label: string }> = [
-  { shape: 'square', label: 'Hình vuông' },
-  { shape: 'rect', label: 'Hình chữ nhật' },
-  { shape: 'triangle', label: 'Hình tam giác' },
-];
-
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -32,17 +32,23 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-function buildChoicesForShape(correctShape: ObjectShape): { choices: ShapeChoice[]; correctChoiceId: string } {
-  const choices = shuffle(CHOICE_DEFS).map((c) => ({
-    id: `choice-${c.shape}`,
-    shape: c.shape,
-    label: c.label,
+function buildChoicesForShape(correctShape: ObjectShape, level: 1 | 2 | 3): {
+  choices: ShapeChoice[];
+  correctChoiceId: string;
+} {
+  const pool = CHOICE_POOL_BY_LEVEL[level];
+  const distractors = shuffle(pool.filter((s) => s !== correctShape)).slice(0, pool.length - 1);
+  const picked = shuffle([correctShape, ...distractors]);
+  const choices = picked.map((shape) => ({
+    id: `choice-${shape}`,
+    shape,
+    label: SHAPE_LABELS[shape],
   }));
   return { choices, correctChoiceId: `choice-${correctShape}` };
 }
 
-function toTask(item: ObjectItem, idx: number): ShapeTask {
-  const { choices, correctChoiceId } = buildChoicesForShape(item.shape);
+function toTask(item: ObjectItem, idx: number, level: 1 | 2 | 3): ShapeTask {
+  const { choices, correctChoiceId } = buildChoicesForShape(item.shape, level);
   return {
     id: `t${idx + 1}`,
     objectId: item.id,
@@ -59,15 +65,40 @@ export function taskCount(level: 1 | 2 | 3): number {
   return 14;
 }
 
+/** Mỗi vòng chơi: không hai câu dùng chung một tranh (builder). */
+function pickItemsWithUniqueArt(pool: ObjectItem[], count: number): ObjectItem[] {
+  const shuffled = shuffle(pool);
+  const picked: ObjectItem[] = [];
+  const usedArt = new Set<string>();
+
+  for (const item of shuffled) {
+    const art = resolveIllustrationBuilderId(item.id, item.label, item.shape);
+    if (usedArt.has(art)) continue;
+    usedArt.add(art);
+    picked.push(item);
+    if (picked.length >= count) break;
+  }
+
+  if (picked.length < count) {
+    for (const item of shuffled) {
+      if (picked.some((p) => p.id === item.id)) continue;
+      picked.push(item);
+      if (picked.length >= count) break;
+    }
+  }
+
+  return picked;
+}
+
 export function generateTasks(level: 1 | 2 | 3): ShapeTask[] {
   const count = taskCount(level);
   const pool = OBJECT_BANK.filter((o) => o.minLevel <= level);
-  const picked = shuffle(pool).slice(0, count);
-  return picked.map((item, idx) => toTask(item, idx));
+  const picked = pickItemsWithUniqueArt(pool, count);
+  return picked.map((item, idx) => toTask(item, idx, level));
 }
 
 export function timePerTaskMs(level: 1 | 2 | 3): number {
   if (level === 1) return 28000;
-  if (level === 2) return 24000;
-  return 22000;
+  if (level === 2) return 26000;
+  return 24000;
 }

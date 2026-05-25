@@ -1,0 +1,10 @@
+Model Information:
+* title:	Solar Panel
+* source:	https://sketchfab.com/3d-models/8f094196d83e43fb9865df4c7501a930
+* author:	https://sketchfab.com/aero3d.ua
+
+Model License:
+* license type:	CC Attribution
+* requirements:	Author must be credited per Sketchfab / Creative Commons terms.
+
+Game: Hình Học Thăng Long (builder o016)

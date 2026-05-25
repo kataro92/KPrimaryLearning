@@ -1,0 +1,10 @@
+Model Information:
+* title:	Rubik's cube 3x3
+* source:	https://sketchfab.com/3d-models/2a9ee6ab13744529932e231e955b7017
+* author:	https://sketchfab.com/Sh0ma
+
+Model License:
+* license type:	CC Attribution
+* requirements:	Author must be credited per Sketchfab / Creative Commons terms.
+
+Game: Hình Học Thăng Long (builder o013)

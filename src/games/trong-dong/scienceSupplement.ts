@@ -1,4 +1,6 @@
 export interface PassageRound {
+  /** Mã bài SGK Khoa học / chủ đề CT lớp 4 */
+  sgkRef?: string;
   passage: string;
   questions: { prompt: string; choices: string[]; correctIndex: number }[];
 }

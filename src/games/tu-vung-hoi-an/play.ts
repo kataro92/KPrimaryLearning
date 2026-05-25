@@ -7,6 +7,7 @@ import { playSfx } from '@/features/audio/sfxService';
 import { createTimerSfxState, syncTimerBar } from '@/features/gameplay/timerBar';
 import { TimerEngine } from '@/core/engine/timerEngine';
 import { ANSWER_FEEDBACK_MS } from '@/features/gameplay/roundTiming';
+import { bindGameLifecycle, createGameSession } from '@/features/gameplay/gameSession';
 import { createGameStage } from '@/ui/gameStage/createGameStage';
 import { selectPairs, sessionTimeMs } from './questions';
 import { HoiAnBoatScene } from './boatLanternScene';
@@ -68,6 +69,7 @@ export function renderTuVungHoiAnGame(
   let lock = false;
   const roundStart = Date.now();
 
+  const session = createGameSession();
   const stage = createGameStage(root, sceneHost, gameId, 'game-play--hoi-an');
   sceneHost.setParallaxSway(false);
   const heroHost = stage.root.querySelector<HTMLElement>('#game-hero')!;
@@ -148,7 +150,7 @@ export function renderTuVungHoiAnGame(
     const openBtns = grid.querySelectorAll<HTMLButtonElement>('.lantern-card--open');
     openBtns.forEach((b) => b.classList.add('lantern-card--checking'));
     stage.setFeedback('Đang kiểm tra cặp đèn lồng...', undefined);
-    setTimeout(() => {
+    session.delay(() => {
       const btns = grid.querySelectorAll<HTMLButtonElement>('.lantern-card--open');
       if (ok) {
         matched++;
@@ -168,7 +170,7 @@ export function renderTuVungHoiAnGame(
             : `Thuyền sông đêm Hội An · ${matched}/${totalPairs} đèn lồng`;
         stage.setGameFeedback('correct');
         if (matched >= totalPairs) {
-          setTimeout(() => void endSession(), ANSWER_FEEDBACK_MS);
+          session.delay(() => void endSession(), ANSWER_FEEDBACK_MS);
         }
       } else {
         boatScene.onWrongPair();
@@ -198,13 +200,14 @@ export function renderTuVungHoiAnGame(
   };
   window.addEventListener('keydown', onKeyDown);
 
-  return () => {
+  return bindGameLifecycle(sceneHost, () => {
     window.removeEventListener('keydown', onKeyDown);
     timer.stop();
+    session.dispose();
     boatScene.dispose();
     sceneHost.setParallaxSway(true);
     stage.cleanup();
-  };
+  });
 }
 
 function escapeAttr(s: string): string {

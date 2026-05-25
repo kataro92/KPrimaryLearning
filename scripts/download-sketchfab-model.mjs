@@ -3,10 +3,12 @@
  * Download a free Sketchfab model (glTF zip) into public/models/.
  * Requires SKETCHFAB_API_TOKEN — see public/models/trong-dong/README.md
  */
+import { existsSync } from 'node:fs';
 import { mkdir, writeFile, copyFile, rm, readdir, cp } from 'node:fs/promises';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { execSync } from 'node:child_process';
+import { execFileSync, execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { loadEnvFile } from './load-env.mjs';
 
 loadEnvFile();
@@ -58,18 +60,27 @@ const MODELS = [
     name: 'Crossbow (Minecraft) — Kosha_',
   },
   {
-    uid: 'a2274ddb30c245e4b00c931ba3dff81b',
-    outDir: join(ROOT, 'public/models/hinh-hoc-thang-long/props'),
-    outFile: 'o023.glb',
-    name: 'Low-poly dice (xúc xắc) — CC Attribution',
-  },
-  {
-    uid: '11a147c2811b435292792505745714a8',
-    outDir: join(ROOT, 'public/models/hinh-hoc-thang-long/props'),
-    outFile: 'o072.glb',
-    name: 'Low Poly Pizza Slice — CC Attribution',
+    uid: 'e63063d93b894b42952277574bb7860d',
+    outDir: join(ROOT, 'public/models/but-sen-viet'),
+    outFile: 'pen.glb',
+    name: 'Low poly pen — VertexKiller (CC BY)',
   },
 ];
+
+const HINH_HOC_PROPS = join(ROOT, 'public/models/hinh-hoc-thang-long/props');
+const hinhHocManifest = JSON.parse(
+  readFileSync(join(__dirname, 'data/hinh-hoc-sketchfab.json'), 'utf8')
+);
+const HINH_HOC_MODELS = hinhHocManifest.map((entry) => ({
+  uid: entry.uid,
+  outDir: join(HINH_HOC_PROPS, entry.id),
+  outFile: `${entry.id}.glb`,
+  name: `Hình học ${entry.id}: ${entry.name}`,
+  tags: ['hinh-hoc'],
+  entry,
+}));
+
+const ALL_MODELS = [...MODELS, ...HINH_HOC_MODELS];
 
 const token = process.env.SKETCHFAB_API_TOKEN?.trim();
 if (!token) {
@@ -77,24 +88,103 @@ if (!token) {
   process.exit(1);
 }
 
-async function downloadOne({ uid, outDir, outFile, name }) {
-  console.log(`\n→ ${name ?? uid}`);
-  const metaRes = await fetch(`https://api.sketchfab.com/v3/models/${uid}/download`, {
-    headers: { Authorization: `Token ${token}` },
+const onlyArg = process.argv.find((a) => a.startsWith('--only='))?.slice('--only='.length)?.trim().toLowerCase();
+const skipExisting = !process.argv.includes('--force');
+
+const apiHeaders = {
+  Authorization: `Token ${token}`,
+  Accept: 'application/json',
+  'User-Agent': 'KVPrimaryFunLearning/1.0 (fetch:models)',
+};
+
+function matchesFilter(m) {
+  if (!onlyArg) return true;
+  if (onlyArg === 'hinh-hoc') return m.tags?.includes('hinh-hoc');
+  const hay = `${m.name} ${m.outDir} ${m.outFile} ${m.uid} ${m.entry?.id ?? ''}`.toLowerCase();
+  return hay.includes(onlyArg);
+}
+
+const CURL_BASE = ['-4', '-sS', '--fail', '--connect-timeout', '30'];
+
+/** curl -4 — tránh timeout IPv6 của Node fetch tới api.sketchfab.com trên một số mạng. */
+function curlToFile(url, outPath, extraArgs = []) {
+  execFileSync('curl', [...CURL_BASE, '--max-time', '180', ...extraArgs, '-o', outPath, url], {
+    stdio: 'pipe',
   });
-  if (!metaRes.ok) {
-    throw new Error(`Download API ${metaRes.status}: ${await metaRes.text()}`);
+}
+
+function curlSketchfabJson(url) {
+  const tmp = join(ROOT, '_sketchfab_meta.json');
+  curlToFile(url, tmp, [
+    '-H',
+    `Authorization: Token ${token}`,
+    '-H',
+    'Accept: application/json',
+    '-H',
+    `User-Agent: ${apiHeaders['User-Agent']}`,
+  ]);
+  const text = readFileSync(tmp, 'utf8');
+  return JSON.parse(text);
+}
+
+function modelAlreadyPresent(outDir, outFile) {
+  if (existsSync(join(outDir, outFile))) return join(outDir, outFile);
+  if (existsSync(join(outDir, 'scene.gltf'))) return join(outDir, 'scene.gltf');
+  return null;
+}
+
+async function writeLicense(outDir, uid, entry) {
+  let name = entry?.name ?? 'Sketchfab model';
+  let author = entry?.author ?? 'Sketchfab author';
+  let license = entry?.license ?? 'CC Attribution';
+  try {
+    const info = curlSketchfabJson(`https://api.sketchfab.com/v3/models/${uid}`);
+    name = info.name ?? name;
+    author = info.user?.username ? `https://sketchfab.com/${info.user.username}` : author;
+    license = info.license?.label ?? license;
+  } catch {
+    /* keep manifest fields */
   }
-  const meta = await metaRes.json();
-  const archiveUrl = meta.gltf?.url ?? meta.glb?.url;
+  const text = `Model Information:
+* title:	${name}
+* source:	https://sketchfab.com/3d-models/${uid}
+* author:	${author}
+
+Model License:
+* license type:	${license}
+* requirements:	Author must be credited per Sketchfab / Creative Commons terms.
+
+Game: Hình Học Thăng Long (builder ${entry?.id ?? '—'})
+`;
+  await writeFile(join(outDir, 'license.txt'), text, 'utf8');
+}
+
+async function downloadOne({ uid, outDir, outFile, name, entry }) {
+  const existing = skipExisting ? modelAlreadyPresent(outDir, outFile) : null;
+  if (existing) {
+    console.log(`\n→ ${name ?? uid}\n  skip (exists): ${existing}`);
+    return;
+  }
+
+  console.log(`\n→ ${name ?? uid}`);
+  let meta;
+  try {
+    meta = curlSketchfabJson(`https://api.sketchfab.com/v3/models/${uid}/download`);
+  } catch (err) {
+    const hint =
+      err instanceof Error && /403|CloudFront/i.test(String(err.message))
+        ? '\n  Hint: Sketchfab API blocked. Check token or VPN.'
+        : '';
+    throw new Error(`Download API failed: ${err instanceof Error ? err.message : err}${hint}`);
+  }
+  const archiveUrl =
+    meta.gltf?.url ?? meta.glb?.url ?? meta.source?.url ?? meta.usdz?.url;
   if (!archiveUrl) throw new Error('No gltf/glb URL in download response');
 
-  const zipRes = await fetch(archiveUrl);
-  if (!zipRes.ok) throw new Error(`Archive fetch ${zipRes.status}`);
   const zipPath = join(outDir, '_sketchfab.zip');
   const extractDir = join(outDir, '_sketchfab_extract');
   await mkdir(outDir, { recursive: true });
-  await writeFile(zipPath, Buffer.from(await zipRes.arrayBuffer()));
+  curlToFile(archiveUrl, zipPath, ['--max-time', '300', '-L']);
 
   await rm(extractDir, { recursive: true, force: true });
   await mkdir(extractDir, { recursive: true });
@@ -115,6 +205,7 @@ async function downloadOne({ uid, outDir, outFile, name }) {
 
   await rm(zipPath, { force: true });
   await rm(extractDir, { recursive: true, force: true });
+  await writeLicense(outDir, uid, entry);
 }
 
 async function clearModelArtifacts(outDir) {
@@ -153,6 +244,30 @@ async function findFile(dir, ext) {
   return null;
 }
 
-for (const m of MODELS) {
-  await downloadOne(m);
+const queue = ALL_MODELS.filter(matchesFilter);
+if (queue.length === 0) {
+  console.error(`No models match --only=${onlyArg ?? '(none)'}`);
+  process.exit(1);
 }
+
+let failed = 0;
+for (const m of queue) {
+  try {
+    await downloadOne(m);
+  } catch (err) {
+    failed++;
+    const detail =
+      err instanceof Error
+        ? err.stderr
+          ? `${err.message}\n${String(err.stderr)}`
+          : err.message
+        : String(err);
+    console.error(`  ✗ ${m.name ?? m.uid}:`, detail.slice(0, 500));
+  }
+}
+
+if (failed > 0) {
+  console.error(`\n${failed} download(s) failed.`);
+  process.exit(1);
+}
+console.log('\nDone.');

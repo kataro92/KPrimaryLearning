@@ -1,0 +1,151 @@
+/** Bút Sen Việt — chính tả DOM + hero bút 3D */
+.game-play--but-sen {
+  max-width: 100%;
+  min-height: 100vh;
+  padding: 8px 10px 14px;
+}
+
+.game-play--but-sen .game-play__header {
+  background: linear-gradient(180deg, #b45309 0%, #d97706 50%, #fef3c7 100%);
+  border: 3px solid #78350f;
+  border-radius: 10px;
+  padding: 8px 12px;
+  box-shadow: 0 4px 0 #78350f;
+}
+
+.game-play--but-sen .game-play__title,
+.game-play--but-sen .game-play__subtitle {
+  color: #fff;
+  text-shadow: 1px 1px 0 #78350f;
+}
+
+.game-play--but-sen .game-play__back {
+  background: #fef3c7;
+  border: 2px solid #78350f;
+  color: #78350f;
+  font-weight: 800;
+}
+
+.game-play--but-sen .progress-dots span.done {
+  background: #16a34a;
+}
+
+.game-play--but-sen .progress-dots span.current {
+  background: #f8b800;
+}
+
+.game-play--but-sen .timer-bar {
+  background: #78350f;
+  border: 2px solid #f8b800;
+  border-radius: 8px;
+  height: 12px;
+}
+
+.game-play--but-sen .timer-bar__fill {
+  background: linear-gradient(90deg, #fbbf24, #fde68a);
+}
+
+.game-play--but-sen .game-play__arena {
+  margin: 0;
+  padding: 14px 12px;
+  background: linear-gradient(180deg, #fff7ed 0%, #ffedd5 100%);
+  border: 3px solid #b45309;
+  border-radius: 12px;
+  box-shadow: 0 4px 0 #92400e;
+}
+
+.game-play--but-sen .feedback {
+  color: #78350f;
+  font-weight: 800;
+}
+
+.but-sen-play__sentence {
+  font-size: clamp(1.05rem, 2.8vw, 1.2rem);
+  line-height: 1.55;
+  margin: 0 0 14px;
+  color: #1c1917;
+  text-align: center;
+}
+
+.but-sen-play__sentence--shake {
+  animation: but-sen-shake 0.35s ease;
+}
+
+@keyframes but-sen-shake {
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
+
+.but-sen-play__gap {
+  display: inline-block;
+  min-width: 3.5rem;
+  margin: 0 4px;
+  padding: 4px 12px;
+  font-weight: 800;
+  color: #1a1a1a;
+  background: #f8b800;
+  border: 2px solid #78350f;
+  border-radius: 6px;
+  vertical-align: middle;
+}
+
+.but-sen-play__gap--done {
+  background: #86efac;
+  color: #14532d;
+}
+
+.but-sen-play__row {
+  display: grid;
+  grid-template-columns: 7fr 3fr;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.but-sen-play__ime {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-family: var(--font);
+  border: 3px solid #78350f;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.but-sen-play__ime:focus {
+  outline: 3px solid #f8b800;
+}
+
+.but-sen-play__ime:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.but-sen-play__hint-chars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+  justify-content: center;
+  align-content: center;
+}
+
+.but-sen-play__hint-char {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.85rem;
+  min-height: 1.85rem;
+  padding: 4px 7px;
+  font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+  font-weight: 800;
+  color: #78350f;
+  background: #fde68a;
+  border: 2px solid #b45309;
+  border-radius: 6px;
+}

@@ -6,7 +6,8 @@ import { speakVietnamese } from '@/features/speech/speechService';
 import { getGameById } from '@/games/catalog';
 import { createTimerSfxState, syncTimerBar } from '@/features/gameplay/timerBar';
 import { TimerEngine } from '@/core/engine/timerEngine';
-import { scheduleAfterAnswer, setRoundHint, WAIT_NEXT_HINT } from '@/features/gameplay/roundUi';
+import { bindGameLifecycle, createGameSession } from '@/features/gameplay/gameSession';
+import { setRoundHint, WAIT_NEXT_HINT } from '@/features/gameplay/roundUi';
 import { createGameStage } from '@/ui/gameStage/createGameStage';
 import {
   generateQuestions,
@@ -42,6 +43,7 @@ export function renderTinhNhamGame(
     startedAt,
   });
 
+  const session = createGameSession();
   const stage = createGameStage(root, sceneHost, gameId, 'game-play--trang-ti');
   sceneHost.setParallaxSway(false);
   const heroHost = stage.root.querySelector<HTMLElement>('#game-hero')!;
@@ -113,7 +115,7 @@ export function renderTinhNhamGame(
       }
       index++;
       const last = index >= questions.length;
-      scheduleAfterAnswer(
+      session.scheduleAfterAnswer(
         last,
         () => showQuestion(questions[index]),
         () => tracker.finish().then(onDone)
@@ -142,7 +144,7 @@ export function renderTinhNhamGame(
         streakFlash = 0;
         index++;
         const last = index >= questions.length;
-        scheduleAfterAnswer(
+        session.scheduleAfterAnswer(
           last,
           () => showQuestion(questions[index]),
           () => tracker.finish().then(onDone)
@@ -152,10 +154,11 @@ export function renderTinhNhamGame(
   };
 
   showQuestion(questions[0]);
-  return () => {
+  return bindGameLifecycle(sceneHost, () => {
     timer.stop();
+    session.dispose();
     trexScene.dispose();
     sceneHost.setParallaxSway(true);
     stage.cleanup();
-  };
+  });
 }

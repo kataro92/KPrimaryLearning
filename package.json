@@ -8,7 +8,21 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "fetch:models": "node scripts/download-sketchfab-model.mjs",
-    "generate:questions": "node scripts/generate-grade4-question-banks.mjs"
+    "fetch:bgm": "node scripts/download-bgm.mjs",
+    "fetch:models:but-sen": "node scripts/download-sketchfab-model.mjs --only=but-sen-viet",
+    "generate:questions": "node scripts/generate-grade4-question-banks.mjs",
+    "fetch:sgk": "node scripts/fetch-sgk-pdfs.mjs",
+    "extract:sgk-index": "python3 scripts/extract-sgk-index.py",
+    "extract:sgk-content": "python3 scripts/extract-sgk-content.py",
+    "extract:sgk-content:ocr": "python3 scripts/extract-sgk-content.py --ocr",
+    "extract:sgk-content:ocr-tv": "python3 scripts/extract-sgk-content.py --ocr --force-ocr --pdf=tieng-viet",
+    "tag:math-sgkref": "node scripts/tag-math-sgkref.mjs",
+    "generate:sketch-parts": "node scripts/generate-sketch-parts2d.mjs",
+    "assign:hinh-hoc-illustrations": "tsx scripts/assign-hinh-hoc-illustrations.mjs",
+    "generate:hinh-hoc-wave3": "node scripts/generate-hinh-hoc-wave3.mjs",
+    "generate:hinh-hoc-drawings": "tsx scripts/generate-hinh-hoc-unique-drawings.mjs",
+    "cli-hub": ".venv/cli-hub/bin/cli-hub",
+    "cli:browser": ".venv/cli-hub/bin/cli-anything-browser"
   },
   "dependencies": {
     "@huggingface/transformers": "^4.2.0",

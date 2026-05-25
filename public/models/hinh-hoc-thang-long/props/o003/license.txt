@@ -1,0 +1,10 @@
+Model Information:
+* title:	CHESS BOARD
+* source:	https://sketchfab.com/3d-models/d7c57b9b15e24498973cb2d2dc14cbcf
+* author:	https://sketchfab.com/kmunawar703
+
+Model License:
+* license type:	CC Attribution
+* requirements:	Author must be credited per Sketchfab / Creative Commons terms.
+
+Game: Hình Học Thăng Long (builder o003)

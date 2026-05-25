@@ -30,6 +30,14 @@ export const GAMES: GameDefinition[] = [
     },
   },
   {
+    id: 'but-sen-viet',
+    title: 'Bút Sen Việt',
+    subject: 'Tiếng Việt',
+    description: 'Điền từ đúng chính tả trong câu',
+    playHint: 'Gõ từ còn thiếu (Telex); nghe câu rồi gõ — không đọc đáp án.',
+    achievements: { 1: 'Mầm Nét Đẹp', 2: 'Bút Non Tài Hoa', 3: 'Sen Rồng Việt' },
+  },
+  {
     id: 'tu-vung-hoi-an',
     title: 'Hành Trình Từ Vựng Hội An',
     subject: 'Tiếng Anh',
@@ -49,8 +57,8 @@ export const GAMES: GameDefinition[] = [
     id: 'hinh-hoc-thang-long',
     title: 'Săn Hình Học Thành Thăng Long',
     subject: 'Toán',
-    description: 'Hình học cơ bản',
-    playHint: 'Kéo viên gạch vào ô hình đúng để xây thành.',
+    description: 'Nhận dạng 7 dạng hình lớp 4',
+    playHint: 'Trả lời đúng để xây thêm tầng thành; xem sổ vẽ và chọn đúng dạng hình lớp 4.',
     achievements: { 1: 'Thợ Xây Tập Sự', 2: 'Kiến Trúc Sư Nhí', 3: 'Thần Đồng Thăng Long' },
   },
   {
@@ -60,6 +68,14 @@ export const GAMES: GameDefinition[] = [
     description: 'Đọc hiểu đoạn văn',
     playHint: 'Đọc đoạn sử, chạm tem Đúng hoặc Sai cho mỗi câu.',
     achievements: { 1: 'Bạn Đọc Sử Nhí', 2: 'Sứ Giả Sử Việt', 3: 'Hậu Duệ Sử Gia' },
+  },
+  {
+    id: 'hanh-trinh-su-dia',
+    title: 'Hành Trình Sử & Địa',
+    subject: 'Lịch sử & Địa lí',
+    description: 'Kéo thẻ vào bản đồ Việt Nam',
+    playHint: 'Đọc câu hỏi, kéo thẻ hoặc chạm đúng vùng trên bản đồ (Hoàng Sa, Trường Sa, Phú Quốc…).',
+    achievements: { 1: 'Bạn Bản Đồ Nhí', 2: 'Nhà Địa Lý Nhí', 3: 'Sứ Giả Biển Đông' },
   },
   {
     id: 'cuu-chuong-van-mieu',
@@ -84,6 +100,14 @@ export const GAMES: GameDefinition[] = [
     description: 'Nhập kết quả phép tính có đếm ngược',
     playHint: 'Nhập kết quả nhanh, bấm Trống! trước khi hết giờ.',
     achievements: { 1: 'Tí Nhanh Trí', 2: 'Tí Siêu Nhẩm', 3: 'Trạng Tí Xuất Chúng' },
+  },
+  {
+    id: 'dao-duc-nhi',
+    title: 'Đạo Đức Nhí',
+    subject: 'Đạo đức',
+    description: 'Chọn việc làm đúng trong tình huống',
+    playHint: 'Đọc tình huống, chọn hành động đúng — bấm 1, 2 hoặc 3.',
+    achievements: { 1: 'Bạn Ngoan', 2: 'Trái Tim Ấm', 3: 'Người Bạn Đáng Tin' },
   },
 ];
 

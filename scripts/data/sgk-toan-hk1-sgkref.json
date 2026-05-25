@@ -1,0 +1,15 @@
+{
+  "note": "Gắn sgkRef toan-hk1-bai-XX theo chủ đề Cánh Diều HK1 (curated index)",
+  "ranges": [
+    { "baiStart": 1, "baiEnd": 5, "keywords": ["ôn tập", "100 000", "chẵn", "lẻ", "em làm được"] },
+    { "baiStart": 6, "baiEnd": 8, "keywords": ["rút về đơn vị", "ba bước"] },
+    { "baiStart": 9, "baiEnd": 12, "keywords": ["biểu thức", "chữ"] },
+    { "baiStart": 13, "baiEnd": 14, "keywords": ["giao hoán", "kết hợp"] },
+    { "baiStart": 16, "baiEnd": 19, "keywords": ["dãy số", "biểu đồ", "trung bình", "lặp lại"] },
+    { "baiStart": 20, "baiEnd": 21, "keywords": ["dm²", "m²", "đề-xi-mét", "mét vuông", "diện tích"] },
+    { "baiStart": 23, "baiEnd": 27, "keywords": ["triệu", "sáu chữ số", "tự nhiên", "hệ thập phân"] },
+    { "baiStart": 29, "baiEnd": 31, "keywords": ["góc", "vuông góc", "song song"] },
+    { "baiStart": 33, "baiEnd": 35, "keywords": ["giây", "thế kỉ", "yến", "tạ", "tấn"] }
+  ],
+  "defaultBai": 9
+}

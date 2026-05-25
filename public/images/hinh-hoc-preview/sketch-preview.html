@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Minh họa Thăng Long — xem trước</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #f5f0e6; padding: 24px; }
+    h1 { font-size: 1.1rem; color: #78350f; }
+    .grid { display: flex; gap: 32px; flex-wrap: wrap; }
+    figure { margin: 0; text-align: center; }
+    canvas {
+      display: block;
+      width: 400px;
+      height: 320px;
+      border: 2px solid #b45309;
+      border-radius: 8px;
+      background: #fffef5;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    }
+    figcaption { margin-top: 10px; font-weight: 700; color: #92400e; }
+    .sub { font-size: 0.85rem; color: #64748b; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <h1>Minh họa trong game (canvas 2D — giống sổ vẽ)</h1>
+  <div class="grid">
+    <figure>
+      <canvas id="can-dieu" width="560" height="440"></canvas>
+      <figcaption>Cánh diều</figcaption>
+      <p class="sub">Builder o053 · đáp án: Hình chữ nhật (thân diều)</p>
+    </figure>
+    <figure>
+      <canvas id="non-la" width="560" height="440"></canvas>
+      <figcaption>Nón lá</figcaption>
+      <p class="sub">Builder o076 · đáp án: Hình tam giác</p>
+    </figure>
+    <figure>
+      <canvas id="can-dieu-duoi" width="560" height="440"></canvas>
+      <figcaption>Cánh diều (đuôi — o080, tham khảo)</figcaption>
+      <p class="sub">Dùng khi hỏi “cánh diều đuôi”</p>
+    </figure>
+  </div>
+  <script type="module">
+    // Mirror paintBuilder + draw_o053 / o076 / o080 from game
+    function paperWash(ctx, w, h) {
+      const g = ctx.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#fffef8');
+      g.addColorStop(1, '#f5f0e6');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+    }
+    function pen(ctx, color, width = 2.2) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+    }
+    function fill(ctx, color) { ctx.fillStyle = color; }
+    function rect(ctx, x, y, w, h, r = 0) {
+      if (r <= 0) { ctx.rect(x, y, w, h); return; }
+      const rr = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + rr, y);
+      ctx.arcTo(x + w, y, x + w, y + h, rr);
+      ctx.arcTo(x + w, y + h, x, y + h, rr);
+      ctx.arcTo(x, y + h, x, y, rr);
+      ctx.arcTo(x, y, x + w, y, rr);
+      ctx.closePath();
+    }
+    function tri(ctx, x1, y1, x2, y2, x3, y3) {
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.lineTo(x3, y3);
+      ctx.closePath();
+    }
+    function draw(ctx, fn) {
+      const w = ctx.canvas.width;
+      const h = ctx.canvas.height;
+      paperWash(ctx, w, h);
+      const s = Math.min(w, h) * 0.82;
+      ctx.save();
+      ctx.translate(w / 2, h / 2);
+      ctx.scale(s / 200, s / 200);
+      fn(ctx);
+      pen(ctx, 'rgba(51, 65, 85, 0.35)', 1.2);
+      ctx.strokeRect(-72, -72, 144, 144);
+      ctx.restore();
+    }
+    function draw_o053(ctx) {
+      fill(ctx,'#dc2626');rect(ctx,-55,-25,110,50,2);ctx.fill();
+      pen(ctx,'#b91c1c',2);ctx.stroke();
+      pen(ctx,'#78350f',3);ctx.beginPath();ctx.moveTo(0,25);ctx.lineTo(0,58);ctx.stroke();
+    }
+    function draw_o076(ctx) {
+      fill(ctx,'#d4d4d8');tri(ctx,-55,30,55,30,0,-35);ctx.fill();
+      pen(ctx,'#a1a1aa',2);ctx.stroke();
+      fill(ctx,'#dc2626');rect(ctx,-55,25,110,8,2);ctx.fill();
+    }
+    function draw_o080(ctx) {
+      pen(ctx,'#dc2626',2);ctx.beginPath();ctx.moveTo(0,-50);ctx.lineTo(0,40);ctx.stroke();
+      for (let i = 0; i < 3; i++) {
+        fill(ctx, i % 2 ? '#f472b6' : '#fbbf24');
+        ctx.beginPath(); ctx.arc(-12 + i * 12, 45 + i * 5, 8, 0, Math.PI * 2); ctx.fill();
+      }
+      fill(ctx,'#fecaca');tri(ctx,-25,-45,25,-45,0,-55);ctx.fill();
+    }
+    for (const [id, fn] of [['can-dieu', draw_o053], ['non-la', draw_o076], ['can-dieu-duoi', draw_o080]]) {
+      const c = document.getElementById(id);
+      const ctx = c.getContext('2d');
+      draw(ctx, fn);
+    }
+  </script>
+</body>
+</html>

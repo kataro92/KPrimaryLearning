@@ -1,0 +1,10 @@
+Model Information:
+* title:	Vietnam Flag
+* source:	https://sketchfab.com/3d-models/55edbce2f58a43b5b382191ea76ae91d
+* author:	https://sketchfab.com/Where123
+
+Model License:
+* license type:	CC Attribution
+* requirements:	Author must be credited per Sketchfab / Creative Commons terms.
+
+Game: Hình Học Thăng Long (builder o069)

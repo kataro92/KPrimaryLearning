@@ -21,6 +21,7 @@
 
 .passage-text,
 .history-scroll__passage,
+.ethics-puzzle__scenario,
 .drum-puzzle__passage {
   padding: 14px 16px;
   margin-bottom: 14px;
@@ -32,6 +33,7 @@
 }
 
 .history-panel__q,
+.ethics-puzzle__question,
 .drum-puzzle__question,
 .temple-arena__board,
 .shape-quiz__prompt,
@@ -550,4 +552,66 @@
 
 .game-tile-grid .game-card--tile:not(:disabled):hover {
   border-color: rgba(124, 58, 237, 0.3);
+}
+
+/* Đạo Đức Nhí — cùng bia đá (stone-tablet) như Trống Đồng / Trạng Nguyên */
+.ethics-puzzle__scenario {
+  font-style: italic;
+  color: color-mix(in srgb, var(--clay-foreground) 88%, var(--clay-accent));
+}
+
+.ethics-puzzle .stone-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.ethics-puzzle .stone-tablet {
+  min-height: 52px;
+  width: 100%;
+  padding: 12px 14px;
+}
+
+.ethics-puzzle .stone-tablet span {
+  display: block;
+  font-size: clamp(0.84rem, 1.35vw, 0.98rem);
+  line-height: 1.35;
+  font-weight: 800;
+  text-align: left;
+}
+
+.dao-duc-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 200px;
+  gap: 8px;
+}
+
+.dao-duc-hero__canvas-host {
+  flex: 1;
+  width: 100%;
+  min-height: 160px;
+  border-radius: var(--clay-radius-md);
+  overflow: hidden;
+  background: linear-gradient(180deg, #fff1f2 0%, #fce7f3 100%);
+  box-shadow: inset 0 0 0 1px rgba(244, 114, 182, 0.2);
+}
+
+.dao-duc-heart-canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.dao-duc-hero__caption {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  color: var(--clay-muted);
+  text-align: center;
+  margin: 0;
+  padding: 0 8px 4px;
 }
