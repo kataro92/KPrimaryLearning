@@ -58,6 +58,7 @@ export function renderHinhHocThangLongGame(
   `;
   const castleMount = heroHost.querySelector<HTMLElement>('#castle-mount')!;
   const sketchMount = heroHost.querySelector<HTMLElement>('#sketchbook-mount')!;
+  sketchMount.classList.add('thang-long-visual__sketch--booting');
   castleMount.replaceChildren();
   sketchMount.replaceChildren();
   const castle = new CastleBuildView(castleMount, tasks.length);
@@ -223,6 +224,7 @@ export function renderHinhHocThangLongGame(
   const hideBootLoading = () => {
     booting = false;
     stage.root.classList.remove('game-play--thang-long-loading');
+    sketchMount.classList.remove('thang-long-visual__sketch--booting');
   };
 
   const bootGame = async () => {
@@ -248,13 +250,13 @@ export function renderHinhHocThangLongGame(
       });
       if (disposed) return;
 
-      hideBootLoading();
       showTask(tasks[0], false);
+      hideBootLoading();
     } catch (err) {
       console.error('[hinh-hoc-thang-long] boot failed', err);
       if (!disposed) {
-        hideBootLoading();
         showTask(tasks[0], false);
+        hideBootLoading();
       }
     }
   };

@@ -12,3 +12,6 @@ scripts/data/sgk-content/*.json
 .env.*.local
 !.env.example
 !.env.production
+
+# Sketchfab download script temp metadata
+_sketchfab_meta.json

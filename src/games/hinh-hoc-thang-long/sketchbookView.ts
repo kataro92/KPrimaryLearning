@@ -103,9 +103,9 @@ export class SketchbookView {
           settle(false);
           return;
         }
-        requestAnimationFrame(tick);
+        window.setTimeout(tick, 16);
       };
-      requestAnimationFrame(() => requestAnimationFrame(tick));
+      window.setTimeout(tick, 0);
     });
   }
 
@@ -238,6 +238,10 @@ export class SketchbookView {
     this.root.remove();
   }
 
+  private markArtReady(): void {
+    this.root.classList.add('sketchbook--ready');
+  }
+
   private paintSheet(sheet: HTMLElement, canvas: HTMLCanvasElement, page: SketchbookPage): void {
     const name = sheet.querySelector('.sketchbook__name')!;
     const trait = sheet.querySelector('.sketchbook__trait')!;
@@ -248,6 +252,7 @@ export class SketchbookView {
       width: this.artWidth,
       height: this.artHeight,
     });
+    this.markArtReady();
   }
 
   private repaintActive(): void {
