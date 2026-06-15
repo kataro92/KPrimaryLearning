@@ -27,6 +27,12 @@ Hiện chưa có bản **nhạc thiếu nhi Việt Nam** (ví dụ *Thuyền bu�
 | `trang-nguyen-toan` | `trang-nguyen-toan.ogg` | Arcade Adventures | https://soundimage.org/wp-content/uploads/2025/10/Arcade-Adventures_Looping.ogg |
 | `tinh-nham-trang-ti` | `tinh-nham-trang-ti.ogg` | Coin-Op Chaos | https://soundimage.org/wp-content/uploads/2025/10/Coin-Op-Chaos_Looping.ogg |
 | `tu-vung-hoi-an` | `tu-vung-hoi-an.ogg` | Bustling Village | https://soundimage.org/wp-content/uploads/2025/10/Bustling-Village.ogg |
+| `thap-trieu-so` | `thap-trieu-so.ogg` | Arcade Heroes | https://soundimage.org/wp-content/uploads/2025/10/Arcade-Heroes.ogg |
+| `thuong-nhan-song-hong` | `thuong-nhan-song-hong.ogg` | Around the Bend | https://soundimage.org/wp-content/uploads/2025/10/Around-the-Bend.ogg |
+| `chia-banh-trang-ram` | `chia-banh-trang-ram.ogg` | Arrival | https://soundimage.org/wp-content/uploads/2025/10/Arrival_Looping.ogg |
+| `do-dat-co-thanh` | `do-dat-co-thanh.ogg` | Ancient Puzzles | https://soundimage.org/wp-content/uploads/2025/10/Ancient-Puzzles.ogg |
+| `bep-bac-hoc-tro` | `bep-bac-hoc-tro.ogg` | Another Cookie Heist | https://soundimage.org/wp-content/uploads/2025/10/Another-Cookie-Heist.ogg |
+| `cho-so-lieu` | `cho-so-lieu.ogg` | Arcade Puzzler | https://soundimage.org/wp-content/uploads/2025/10/Arcade-Puzzler.ogg |
 
 ## Download
 

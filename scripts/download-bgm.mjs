@@ -84,6 +84,42 @@ const TRACKS = [
     source: 'Bustling-Village.ogg',
     title: 'Bustling Village',
   },
+  {
+    gameId: 'thap-trieu-so',
+    outFile: 'thap-trieu-so.ogg',
+    source: 'Arcade-Heroes.ogg',
+    title: 'Arcade Heroes',
+  },
+  {
+    gameId: 'thuong-nhan-song-hong',
+    outFile: 'thuong-nhan-song-hong.ogg',
+    source: 'Around-the-Bend.ogg',
+    title: 'Around the Bend',
+  },
+  {
+    gameId: 'chia-banh-trang-ram',
+    outFile: 'chia-banh-trang-ram.ogg',
+    source: 'Arrival_Looping.ogg',
+    title: 'Arrival',
+  },
+  {
+    gameId: 'do-dat-co-thanh',
+    outFile: 'do-dat-co-thanh.ogg',
+    source: 'Ancient-Puzzles.ogg',
+    title: 'Ancient Puzzles',
+  },
+  {
+    gameId: 'bep-bac-hoc-tro',
+    outFile: 'bep-bac-hoc-tro.ogg',
+    source: 'Another-Cookie-Heist.ogg',
+    title: 'Another Cookie Heist',
+  },
+  {
+    gameId: 'cho-so-lieu',
+    outFile: 'cho-so-lieu.ogg',
+    source: 'Arcade-Puzzler.ogg',
+    title: 'Arcade Puzzler',
+  },
 ];
 
 const onlyArg = process.argv.find((a) => a.startsWith('--only='))?.slice('--only='.length)?.trim().toLowerCase();

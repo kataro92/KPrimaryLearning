@@ -13,6 +13,12 @@ export type BgmGameId =
   | 'cuu-chuong-van-mieu'
   | 'tham-hiem-cuu-long'
   | 'tinh-nham-trang-ti'
+  | 'thap-trieu-so'
+  | 'thuong-nhan-song-hong'
+  | 'chia-banh-trang-ram'
+  | 'do-dat-co-thanh'
+  | 'bep-bac-hoc-tro'
+  | 'cho-so-lieu'
   | 'dao-duc-nhi';
 
 interface BgmTrack {
@@ -74,6 +80,36 @@ const TRACKS: Record<BgmGameId, BgmTrack> = {
     file: 'tinh-nham-trang-ti.ogg',
     title: 'Coin-Op Chaos',
     volume: 0.34,
+  },
+  'thap-trieu-so': {
+    file: 'thap-trieu-so.ogg',
+    title: 'Arcade Heroes',
+    volume: 0.32,
+  },
+  'thuong-nhan-song-hong': {
+    file: 'thuong-nhan-song-hong.ogg',
+    title: 'Around the Bend',
+    volume: 0.32,
+  },
+  'chia-banh-trang-ram': {
+    file: 'chia-banh-trang-ram.ogg',
+    title: 'Arrival',
+    volume: 0.3,
+  },
+  'do-dat-co-thanh': {
+    file: 'do-dat-co-thanh.ogg',
+    title: 'Ancient Puzzles',
+    volume: 0.32,
+  },
+  'bep-bac-hoc-tro': {
+    file: 'bep-bac-hoc-tro.ogg',
+    title: 'Another Cookie Heist',
+    volume: 0.32,
+  },
+  'cho-so-lieu': {
+    file: 'cho-so-lieu.ogg',
+    title: 'Arcade Puzzler',
+    volume: 0.32,
   },
   'dao-duc-nhi': {
     file: 'dao-duc-nhi.ogg',

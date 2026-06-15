@@ -45,7 +45,7 @@ Last updated: 2026-06-15
   - Cancel/timeout/preload worker từ Home khi bật giọng.
   - Mỗi game đọc câu hỏi/lượt khi hiển thị (tôn trọng toggle Giọng); game ghép thẻ Hội An chỉ đọc hướng dẫn mở đầu vì không có câu hỏi từng lượt.
   - SFX qua Web Audio API (`sfxService.ts`, toggle `sfxEnabled`).
-  - Nhạc nền OGG **vui/sáng** riêng từng game (`public/audio/bgm/`, Eric Matyas CC BY; `npm run fetch:bgm`); ví dụ Đạo Đức Nhí → *Good Morning Doctor Weird*, Bút Sen → *Fishbowl Circus*; chưa có nhạc thiếu nhi Việt có license — xem `public/audio/bgm/README.md`.
+  - Nhạc nền OGG **vui/sáng** riêng từng game (`public/audio/bgm/`, Eric Matyas CC BY; `npm run fetch:bgm`); **17** game có track riêng (gồm 6 Toán 4 Cánh Diều); chưa có nhạc thiếu nhi Việt có license — xem `public/audio/bgm/README.md`.
   - Tài liệu: `docs/planning/TTS_LOCAL_ARCHITECTURE.md`.
 - Deployment:
   - GitHub Actions tự động build và publish lên GitHub Pages khi push `main`.
