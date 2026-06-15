@@ -1,3 +1,10 @@
+export interface LevelUpInfo {
+  fromLevel: number;
+  toLevel: number;
+  fromTitle: string;
+  toTitle: string;
+}
+
 export interface PlayResult {
   score: number;
   stars: number;
@@ -7,4 +14,5 @@ export interface PlayResult {
   durationMs: number;
   unlocked: boolean;
   newAchievementName?: string;
+  levelUp?: LevelUpInfo;
 }

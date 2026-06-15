@@ -21,7 +21,6 @@ Hiện chưa có bản **nhạc thiếu nhi Việt Nam** (ví dụ *Thuyền bu�
 | `hanh-trinh-su-dia` | `hanh-trinh-su-dia.ogg` | Cool Adventure Intro | https://soundimage.org/wp-content/uploads/2025/10/Cool-Adventure-Intro.ogg |
 | `but-sen-viet` | `but-sen-viet.ogg` | Fishbowl Circus | https://soundimage.org/wp-content/uploads/2025/10/Fishbowl-Circus.ogg |
 | `trong-dong` | `trong-dong.ogg` | Monkey Drama | https://soundimage.org/wp-content/uploads/2025/10/Monkey-Drama.ogg |
-| `hinh-hoc-thang-long` | `hinh-hoc-thang-long.ogg` | Whimsical Popsicle | https://soundimage.org/wp-content/uploads/2025/10/Whimsical-Popsicle.ogg |
 | `cuu-chuong-van-mieu` | `cuu-chuong-van-mieu.ogg` | Monkey Island Band | https://soundimage.org/wp-content/uploads/2025/10/Monkey-Island-Band_Looping.ogg |
 | `tham-hiem-cuu-long` | `tham-hiem-cuu-long.ogg` | Arcade Fantasy | https://soundimage.org/wp-content/uploads/2025/10/Arcade-Fantasy.ogg |
 | `trang-nguyen-toan` | `trang-nguyen-toan.ogg` | Arcade Adventures | https://soundimage.org/wp-content/uploads/2025/10/Arcade-Adventures_Looping.ogg |

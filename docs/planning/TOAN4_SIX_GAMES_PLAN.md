@@ -17,7 +17,7 @@
 
 ## 2. Nguyên tắc thiết kế
 
-- **Không trùng** game Toán hiện có: Trạng Nguyên (MCQ tổng hợp), Trạng Tí (nhẩm), Thăng Long (nhận dạng hình), Cửu Chương (bảng nhân/chia).
+- **Không trùng** game Toán hiện có: Trạng Nguyên (MCQ tổng hợp), Trạng Tí (nhẩm), Cửu Chương (bảng nhân/chia).
 - Mỗi câu có `sgkRef` theo chủ đề/bài (vd. `toan-so-trieu-lam-tron`), không copy nguyên đề SGK.
 - 3 cấp danh hiệu: nhận biết → vận dụng → tổng hợp.
 - Feedback ngay (đúng/sai/hết giờ), TTS đọc câu hỏi, timer theo cấp.
@@ -67,7 +67,7 @@
 ### 3.3–3.6. Phase 2–3 (tóm tắt)
 
 - **Chia Bánh Trăng Rằm:** Canvas tô phần + ghép thẻ phân số; phụ thuộc hiểu phân số trước phép tính.
-- **Đo Đất Cổ Thành:** diện tích m²/dm²/mm², hình bình hành/thoi; bổ sung Thăng Long.
+- **Đo Đất Cổ Thành:** diện tích m²/dm²/mm², hình bình hành/thoi.
 - **Bếp Bác Học Trò:** cộng/trừ/nhân/chia phân số; picker tử/mẫu ở cấp cao.
 - **Chợ Số Liệu:** biểu đồ cột SVG + mô phỏng đếm sự kiện.
 
@@ -95,7 +95,7 @@
 |----------|---------|---------|
 | Tháp Triệu Số | Trạng Nguyên | Số lớn, làm tròn, đơn vị → Tháp; MCQ tổng hợp giữ ở Trạng Nguyên |
 | Thương Nhân | Trạng Tí | Bài toán lời, tính chất → Thương Nhân; nhẩm nhanh → Trạng Tí |
-| Đo Đất | Thăng Long | Thăng Long = nhận dạng; Đo Đất = diện tích & đổi đơn vị |
+| Đo Đất | — | Diện tích & đổi đơn vị (hình bình hành/thoi) |
 
 ## 6. Rủi ro
 

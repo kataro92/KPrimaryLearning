@@ -1047,28 +1047,6 @@ function buildSciencePassagesExtra(count = 25) {
   return rounds;
 }
 
-// ——— Hình học: đồ vật ———
-const OBJECT_LABELS = {
-  square: [
-    'Viên xúc xắc', 'Miếng phô mai vuông', 'Tấm gương vuông', 'Khay sushi', 'Miếng brownie',
-    'Tấm kính vuông', 'Khối đá lát', 'Miếng bánh quy vuông', 'Tấm thảm họa tiết', 'Hộp sữa vuông',
-    'Miếng tofu vuông', 'Tấm decal vuông', 'Khối xếp hình', 'Miếng kẹo dẻo', 'Tấm bìa màu',
-    'Viên gạch mosaic', 'Miếng sandwich vuông', 'Tấm lót bàn', 'Khung ảnh vuông', 'Miếng bánh flan',
-  ],
-  rect: [
-    'Thẻ tên', 'Cuốn sách mỏng', 'Thước kẻ dài', 'Hộp bút', 'Tấm ván gỗ',
-    'Viên gạch ống', 'Cánh cửa phòng', 'Tấm biển báo', 'Khay đựng bút', 'Hộp socola',
-    'Tờ giấy A4', 'Miếng bánh mì', 'Thẻ nhớ', 'Hộp diêm', 'Tấm thẻ học',
-    'Băng dính cuộn', 'Hộp sữa hộp', 'Tấm menu', 'Cánh tay ghế', 'Thân bút chì',
-  ],
-  triangle: [
-    'Miếng pizza', 'Nón lá', 'Cái ê-tô', 'Kim tự tháp mini', 'Dấu hiệu cảnh báo',
-    'Miếng sandwich tam giác', 'Cánh diều', 'Đinh ba trang trí', 'Miếng bánh sandwich', 'Núi nhọn',
-    'Cái chặn cửa', 'Biển báo tam giác', 'Miếng phô mai tam giác', 'Hình ghim', 'Cái thước tam giác',
-    'Miếng bánh gốc', 'Đỉnh mái nhà', 'Cái kẹp giấy', 'Hình cờ tam giác', 'Miếng tortilla gập',
-  ],
-};
-
 // ——— Cửu Long: phân loại ———
 const MEKONG_ITEMS = [
   ['Cá chép', '🐟', 'dong-vat'], ['Sen hồng', '🪷', 'thuc-vat'], ['Nước dâng', '🌊', 'hien-tuong'],
@@ -1210,34 +1188,6 @@ writeTs(
   'src/games/doc-hieu-su-viet/historySupplement.ts',
   "import type { HistoryPassage } from './historyBank';",
   `/** Lịch sử lớp 4 bổ sung — ${HISTORY_EXTRA.reduce((n, p) => n + p[1].length, 0)} nhận định */\nexport const HISTORY_SUPPLEMENT_DATA: [string, [string, boolean][]][] = ${JSON.stringify(HISTORY_EXTRA, null, 2)};\n\nexport const HISTORY_SUPPLEMENT: HistoryPassage[] = HISTORY_SUPPLEMENT_DATA.map(([passage, statements]) => ({\n  passage,\n  statements: statements.map(([text, isTrue]) => ({ text, isTrue })),\n}));`
-);
-
-const OBJECT_PREFIX = ['Chiếc', 'Tấm', 'Miếng', 'Khối', 'Cái', 'Hộp', 'Viên', 'Tờ', 'Cuốn', 'Thanh'];
-const OBJECT_SUFFIX = [' trong phòng', ' trên bàn', ' ngoài sân', ' trong lớp', ' ở bếp', ' trong túi', ' trên kệ', ''];
-
-let objId = 101;
-const objectRows = [];
-const objectSeen = new Set();
-for (const [shape, labels] of Object.entries(OBJECT_LABELS)) {
-  for (const base of labels) {
-    for (let v = 0; v < 3 && objectRows.length < 150; v++) {
-      const label =
-        v === 0
-          ? base
-          : `${OBJECT_PREFIX[v % OBJECT_PREFIX.length]} ${base.toLowerCase()}${OBJECT_SUFFIX[v % OBJECT_SUFFIX.length]}`;
-      if (objectSeen.has(label)) continue;
-      objectSeen.add(label);
-      const minLevel = objId % 3 === 0 ? 3 : objId % 2 === 0 ? 2 : 1;
-      objectRows.push(
-        `  { id: 'o${String(objId++).padStart(3, '0')}', label: '${esc(label)}', shape: '${shape}', minLevel: ${minLevel} },`
-      );
-    }
-  }
-}
-writeTs(
-  'src/games/hinh-hoc-thang-long/objectSupplement.ts',
-  "import type { ObjectItem } from './objectBank';",
-  `/** Đồ vật hình học bổ sung — ${objectRows.length} mục */\nexport const OBJECT_SUPPLEMENT: ObjectItem[] = [\n${objectRows.join('\n')}\n];`
 );
 
 const itemRows = MEKONG_ITEMS.map(([label, emoji, bin], i) => {

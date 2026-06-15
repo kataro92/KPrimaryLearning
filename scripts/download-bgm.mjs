@@ -49,12 +49,6 @@ const TRACKS = [
     title: 'Monkey Drama',
   },
   {
-    gameId: 'hinh-hoc-thang-long',
-    outFile: 'hinh-hoc-thang-long.ogg',
-    source: 'Whimsical-Popsicle.ogg',
-    title: 'Whimsical Popsicle',
-  },
-  {
     gameId: 'cuu-chuong-van-mieu',
     outFile: 'cuu-chuong-van-mieu.ogg',
     source: 'Monkey-Island-Band_Looping.ogg',

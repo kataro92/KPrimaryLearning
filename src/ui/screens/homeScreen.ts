@@ -4,6 +4,7 @@ import { getAllProgress, getAllSessions } from '@/data/indexeddb/db';
 import { GAMES } from '@/games/catalog';
 import { isPlayableGame } from '@/games/registry';
 import { getOrInitProgress } from '@/features/progress/userProgressStore';
+import { aggregatePlayerLevelInput } from '@/features/progress/playerLevelInput';
 import { mountGameSprite } from '@/assets/gameSprites';
 import { formatScoreDisplay } from '@/features/scoring/scoreEngine';
 import { CharacterKnightScene } from '@/features/character/characterKnightScene';
@@ -285,12 +286,9 @@ async function renderCharacterReport(profileId: string, reportBody: HTMLElement)
 
   const statsPane = reportBody.querySelector<HTMLElement>('.character-report-stats');
   if (statsPane) {
-    const levelSnap = getPlayerLevelSnapshot({
-      totalSessions,
-      avgScore,
-      unlockedTier3,
-      totalQuestions,
-    });
+    const levelSnap = getPlayerLevelSnapshot(
+      await aggregatePlayerLevelInput(profileId)
+    );
     statsPane.insertAdjacentHTML('afterbegin', renderPlayerLevelLadder(levelSnap));
     void mountVoiceProfilePanel(statsPane, profileId).catch(() => {
       /* voice panel optional */

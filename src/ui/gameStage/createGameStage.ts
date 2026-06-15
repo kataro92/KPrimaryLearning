@@ -66,7 +66,6 @@ export function createGameStage(
   const feedbackFx3d = new StageFeedback3DFx(sceneHost);
   // Some games replace #game-hero with their own 3D preview (avoid static SVG overlay).
   if (
-    gameId !== 'hinh-hoc-thang-long' &&
     gameId !== 'trong-dong' &&
     gameId !== 'tham-hiem-cuu-long' &&
     gameId !== 'cuu-chuong-van-mieu' &&

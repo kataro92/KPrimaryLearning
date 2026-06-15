@@ -2,6 +2,11 @@ import { saveProgress, saveSession } from '@/data/indexeddb/db';
 import type { PlaySession } from '@/data/types';
 import type { AchievementLevel } from '@/data/types';
 import { computeScore, gradeLabel, starCount } from '@/features/scoring/scoreEngine';
+import { aggregatePlayerLevelInput } from '@/features/progress/playerLevelInput';
+import {
+  getPlayerLevelSnapshot,
+  PLAYER_LEVEL_TITLES,
+} from '@/features/progress/playerLevel';
 import {
   getOrInitProgress,
   tryUnlockNextAchievement,
@@ -24,6 +29,10 @@ export interface FinishSessionInput {
 }
 
 export async function finishGameSession(input: FinishSessionInput): Promise<PlayResult> {
+  const levelBefore = getPlayerLevelSnapshot(
+    await aggregatePlayerLevelInput(input.profileId)
+  ).level;
+
   const durationMs = Date.now() - input.startedAt;
   const score = computeScore({
     correct: input.correct,
@@ -64,6 +73,19 @@ export async function finishGameSession(input: FinishSessionInput): Promise<Play
   };
   await saveSession(session);
 
+  const levelAfterSnap = getPlayerLevelSnapshot(
+    await aggregatePlayerLevelInput(input.profileId)
+  );
+  const levelUp =
+    levelAfterSnap.level > levelBefore
+      ? {
+          fromLevel: levelBefore,
+          toLevel: levelAfterSnap.level,
+          fromTitle: PLAYER_LEVEL_TITLES[levelBefore - 1] ?? PLAYER_LEVEL_TITLES[0],
+          toTitle: levelAfterSnap.title,
+        }
+      : undefined;
+
   return {
     score,
     stars,
@@ -75,5 +97,6 @@ export async function finishGameSession(input: FinishSessionInput): Promise<Play
     newAchievementName: unlock.unlocked
       ? input.achievements[unlock.newLevel!]
       : undefined,
+    levelUp,
   };
 }

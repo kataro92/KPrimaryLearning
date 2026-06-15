@@ -25,15 +25,6 @@ const LINES: Record<string, Record<FeedbackKind, string[]>> = {
     timeout: ['Hết giờ rồi, thử câu sau nhé!', 'Cố thêm chút nữa nhé!'],
     start: ['Kéo mảnh ghép vào trống đồng để giải mã.'],
   },
-  'hinh-hoc-thang-long': {
-    correct: ['Khối hình này con xử lý rất chuẩn!', 'Thành Thăng Long đang dần hoàn thiện rồi.', 'Xây đúng! Thành cao thêm!'],
-    wrong: ['Cố thêm chút nữa, con xây giỏi lắm.', 'Chưa khớp hình, thử lại nhé!', 'Không sao, mình thử lại nhé!'],
-    timeout: ['Hết giờ rồi, thử câu sau nhé!', 'Cố thêm chút nữa nhé!'],
-    start: [
-      'Nhìn tranh trong sổ vẽ, chọn đúng dạng hình học lớp 4.',
-      'Mở sổ vẽ bên trái, chọn tên hình cho đồ vật.',
-    ],
-  },
   'doc-hieu-su-viet': {
     correct: ['Con đọc rất tốt, ý chính đúng rồi.', 'Hiểu sử giỏi lắm!', 'Thêm một câu nữa là mở trang sử mới.'],
     wrong: ['Bình tĩnh đọc lại, con sẽ làm được ngay.', 'Đọc kỹ đoạn văn nhé!', 'Không sao, mình thử lại nhé!'],

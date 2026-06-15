@@ -15,7 +15,11 @@ export type SfxKind =
   | 'celebrate'
   | 'unlock'
   | 'star'
-  | 'drumStrike';
+  | 'drumStrike'
+  | 'evolveCharge'
+  | 'evolveFlash'
+  | 'evolveTransform'
+  | 'evolveReveal';
 
 export interface TimerSfxState {
   warned: boolean;
@@ -123,6 +127,40 @@ export function playSfx(kind: SfxKind): void {
       tone(ctx, { freq: 156, type: 'triangle', start: t, duration: 0.28, peak: 0.09, attack: 0.003 });
       tone(ctx, { freq: 312, start: t + 0.04, duration: 0.18, peak: 0.045 });
       tone(ctx, { freq: 520, type: 'triangle', start: t + 0.1, duration: 0.45, peak: 0.028 });
+      break;
+    case 'evolveCharge':
+      tone(ctx, { freq: 110, type: 'sine', start: t, duration: 0.55, peak: 0.12, attack: 0.08, decay: 0.42 });
+      tone(ctx, { freq: 165, type: 'triangle', start: t + 0.15, duration: 0.5, peak: 0.08, attack: 0.06 });
+      tone(ctx, { freq: 220, start: t + 0.35, duration: 0.45, peak: 0.06, attack: 0.05 });
+      break;
+    case 'evolveFlash':
+      tone(ctx, { freq: 880, type: 'square', start: t, duration: 0.08, peak: 0.14, attack: 0.002 });
+      tone(ctx, { freq: 1320, type: 'triangle', start: t + 0.04, duration: 0.12, peak: 0.12, attack: 0.003 });
+      tone(ctx, { freq: 1760, start: t + 0.08, duration: 0.2, peak: 0.1, attack: 0.004 });
+      break;
+    case 'evolveTransform':
+      [220, 277, 330, 415, 523].forEach((f, i) => {
+        tone(ctx, {
+          freq: f,
+          type: i % 2 === 0 ? 'sawtooth' : 'triangle',
+          start: t + i * 0.07,
+          duration: 0.18,
+          peak: 0.09 - i * 0.008,
+          attack: 0.01,
+        });
+      });
+      break;
+    case 'evolveReveal':
+      [523.25, 659.25, 783.99, 987.77, 1174.66].forEach((f, i) => {
+        tone(ctx, {
+          freq: f,
+          type: 'triangle',
+          start: t + i * 0.11,
+          duration: 0.35,
+          peak: 0.1 - i * 0.01,
+          attack: 0.015,
+        });
+      });
       break;
     default:
       break;

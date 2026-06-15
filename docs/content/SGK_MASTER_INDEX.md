@@ -35,7 +35,7 @@ KNTT và CTST **cùng đề cương** (TT22/27); `sgkRef` theo chủ đề/bài,
 | lich-su-dia-li | `hanh-trinh-su-dia`, `doc-hieu-su-viet` |
 | tieng-anh | `tu-vung-hoi-an` |
 | tieng-viet | `but-sen-viet`, `doc-hieu-su-viet` |
-| toan | `trang-nguyen-toan`, `tinh-nham-trang-ti`, `cuu-chuong-van-mieu`, `hinh-hoc-thang-long`, `thap-trieu-so`, `thuong-nhan-song-hong`, `chia-banh-trang-ram`, `do-dat-co-thanh`, `bep-bac-hoc-tro`, `cho-so-lieu` |
+| toan | `trang-nguyen-toan`, `tinh-nham-trang-ti`, `cuu-chuong-van-mieu`, `thap-trieu-so`, `thuong-nhan-song-hong`, `chia-banh-trang-ram`, `do-dat-co-thanh`, `bep-bac-hoc-tro`, `cho-so-lieu` |
 
 ## cong-nghe
 

@@ -54,14 +54,6 @@ export const GAMES: GameDefinition[] = [
     achievements: { 1: 'Người Tìm Dấu Vết', 2: 'Nhà Khảo Cổ Nhí', 3: 'Bậc Thầy Trống Đồng' },
   },
   {
-    id: 'hinh-hoc-thang-long',
-    title: 'Săn Hình Học Thành Thăng Long',
-    subject: 'Toán',
-    description: 'Nhận dạng 7 dạng hình lớp 4',
-    playHint: 'Trả lời đúng để xây thêm tầng thành; xem sổ vẽ và chọn đúng dạng hình lớp 4.',
-    achievements: { 1: 'Thợ Xây Tập Sự', 2: 'Kiến Trúc Sư Nhí', 3: 'Thần Đồng Thăng Long' },
-  },
-  {
     id: 'doc-hieu-su-viet',
     title: 'Đọc Hiểu Sử Việt Nhí',
     subject: 'Tiếng Việt',

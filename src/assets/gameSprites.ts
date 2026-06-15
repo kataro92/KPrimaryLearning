@@ -4,7 +4,6 @@ export const GAME_SPRITE_IDS = [
   'but-sen-viet',
   'tu-vung-hoi-an',
   'trong-dong',
-  'hinh-hoc-thang-long',
   'doc-hieu-su-viet',
   'hanh-trinh-su-dia',
   'cuu-chuong-van-mieu',
@@ -139,27 +138,6 @@ const SPRITES: Record<GameSpriteId, string> = {
     </g>
     <rect x="118" y="28" width="28" height="20" rx="3" fill="#fef3c7" stroke="#b8860b" stroke-width="1.5" transform="rotate(8 132 38)"/>
     <path d="M124 32 L132 36 L124 40 Z" fill="#cd7f32"/>
-  </svg>`,
-
-  'hinh-hoc-thang-long': `<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Hình học Thăng Long">
-    <defs>
-      <linearGradient id="hl-sky" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#cbd5e1"/>
-        <stop offset="100%" stop-color="#e2e8f0"/>
-      </linearGradient>
-    </defs>
-    <rect width="200" height="120" fill="url(#hl-sky)" rx="12"/>
-    <rect x="18" y="52" width="164" height="48" fill="#94a3b8" opacity=".45" rx="4"/>
-    <rect x="30" y="42" width="18" height="28" fill="#64748b"/>
-    <rect x="152" y="40" width="18" height="30" fill="#64748b"/>
-    <polygon points="100,28 128,48 72,48" fill="#b45309" opacity=".9"/>
-    <rect x="38" y="58" width="32" height="32" fill="#3b82f6" stroke="#1e40af" stroke-width="2" rx="2"/>
-    <rect x="84" y="62" width="44" height="24" fill="#f59e0b" stroke="#1e40af" stroke-width="2" rx="2"/>
-    <polygon points="142,58 168,88 116,88" fill="#22c55e" stroke="#1e40af" stroke-width="2"/>
-    <circle cx="54" cy="74" r="6" fill="#f8fafc" opacity=".5"/>
-    <circle cx="106" cy="74" r="6" fill="#f8fafc" opacity=".5"/>
-    <circle cx="142" cy="72" r="6" fill="#f8fafc" opacity=".5"/>
-    <rect x="72" y="94" width="56" height="8" rx="2" fill="#78716c"/>
   </svg>`,
 
   'hanh-trinh-su-dia': `<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Hành Trình Sử và Địa">

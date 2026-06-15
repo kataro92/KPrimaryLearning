@@ -44,6 +44,15 @@ export function computePlayerXp(input: PlayerLevelInput): number {
   );
 }
 
+/** Ánh xạ cấp nhân vật (1–10) sang tầng giáp hiệp sĩ 3D (0–4). */
+export function levelToKnightTier(level: number): 0 | 1 | 2 | 3 | 4 {
+  if (level >= 9) return 4;
+  if (level >= 7) return 3;
+  if (level >= 5) return 2;
+  if (level >= 3) return 1;
+  return 0;
+}
+
 export function getPlayerLevelSnapshot(input: PlayerLevelInput): PlayerLevelSnapshot {
   const xp = computePlayerXp(input);
   const maxLevel = PLAYER_LEVEL_TITLES.length;

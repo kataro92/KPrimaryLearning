@@ -152,7 +152,7 @@ See `public/models/*/README.md` per game. Missing files fall back to procedural 
 
 | Scope | Asset | Source | License |
 | --- | --- | --- | --- |
-| All 9 games (per-game track) | Background music OGG | [Eric Matyas — soundimage.org](https://soundimage.org) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| All 16 games (per-game track) | Background music OGG | [Eric Matyas — soundimage.org](https://soundimage.org) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
 
 See `public/audio/bgm/README.md` for track titles and download URLs per game.
 

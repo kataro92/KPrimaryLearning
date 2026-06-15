@@ -5,6 +5,7 @@ export type ScreenId =
   | 'home'
   | 'game-select'
   | 'game-play'
+  | 'level-up'
   | 'result'
   | 'celebration';
 

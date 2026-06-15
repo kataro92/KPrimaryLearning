@@ -3,7 +3,6 @@ import { renderButSenVietGame } from './but-sen-viet/play';
 import { renderCuuChuongGame } from './cuu-chuong-van-mieu/play';
 import { renderDocHieuSuVietGame } from './doc-hieu-su-viet/play';
 import { renderHanhTrinhSuDiaGame } from './hanh-trinh-su-dia/play';
-import { renderHinhHocThangLongGame } from './hinh-hoc-thang-long/play';
 import { renderThamHiemCuuLongGame } from './tham-hiem-cuu-long/play';
 import { renderTinhNhamGame } from './tinh-nham-trang-ti/play';
 import { renderTrongDongGame } from './trong-dong/play';
@@ -28,7 +27,6 @@ export const PLAYABLE_GAME_IDS = new Set([
   'trang-nguyen-toan',
   'cuu-chuong-van-mieu',
   'but-sen-viet',
-  'hinh-hoc-thang-long',
   'tu-vung-hoi-an',
   'trong-dong',
   'doc-hieu-su-viet',
@@ -48,7 +46,6 @@ const RENDERERS: Record<string, GameRenderer> = {
   'trang-nguyen-toan': renderTrangNguyenToanGame,
   'cuu-chuong-van-mieu': renderCuuChuongGame,
   'but-sen-viet': renderButSenVietGame,
-  'hinh-hoc-thang-long': renderHinhHocThangLongGame,
   'tu-vung-hoi-an': renderTuVungHoiAnGame,
   'trong-dong': renderTrongDongGame,
   'doc-hieu-su-viet': renderDocHieuSuVietGame,

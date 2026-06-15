@@ -7,7 +7,6 @@ export type BgmGameId =
   | 'but-sen-viet'
   | 'tu-vung-hoi-an'
   | 'trong-dong'
-  | 'hinh-hoc-thang-long'
   | 'doc-hieu-su-viet'
   | 'hanh-trinh-su-dia'
   | 'cuu-chuong-van-mieu'
@@ -50,11 +49,6 @@ const TRACKS: Record<BgmGameId, BgmTrack> = {
     file: 'trong-dong.ogg',
     title: 'Monkey Drama',
     volume: 0.32,
-  },
-  'hinh-hoc-thang-long': {
-    file: 'hinh-hoc-thang-long.ogg',
-    title: 'Whimsical Popsicle',
-    volume: 0.3,
   },
   'doc-hieu-su-viet': {
     file: 'doc-hieu-su-viet.ogg',

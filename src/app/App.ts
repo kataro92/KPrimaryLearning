@@ -4,6 +4,7 @@ import { renderWelcomeScreen } from '@/ui/screens/welcomeScreen';
 import { renderHomeScreen } from '@/ui/screens/homeScreen';
 import { renderGameSelectScreen } from '@/ui/screens/gameSelectScreen';
 import { renderResultScreen } from '@/ui/screens/resultScreen';
+import { renderLevelUpEvolutionScreen } from '@/ui/screens/levelUpEvolutionScreen';
 import type { PlayResult } from '@/features/gameplay/types';
 import { getGameRenderer } from '@/games/registry';
 import { loadSettings } from '@/data/storage/settingsStore';
@@ -48,6 +49,10 @@ export class App {
 
   private onGameComplete = (result: PlayResult): void => {
     this.lastResult = result;
+    if (result.levelUp) {
+      useAppStore.setScreen('level-up');
+      return;
+    }
     useAppStore.setScreen(result.score >= 9 ? 'celebration' : 'result');
   };
 
@@ -101,6 +106,16 @@ export class App {
         }
         break;
       }
+      case 'level-up':
+        if (this.lastResult?.levelUp) {
+          renderLevelUpEvolutionScreen(this.uiRoot, this.lastResult, () => {
+            const r = this.lastResult!;
+            useAppStore.setScreen(r.score >= 9 ? 'celebration' : 'result');
+          });
+        } else {
+          useAppStore.setScreen('result');
+        }
+        break;
       case 'result':
         if (this.lastResult) renderResultScreen(this.uiRoot, this.lastResult);
         break;
