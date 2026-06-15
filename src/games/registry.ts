@@ -10,9 +10,21 @@ import { renderTrongDongGame } from './trong-dong/play';
 import { renderTrangNguyenToanGame } from './trang-nguyen-toan/play';
 import { renderTuVungHoiAnGame } from './tu-vung-hoi-an/play';
 import { renderDaoDucNhiGame } from './dao-duc-nhi/play';
+import { renderBepBacHocTroGame } from './bep-bac-hoc-tro/play';
+import { renderChoSoLieuGame } from './cho-so-lieu/play';
+import { renderChiaBanhTrangRamGame } from './chia-banh-trang-ram/play';
+import { renderDoDatCoThanhGame } from './do-dat-co-thanh/play';
+import { renderThapTrieuSoGame } from './thap-trieu-so/play';
+import { renderThuongNhanSongHongGame } from './thuong-nhan-song-hong/play';
 
 export const PLAYABLE_GAME_IDS = new Set([
   'tinh-nham-trang-ti',
+  'thap-trieu-so',
+  'thuong-nhan-song-hong',
+  'chia-banh-trang-ram',
+  'do-dat-co-thanh',
+  'bep-bac-hoc-tro',
+  'cho-so-lieu',
   'trang-nguyen-toan',
   'cuu-chuong-van-mieu',
   'but-sen-viet',
@@ -43,6 +55,12 @@ const RENDERERS: Record<string, GameRenderer> = {
   'hanh-trinh-su-dia': renderHanhTrinhSuDiaGame,
   'tham-hiem-cuu-long': renderThamHiemCuuLongGame,
   'dao-duc-nhi': renderDaoDucNhiGame,
+  'thap-trieu-so': renderThapTrieuSoGame,
+  'thuong-nhan-song-hong': renderThuongNhanSongHongGame,
+  'chia-banh-trang-ram': renderChiaBanhTrangRamGame,
+  'do-dat-co-thanh': renderDoDatCoThanhGame,
+  'bep-bac-hoc-tro': renderBepBacHocTroGame,
+  'cho-so-lieu': renderChoSoLieuGame,
 };
 
 export function getGameRenderer(gameId: string): GameRenderer | undefined {

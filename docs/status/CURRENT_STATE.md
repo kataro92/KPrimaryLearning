@@ -1,11 +1,11 @@
 # Current System State
 
-Last updated: 2026-05-25
+Last updated: 2026-06-15
 
 ## Product Snapshot
 
 - Ứng dụng web game học tập lớp 4 chạy frontend-only.
-- Có **11** game playable với luồng đầy đủ:
+- Có **17** game playable với luồng đầy đủ:
   - Welcome -> Home -> Game Select -> Game Play -> Result/Celebration.
 - Welcome đã hỗ trợ profile picker nhiều hồ sơ (chọn profile cũ hoặc tạo profile mới theo tên).
 - Home có dock nổi 2 bên: trái (Nhân vật/Thoát), phải (4 toggle cấu hình nhanh: Giọng, SFX, Nhạc nền, Chữ+).
@@ -14,9 +14,16 @@ Last updated: 2026-05-25
 - Game Trạng Tí: T-Rex glTF lớn quay mặt người chơi, nền kỷ Jura (đồi, cây cọ, núi lửa); bắn pháo khi đúng (fallback khối procedural).
 - Game Văn Miếu: hero rùa 3D glTF da xanh (texture PBR Turtle.001, bóng đổ) tiến về bia khi trả lời đúng (fallback procedural xanh).
 - Game Trống Đồng: hero 3D glTF (Sketchfab CC BY) + fallback procedural; đáp án dạng bia đá (thống nhất Trạng Nguyên); trả lời đúng có tiếng đánh trống + hiệu ứng nền rực rỡ, trống quay mặt về người chơi, hoa văn sáng lên.
-- Game Thăng Long: **538** đồ vật; **538** nét vẽ procedural (**o001–o538**, mỗi câu một tranh, gán `oNNN→oNNN`); **o001–o100** chi tiết (`parts2d.ts`), **o101–o538** (`parts2dExtra.ts`); mỗi vòng chơi **không trùng tranh**; sinh lại: `npm run generate:hinh-hoc-drawings` (hoặc `assign:hinh-hoc-illustrations`).
+- Game Thăng Long: **538** đồ vật; **538** nét vẽ procedural (**o001–o538**); sổ vẽ 2D — bìa `z-index:0`, trang `z-index:2`, canvas `z-index:1` trong giấy; ẩn sổ lúc preload (`--booting`), hiện sau vẽ tranh (`sketchbook--ready`); `backface-visibility` chỉ khi lật trang; sinh lại: `npm run generate:hinh-hoc-drawings`.
 - Game Bút Sen Việt: chính tả điền từ (Telex); hero 3D bút (`butSenPenScene`, `public/models/but-sen-viet/pen.glb` hoặc procedural); bank **~70 câu** trích SGK (OCR TV CTST: Mùa thu, Gieo ngày mới, Ca dao, Đất lành chim đậu, Kéo co, Chợ Tết, …); `npm run extract:sgk-content:ocr-tv`; xem `docs/content/SGK_TIENG_VIET_4_CHINH_TA.md`.
 - Game **Đạo Đức Nhí** (`dao-duc-nhi`): tình huống 3 lựa chọn, Bài 1–12 SGK Đạo đức CTST; đáp án **bia đá** (`stone-tablet`, cùng Trống Đồng/Trạng Nguyên); hero 3D trái tim hồng (đập/to khi đúng, mọc cánh nhảy khi hết vòng).
+- Game **Tháp Triệu Số** (`thap-trieu-so`): MCQ số trong phạm vi 1 000 000 (đọc, so sánh, làm tròn, đơn vị, góc); bank **~58 câu** (`numberBank` + `Extra`) có `sgkRef`; L2–L3: 12 câu/ván; hero tháp CSS.
+- Game **Thương Nhân Sông Hồng** (`thuong-nhan-song-hong`): MCQ phép tính số tự nhiên; bank **~58 câu**; L2–L3: 12 câu/ván; hero gian hàng chợ CSS.
+- Game **Đo Đất Cổ Thành** (`do-dat-co-thanh`): MCQ hình bình hành/thoi & diện tích; bank **~36 câu**; hero lô đất CSS.
+- Game **Chia Bánh Trăng Rằm** (`chia-banh-trang-ram`): MCQ phân số; bank **~48 câu** (gồm **10 câu hình** tô phần tròn/vuông); L1 ưu tiên câu visual.
+- Game **Bếp Bác Học Trò** (`bep-bac-hoc-tro`): bank **~47 câu** phép tính phân số.
+- Game **Chợ Số Liệu** (`cho-so-lieu`): dãy số, biểu đồ cột; **cấp 2–3: 4 lượt/ván tung xu tương tác** (đếm S/N, so sánh mặt); bank **~38 câu** MCQ.
+- **6 game Toán 4 Cánh Diều** playable — `sgkRef` chủ đề map trong `docs/content/SGK_MASTER_INDEX.md`.
 - Game Hành Trình Sử & Địa: kéo thẻ vào bản đồ SGK Hình 1; **~200 câu** (`suDiaBank` + `Extra` + `Supplement`) phủ 8 mục SGK; 13 vùng thả (đã hiệu chỉnh 2026-05-24); DOM. **Còn:** QA vùng thả trên thiết bị thật, SVG vector thay ảnh scan NXB.
 - Game Cửu Long (FPS): toàn màn hình; câu hỏi cố định trên bảng gỗ lớn (cao gấp đôi) dưới hàng mục tiêu; nhãn lựa chọn (Động vật / Thực vật / Hiện tượng) trực tiếp trên mặt bia — không còn A/B/C; HUD timer/tiến độ cố định trong scene; không còn model nỏ — chỉ tâm ngắm mảnh + viên sáng bay tới mục tiêu; ngắm/chọn tự do; bấm « Về » dừng RAF/timer/TTS/BGM và hủy timeout câu tiếp; các game DOM khác: câu hỏi cố định phía trên lựa chọn (không animation).
 - Có popup "Nhân vật" hiển thị **bảng cấp 1–10** (điểm kinh nghiệm từ lượt chơi, điểm TB, mốc game), tổng quan lượt chơi, độ chính xác, điểm và thống kê theo từng game (lọc theo profile đang chọn), kèm hiệp sĩ 3D chibi — giáp tầng chi tiết (ngực/vai/ống chân/tấm bụng), khiên & huy hiệu **cờ đỏ sao vàng**, cờ cắm bậc cao; **Giọng đọc**: nếu trình duyệt chỉ có ≤1 giọng `vi` → một dòng thông báo (giọng AI); nếu ≥2 giọng → panel preset nữ/nam/hoạt hình + file mẫu tùy chọn.

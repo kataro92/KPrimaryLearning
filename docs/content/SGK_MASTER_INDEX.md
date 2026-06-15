@@ -1,6 +1,6 @@
 # Ma trận mục lục SGK lớp 4
 
-Cập nhật: 2026-05-24 — sinh bởi `npm run extract:sgk-index`.
+Cập nhật: 2026-06-15 — sinh bởi `npm run extract:sgk-index`; bổ sung 6 game Toán 4 Cánh Diều.
 
 KNTT và CTST **cùng đề cương** (TT22/27); `sgkRef` theo chủ đề/bài, không theo NXB.
 
@@ -35,7 +35,7 @@ KNTT và CTST **cùng đề cương** (TT22/27); `sgkRef` theo chủ đề/bài,
 | lich-su-dia-li | `hanh-trinh-su-dia`, `doc-hieu-su-viet` |
 | tieng-anh | `tu-vung-hoi-an` |
 | tieng-viet | `but-sen-viet`, `doc-hieu-su-viet` |
-| toan | `trang-nguyen-toan`, `tinh-nham-trang-ti`, `cuu-chuong-van-mieu`, `hinh-hoc-thang-long` |
+| toan | `trang-nguyen-toan`, `tinh-nham-trang-ti`, `cuu-chuong-van-mieu`, `hinh-hoc-thang-long`, `thap-trieu-so`, `thuong-nhan-song-hong`, `chia-banh-trang-ram`, `do-dat-co-thanh`, `bep-bac-hoc-tro`, `cho-so-lieu` |
 
 ## cong-nghe
 
@@ -172,11 +172,25 @@ KNTT và CTST **cùng đề cương** (TT22/27); `sgkRef` theo chủ đề/bài,
 | `toan-hk1-bai-08` | 8 | Bài toán bằng ba bước tính | `Toan-4-T1-Canh-Dieu.pdf` |
 | `toan-hk1-bai-09` | 9 | Ôn tập biểu thức số | `Toan-4-T1-Canh-Dieu.pdf` |
 
+### 6 game Toán 4 Cánh Diều — `sgkRef` chủ đề (bank game)
+
+Nguồn bài học: `docs/content/TOAN-4-CANH-DIEU-SESSIONS.md`. Kế hoạch: `docs/planning/TOAN4_SIX_GAMES_PLAN.md`.
+
+| Game | `gameId` | Phân loại SGK | Tiền tố `sgkRef` trong bank |
+|------|----------|---------------|------------------------------|
+| Tháp Triệu Số | `thap-trieu-so` | Số trong phạm vi 1 000 000 | `toan-so-trieu-*`, `toan-doi-yen-ta-tan`, `toan-thoi-gian-giay`, `toan-the-ky`, `toan-rut-ve-don-vi`, `toan-goc-co-ban` |
+| Thương Nhân Sông Hồng | `thuong-nhan-song-hong` | Phép tính số tự nhiên | `toan-stn-*` |
+| Chia Bánh Trăng Rằm | `chia-banh-trang-ram` | Phân số | `toan-phan-so-*` (+ câu có `visual` tô phần) |
+| Đo Đất Cổ Thành | `do-dat-co-thanh` | Hình học & đo lường | `toan-hinh-*`, `toan-dien-tich-*` |
+| Bếp Bác Học Trò | `bep-bac-hoc-tro` | Phép tính với phân số | `toan-ptps-*` |
+| Chợ Số Liệu | `cho-so-lieu` | Thống kê & xác suất | `toan-tk-day-so`, `toan-tk-bieu-do-cot`, `toan-tk-dem-su-kien` |
+
 ## Việc tiếp theo
 
 1. Bút Sen: trích **Chính tả** từ TV CTST (mục lục trên) + PDF khi OCR.
-2. Toán: gắn `sgkRef` vào `mcqBank` / `mathBank` theo `toan-hk1-bai-XX`.
-3. Sử–Địa: đối chiếu `suDiaCoverage` với mục `lich-su-dia-li` trong JSON.
-4. Tải thêm PDF: `npm run fetch:sgk` — Khoa học KNTT khi có trên thư viện.
+2. Toán tổng hợp: gắn `sgkRef` `toan-hk1-bai-XX` vào `mcqBank` / `mathBank` (game Trạng Nguyên, Trạng Tí).
+3. Toán 4 Cánh Diều: mở rộng bank L3, playtest timing trên thiết bị thật.
+4. Sử–Địa: đối chiếu `suDiaCoverage` với mục `lich-su-dia-li` trong JSON.
+5. Tải thêm PDF: `npm run fetch:sgk` — Khoa học KNTT khi có trên thư viện.
 
 JSON đầy đủ: `scripts/data/sgk-index.json`.

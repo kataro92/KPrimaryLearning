@@ -1,0 +1,892 @@
+/** Tháp Triệu Số + Thương Nhân Sông Hồng — Toán 4 Cánh Diều */
+
+.game-play--trieu-so .game-play__visual-pane,
+.game-play--song-hong .game-play__visual-pane {
+  pointer-events: auto;
+  padding: 0;
+  align-items: stretch;
+  justify-content: stretch;
+  overflow: hidden;
+}
+
+.game-play--trieu-so .game-play__visual-pane {
+  background: linear-gradient(180deg, #7dd3fc 0%, #bae6fd 45%, #fef9c3 100%);
+}
+
+.game-play--song-hong .game-play__visual-pane {
+  background: linear-gradient(180deg, #86efac 0%, #bbf7d0 40%, #7dd3fc 100%);
+}
+
+.game-play--trieu-so .game-play__hero,
+.game-play--song-hong .game-play__hero {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  min-height: 240px;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+  overflow: hidden;
+}
+
+.trieu-so-hero,
+.song-hong-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  padding: 8px 12px 10px;
+  box-sizing: border-box;
+}
+
+.trieu-so-hero__tower,
+.song-hong-hero__market {
+  flex: 1;
+  width: 100%;
+  max-width: 280px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.trieu-so-hero__caption,
+.song-hong-hero__caption {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #1e3a5f;
+  text-align: center;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* Tháp Triệu Số */
+.trieu-tower {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  width: 120px;
+  min-height: 180px;
+}
+
+.trieu-tower__spire {
+  width: 0;
+  height: 0;
+  border-left: 18px solid transparent;
+  border-right: 18px solid transparent;
+  border-bottom: 28px solid #f59e0b;
+  filter: drop-shadow(0 2px 0 #b45309);
+  margin-bottom: -2px;
+  z-index: 2;
+}
+
+.trieu-tower__floors {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  width: 100%;
+}
+
+.trieu-tower__floor {
+  width: 88px;
+  height: 22px;
+  margin-top: 3px;
+  background: linear-gradient(180deg, #fde68a 0%, #f59e0b 100%);
+  border: 2px solid #b45309;
+  border-radius: 4px;
+  box-shadow: 0 2px 0 #92400e;
+}
+
+.trieu-tower__floor--rise {
+  animation: trieu-floor-rise 0.45s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+}
+
+.trieu-tower__base {
+  width: 110px;
+  height: 14px;
+  margin-top: 4px;
+  background: #78716c;
+  border: 2px solid #44403c;
+  border-radius: 4px;
+}
+
+.trieu-tower--shake {
+  animation: toan4-shake 0.42s ease;
+}
+
+@keyframes trieu-floor-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Chợ Sông Hồng */
+.song-hong-market {
+  position: relative;
+  width: 200px;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.song-hong-market__awning {
+  width: 100%;
+  height: 28px;
+  background: repeating-linear-gradient(
+    90deg,
+    #dc2626 0,
+    #dc2626 20px,
+    #fef08a 20px,
+    #fef08a 40px
+  );
+  border: 2px solid #7f1d1d;
+  border-radius: 8px 8px 0 0;
+}
+
+.song-hong-market__counter {
+  width: 92%;
+  height: 48px;
+  background: linear-gradient(180deg, #d6d3d1 0%, #a8a29e 100%);
+  border: 2px solid #57534e;
+  border-top: none;
+}
+
+.song-hong-market__goods {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 36px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  min-height: 36px;
+}
+
+.song-hong-market__item {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.song-hong-market__item--pop {
+  animation: song-hong-pop 0.4s cubic-bezier(0.34, 1.5, 0.64, 1) both;
+}
+
+.song-hong-market__river {
+  width: 120%;
+  height: 22px;
+  margin-top: auto;
+  background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  opacity: 0.85;
+}
+
+.song-hong-market--shake {
+  animation: toan4-shake 0.42s ease;
+}
+
+@keyframes song-hong-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.3) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes toan4-shake {
+  25% {
+    transform: translateX(-6px);
+  }
+  75% {
+    transform: translateX(6px);
+  }
+}
+
+@media (max-width: 820px) {
+  .game-play--trieu-so .game-play__hero,
+  .game-play--song-hong .game-play__hero,
+  .game-play--trang-ram .game-play__hero,
+  .game-play--co-thanh .game-play__hero {
+    min-height: 200px;
+  }
+}
+
+/* Chia Bánh Trăng Rằm */
+.game-play--trang-ram .game-play__visual-pane {
+  background: linear-gradient(180deg, #1e1b4b 0%, #312e81 35%, #fef3c7 100%);
+}
+
+.game-play--trang-ram .game-play__hero {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  min-height: 240px;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+  overflow: hidden;
+}
+
+.trang-ram-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  padding: 8px 12px 10px;
+  box-sizing: border-box;
+}
+
+.trang-ram-hero__scene {
+  flex: 1;
+  width: 100%;
+  max-width: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.trang-ram-hero__caption {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #fef9c3;
+  text-align: center;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.trang-ram-moon {
+  position: relative;
+  width: 200px;
+  height: 170px;
+}
+
+.trang-ram-moon__sky {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background: radial-gradient(circle at 70% 25%, rgba(254, 243, 199, 0.15), transparent 55%);
+}
+
+.trang-ram-moon__disc {
+  position: absolute;
+  top: 8px;
+  right: 20px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fef9c3, #fde68a 60%, #f59e0b);
+  box-shadow: 0 0 24px rgba(253, 224, 71, 0.55);
+}
+
+.trang-ram-moon__tray {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  width: 160px;
+  min-height: 48px;
+  padding: 8px;
+  background: linear-gradient(180deg, #92400e 0%, #78350f 100%);
+  border: 2px solid #fcd34d;
+  border-radius: 8px;
+}
+
+.trang-ram-moon__cake {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.trang-ram-moon__cake--pop {
+  animation: song-hong-pop 0.4s cubic-bezier(0.34, 1.5, 0.64, 1) both;
+}
+
+.trang-ram-moon--shake {
+  animation: toan4-shake 0.42s ease;
+}
+
+.temple-arena--trang-ram .frac-visual-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.frac-visual {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.frac-visual__circle {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  border: 3px solid #b45309;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.frac-visual--rect {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 4), 1fr);
+  gap: 3px;
+  width: min(160px, 100%);
+  padding: 6px;
+  background: #fffbeb;
+  border: 2px solid #d97706;
+  border-radius: 8px;
+}
+
+.frac-visual__cell {
+  aspect-ratio: 1;
+  background: #fef9c3;
+  border: 1px solid #fcd34d;
+  border-radius: 3px;
+}
+
+.frac-visual__cell--on {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  border-color: #b45309;
+}
+
+/* Đo Đất Cổ Thành */
+.game-play--co-thanh .game-play__visual-pane {
+  background: linear-gradient(180deg, #a8a29e 0%, #d6d3d1 40%, #86efac 100%);
+}
+
+.game-play--co-thanh .game-play__hero {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  min-height: 240px;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+  overflow: hidden;
+}
+
+.co-thanh-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  padding: 8px 12px 10px;
+  box-sizing: border-box;
+}
+
+.co-thanh-hero__plot {
+  flex: 1;
+  width: 100%;
+  max-width: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.co-thanh-hero__caption {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #44403c;
+  text-align: center;
+}
+
+.co-thanh-land {
+  position: relative;
+  width: 180px;
+  padding: 10px;
+  background: #fef3c7;
+  border: 3px solid #78350f;
+  border-radius: 8px;
+  box-shadow: 0 4px 0 #57534e;
+}
+
+.co-thanh-land__wall {
+  position: absolute;
+  top: -8px;
+  left: 10px;
+  right: 10px;
+  height: 10px;
+  background: repeating-linear-gradient(90deg, #78716c 0, #78716c 12px, #a8a29e 12px, #a8a29e 24px);
+  border-radius: 4px 4px 0 0;
+}
+
+.co-thanh-land__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  min-height: 80px;
+}
+
+.co-thanh-land__cell {
+  aspect-ratio: 1;
+  background: #e7e5e4;
+  border: 1px dashed #a8a29e;
+  border-radius: 3px;
+}
+
+.co-thanh-land__cell--fill {
+  background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+  border: 1px solid #15803d;
+  animation: trieu-floor-rise 0.4s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+}
+
+.co-thanh-land__label {
+  margin-top: 6px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #57534e;
+  text-align: right;
+}
+
+.co-thanh-land--shake {
+  animation: toan4-shake 0.42s ease;
+}
+
+/* Bếp Bác Học Trò */
+.game-play--bep-bac .game-play__visual-pane {
+  background: linear-gradient(180deg, #fef3c7 0%, #fed7aa 50%, #fdba74 100%);
+}
+
+.game-play--bep-bac .game-play__hero {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  min-height: 240px;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+  overflow: hidden;
+}
+
+.bep-bac-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  padding: 8px 12px 10px;
+  box-sizing: border-box;
+}
+
+.bep-bac-hero__kitchen {
+  flex: 1;
+  width: 100%;
+  max-width: 200px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.bep-bac-hero__caption {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #78350f;
+  text-align: center;
+}
+
+.bep-bac-kitchen {
+  position: relative;
+  width: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bep-bac-kitchen__hood {
+  width: 120px;
+  height: 20px;
+  background: #57534e;
+  border-radius: 8px 8px 0 0;
+}
+
+.bep-bac-kitchen__pot {
+  position: relative;
+  width: 100px;
+  min-height: 70px;
+  background: linear-gradient(180deg, #44403c 0%, #292524 100%);
+  border-radius: 0 0 40px 40px;
+  border: 3px solid #1c1917;
+}
+
+.bep-bac-kitchen__ingredients {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  justify-content: center;
+  padding: 8px 6px 4px;
+  min-height: 36px;
+}
+
+.bep-bac-kitchen__item {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.bep-bac-kitchen__item--pop {
+  animation: song-hong-pop 0.4s cubic-bezier(0.34, 1.5, 0.64, 1) both;
+}
+
+.bep-bac-kitchen__pot-rim {
+  position: absolute;
+  top: -6px;
+  left: -8px;
+  right: -8px;
+  height: 12px;
+  background: #78716c;
+  border-radius: 6px;
+  border: 2px solid #44403c;
+}
+
+.bep-bac-kitchen__stove {
+  width: 130px;
+  height: 16px;
+  margin-top: 4px;
+  background: #1c1917;
+  border-radius: 4px;
+}
+
+.bep-bac-kitchen--shake {
+  animation: toan4-shake 0.42s ease;
+}
+
+/* Chợ Số Liệu */
+.game-play--cho-so .game-play__visual-pane {
+  background: linear-gradient(180deg, #fef08a 0%, #fde047 40%, #fbbf24 100%);
+}
+
+.game-play--cho-so .game-play__hero {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  min-height: 240px;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+  overflow: hidden;
+}
+
+.cho-so-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  padding: 8px 12px 10px;
+  box-sizing: border-box;
+}
+
+.cho-so-hero__market {
+  flex: 1;
+  width: 100%;
+  max-width: 220px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.cho-so-hero__caption {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #713f12;
+  text-align: center;
+}
+
+.cho-so-market {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 180px;
+  min-height: 140px;
+}
+
+.cho-so-market__sign {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #78350f;
+  margin-bottom: 6px;
+}
+
+.cho-so-market__bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 90px;
+  padding: 0 8px;
+}
+
+.cho-so-market__bar {
+  width: 14px;
+  border-radius: 4px 4px 0 0;
+  min-height: 8px;
+}
+
+.cho-so-market__bar--rise {
+  animation: trieu-floor-rise 0.4s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+}
+
+.cho-so-market__floor {
+  width: 100%;
+  height: 12px;
+  margin-top: 4px;
+  background: #a16207;
+  border-radius: 4px;
+}
+
+.cho-so-market--shake {
+  animation: toan4-shake 0.42s ease;
+}
+
+.temple-arena--cho-so .cho-chart-wrap {
+  margin-bottom: 10px;
+}
+
+.cho-chart {
+  padding: 8px 10px;
+  background: #fffbeb;
+  border: 2px solid #d97706;
+  border-radius: 8px;
+  font-size: 0.8rem;
+}
+
+.cho-chart__title {
+  margin: 0 0 8px;
+  font-weight: 800;
+  color: #78350f;
+  text-align: center;
+  font-size: 0.75rem;
+}
+
+.cho-chart__row {
+  display: grid;
+  grid-template-columns: 3.5rem 1fr 1.5rem;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.cho-chart__label {
+  font-weight: 700;
+  color: #44403c;
+  font-size: 0.72rem;
+}
+
+.cho-chart__track {
+  height: 12px;
+  background: #e7e5e4;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.cho-chart__bar {
+  height: 100%;
+  border-radius: 4px;
+  min-width: 2px;
+}
+
+.cho-chart__val {
+  font-weight: 800;
+  color: #1c1917;
+  font-size: 0.72rem;
+  text-align: right;
+}
+
+/* Tung xu tương tác — Chợ Số Liệu */
+.temple-arena--coin-flip {
+  gap: 8px;
+}
+
+.coin-flip-arena {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0 8px;
+}
+
+.coin-flip-arena__instruction {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #78350f;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.coin-flip-arena__main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.coin-flip-arena__coin {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 3px solid #a16207;
+  background: linear-gradient(145deg, #fde68a 0%, #f59e0b 55%, #d97706 100%);
+  box-shadow: 0 4px 0 #92400e, 0 6px 12px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: transform 0.15s ease;
+}
+
+.coin-flip-arena__coin:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.coin-flip-arena__coin:disabled {
+  cursor: default;
+  opacity: 0.85;
+}
+
+.coin-flip-arena__coin--flip {
+  animation: coin-flip-spin 0.28s ease-in-out;
+}
+
+.coin-flip-arena__face {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #78350f;
+}
+
+.coin-flip-arena__face--s {
+  color: #b45309;
+}
+
+.coin-flip-arena__face--n {
+  color: #1e3a5f;
+}
+
+.coin-flip-arena__tally {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #44403c;
+}
+
+.coin-flip-arena__tally strong {
+  font-size: 1.1rem;
+  color: #78350f;
+}
+
+.coin-flip-arena__history {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  min-height: 28px;
+  max-width: 280px;
+}
+
+.coin-flip-arena__chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 900;
+  border: 2px solid;
+  animation: song-hong-pop 0.3s cubic-bezier(0.34, 1.5, 0.64, 1) both;
+}
+
+.coin-flip-arena__chip--s {
+  background: #fef3c7;
+  border-color: #d97706;
+  color: #b45309;
+}
+
+.coin-flip-arena__chip--n {
+  background: #e0f2fe;
+  border-color: #0284c7;
+  color: #0369a1;
+}
+
+.coin-flip-arena__flip-btn {
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  font-family: var(--font);
+  color: #fff;
+  background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+  border: 2px solid #92400e;
+  border-radius: 10px;
+  box-shadow: 0 3px 0 #78350f;
+  cursor: pointer;
+}
+
+.coin-flip-arena__flip-btn:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.coin-flip-arena__flip-btn:disabled {
+  opacity: 0.75;
+  cursor: default;
+  box-shadow: none;
+}
+
+.coin-flip-arena__prompt {
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+@keyframes coin-flip-spin {
+  0% {
+    transform: rotateY(0deg) scale(1);
+  }
+  50% {
+    transform: rotateY(180deg) scale(1.08);
+  }
+  100% {
+    transform: rotateY(360deg) scale(1);
+  }
+}
+
+@media (max-width: 820px) {
+  .game-play--bep-bac .game-play__hero,
+  .game-play--cho-so .game-play__hero {
+    min-height: 200px;
+  }
+}
+
