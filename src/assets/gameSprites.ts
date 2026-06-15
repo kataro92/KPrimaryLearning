@@ -10,6 +10,12 @@ export const GAME_SPRITE_IDS = [
   'cuu-chuong-van-mieu',
   'tham-hiem-cuu-long',
   'tinh-nham-trang-ti',
+  'thap-trieu-so',
+  'thuong-nhan-song-hong',
+  'chia-banh-trang-ram',
+  'do-dat-co-thanh',
+  'bep-bac-hoc-tro',
+  'cho-so-lieu',
   'dao-duc-nhi',
 ] as const;
 
@@ -289,6 +295,156 @@ const SPRITES: Record<GameSpriteId, string> = {
     <path d="M100 28 C78 28 62 44 62 66 C62 88 78 98 100 98 C122 98 138 88 138 66 C138 44 122 28 100 28Z" fill="#f472b6" stroke="#db2777" stroke-width="2"/>
     <path d="M100 42 C88 42 78 52 78 64 C78 76 88 82 100 88 C112 82 122 76 122 64 C122 52 112 42 100 42Z" fill="#fce7f3"/>
     <text x="100" y="112" text-anchor="middle" font-size="11" font-weight="700" fill="#9d174d" font-family="system-ui,sans-serif">Đạo đức</text>
+  </svg>`,
+
+  'thap-trieu-so': `<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tháp Triệu Số">
+    <defs>
+      <linearGradient id="tts-sky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#7dd3fc"/>
+        <stop offset="55%" stop-color="#bae6fd"/>
+        <stop offset="100%" stop-color="#fef9c3"/>
+      </linearGradient>
+    </defs>
+    <rect width="200" height="120" fill="url(#tts-sky)" rx="12"/>
+    <ellipse cx="100" cy="108" rx="70" ry="8" fill="#78716c" opacity=".35"/>
+    <g transform="translate(100 88)">
+      <polygon points="0,-52 -14,0 14,0" fill="#f59e0b" stroke="#b45309" stroke-width="1.5"/>
+      <rect x="-22" y="0" width="44" height="14" rx="3" fill="#fde68a" stroke="#b45309" stroke-width="1.5"/>
+      <rect x="-26" y="16" width="52" height="14" rx="3" fill="#fbbf24" stroke="#b45309" stroke-width="1.5"/>
+      <rect x="-30" y="32" width="60" height="14" rx="3" fill="#f59e0b" stroke="#b45309" stroke-width="1.5"/>
+      <rect x="-36" y="50" width="72" height="12" rx="3" fill="#78716c" stroke="#44403c" stroke-width="1.5"/>
+    </g>
+    <rect x="52" y="28" width="96" height="36" rx="5" fill="#475569" stroke="#facc15" stroke-width="2"/>
+    <text x="100" y="52" text-anchor="middle" font-size="13" font-weight="800" fill="#f8fafc" font-family="system-ui,sans-serif">1 000 000</text>
+  </svg>`,
+
+  'thuong-nhan-song-hong': `<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Thương Nhân Sông Hồng">
+    <defs>
+      <linearGradient id="snsh-bg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#86efac"/>
+        <stop offset="45%" stop-color="#bbf7d0"/>
+        <stop offset="100%" stop-color="#7dd3fc"/>
+      </linearGradient>
+      <pattern id="snsh-awn" width="20" height="18" patternUnits="userSpaceOnUse">
+        <rect width="10" height="18" fill="#dc2626"/>
+        <rect x="10" width="10" height="18" fill="#fef08a"/>
+      </pattern>
+    </defs>
+    <rect width="200" height="120" fill="url(#snsh-bg)" rx="12"/>
+    <rect x="38" y="38" width="124" height="18" fill="url(#snsh-awn)" rx="4"/>
+    <rect x="42" y="54" width="116" height="32" fill="#d6d3d1" stroke="#57534e" stroke-width="2"/>
+    <text x="58" y="72" font-size="14">🍎</text>
+    <text x="82" y="72" font-size="14">🥬</text>
+    <text x="106" y="72" font-size="14">🐟</text>
+    <text x="130" y="72" font-size="14">🍚</text>
+    <path d="M20 98 Q100 82 180 98 L180 120 L20 120 Z" fill="#38bdf8" opacity=".85"/>
+    <path d="M30 102 Q100 90 170 102" stroke="#0284c7" stroke-width="2" fill="none" opacity=".6"/>
+    <rect x="68" y="22" width="64" height="22" rx="4" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+    <text x="100" y="37" text-anchor="middle" font-size="9" font-weight="800" fill="#78350f" font-family="system-ui,sans-serif">125 859 + ?</text>
+  </svg>`,
+
+  'chia-banh-trang-ram': `<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Chia Bánh Trăng Rằm">
+    <defs>
+      <linearGradient id="cbtr-sky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#1e1b4b"/>
+        <stop offset="40%" stop-color="#312e81"/>
+        <stop offset="100%" stop-color="#fef3c7"/>
+      </linearGradient>
+      <radialGradient id="cbtr-moon" cx="35%" cy="35%" r="65%">
+        <stop offset="0%" stop-color="#fef9c3"/>
+        <stop offset="100%" stop-color="#f59e0b"/>
+      </radialGradient>
+    </defs>
+    <rect width="200" height="120" fill="url(#cbtr-sky)" rx="12"/>
+    <circle cx="158" cy="32" r="22" fill="url(#cbtr-moon)" opacity=".95"/>
+    <circle cx="150" cy="26" r="4" fill="#fde68a" opacity=".5"/>
+    <circle cx="168" cy="36" r="3" fill="#fde68a" opacity=".4"/>
+    <rect x="48" y="62" width="104" height="38" rx="6" fill="#78350f" stroke="#fcd34d" stroke-width="2"/>
+    <text x="68" y="86" font-size="16">🥮</text>
+    <text x="92" y="86" font-size="16">🥮</text>
+    <text x="116" y="86" font-size="16">🥮</text>
+    <circle cx="36" cy="48" r="22" fill="none" stroke="#fcd34d" stroke-width="3"/>
+    <path d="M36 26 L36 70 A22 22 0 0 1 36 26 Z" fill="#f59e0b"/>
+    <text x="36" y="52" text-anchor="middle" font-size="10" font-weight="800" fill="#78350f" font-family="system-ui,sans-serif">½</text>
+  </svg>`,
+
+  'do-dat-co-thanh': `<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Đo Đất Cổ Thành">
+    <defs>
+      <linearGradient id="ddct-bg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#a8a29e"/>
+        <stop offset="45%" stop-color="#d6d3d1"/>
+        <stop offset="100%" stop-color="#86efac"/>
+      </linearGradient>
+      <pattern id="ddct-wall" width="12" height="8" patternUnits="userSpaceOnUse">
+        <rect width="6" height="8" fill="#78716c"/>
+        <rect x="6" width="6" height="8" fill="#a8a29e"/>
+      </pattern>
+    </defs>
+    <rect width="200" height="120" fill="url(#ddct-bg)" rx="12"/>
+    <rect x="52" y="30" width="96" height="72" rx="6" fill="#fef3c7" stroke="#78350f" stroke-width="2"/>
+    <rect x="58" y="24" width="84" height="8" fill="url(#ddct-wall)" rx="2"/>
+    <g transform="translate(60 38)">
+      <rect width="18" height="18" rx="2" fill="#22c55e" stroke="#15803d" stroke-width="1"/>
+      <rect x="22" width="18" height="18" rx="2" fill="#22c55e" stroke="#15803d" stroke-width="1"/>
+      <rect x="44" width="18" height="18" rx="2" fill="#e7e5e4" stroke="#a8a29e" stroke-width="1" stroke-dasharray="3 2"/>
+      <rect x="66" width="18" height="18" rx="2" fill="#e7e5e4" stroke="#a8a29e" stroke-width="1" stroke-dasharray="3 2"/>
+      <rect y="22" width="18" height="18" rx="2" fill="#22c55e" stroke="#15803d" stroke-width="1"/>
+      <rect x="22" y="22" width="18" height="18" rx="2" fill="#4ade80" stroke="#15803d" stroke-width="1"/>
+      <rect x="44" y="22" width="18" height="18" rx="2" fill="#e7e5e4" stroke="#a8a29e" stroke-width="1" stroke-dasharray="3 2"/>
+      <rect x="66" y="22" width="18" height="18" rx="2" fill="#e7e5e4" stroke="#a8a29e" stroke-width="1" stroke-dasharray="3 2"/>
+      <rect y="44" width="18" height="18" rx="2" fill="#e7e5e4" stroke="#a8a29e" stroke-width="1" stroke-dasharray="3 2"/>
+      <rect x="22" y="44" width="18" height="18" rx="2" fill="#e7e5e4" stroke="#a8a29e" stroke-width="1" stroke-dasharray="3 2"/>
+      <rect x="44" y="44" width="18" height="18" rx="2" fill="#e7e5e4" stroke="#a8a29e" stroke-width="1" stroke-dasharray="3 2"/>
+      <rect x="66" y="44" width="18" height="18" rx="2" fill="#e7e5e4" stroke="#a8a29e" stroke-width="1" stroke-dasharray="3 2"/>
+    </g>
+    <text x="148" y="98" font-size="9" font-weight="800" fill="#44403c" font-family="system-ui,sans-serif">m²</text>
+    <polygon points="100,18 112,34 88,34" fill="#78716c" opacity=".8"/>
+  </svg>`,
+
+  'bep-bac-hoc-tro': `<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bếp Bác Học Trò">
+    <defs>
+      <linearGradient id="bbht-bg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#fef3c7"/>
+        <stop offset="55%" stop-color="#fed7aa"/>
+        <stop offset="100%" stop-color="#fdba74"/>
+      </linearGradient>
+    </defs>
+    <rect width="200" height="120" fill="url(#bbht-bg)" rx="12"/>
+    <rect x="78" y="28" width="44" height="12" rx="4" fill="#57534e"/>
+    <path d="M72 40 L128 40 L118 88 Q100 96 82 88 Z" fill="#292524" stroke="#1c1917" stroke-width="2"/>
+    <ellipse cx="100" cy="40" rx="56" ry="8" fill="#78716c" stroke="#44403c" stroke-width="2"/>
+    <text x="88" y="62" font-size="12">🥕</text>
+    <text x="104" y="68" font-size="12">🧅</text>
+    <text x="92" y="78" font-size="11">🍚</text>
+    <rect x="68" y="92" width="64" height="10" rx="3" fill="#1c1917"/>
+    <rect x="48" y="22" width="44" height="28" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+    <text x="70" y="40" text-anchor="middle" font-size="11" font-weight="800" fill="#ea580c" font-family="system-ui,sans-serif">¾</text>
+    <rect x="108" y="22" width="44" height="28" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+    <text x="130" y="40" text-anchor="middle" font-size="11" font-weight="800" fill="#ea580c" font-family="system-ui,sans-serif">+</text>
+  </svg>`,
+
+  'cho-so-lieu': `<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Chợ Số Liệu">
+    <defs>
+      <linearGradient id="csl-bg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#fef08a"/>
+        <stop offset="45%" stop-color="#fde047"/>
+        <stop offset="100%" stop-color="#fbbf24"/>
+      </linearGradient>
+    </defs>
+    <rect width="200" height="120" fill="url(#csl-bg)" rx="12"/>
+    <text x="100" y="22" text-anchor="middle" font-size="9" font-weight="800" fill="#78350f" font-family="system-ui,sans-serif">Chợ Số Liệu</text>
+    <g transform="translate(52 30)">
+      <rect x="0" y="50" width="14" height="28" rx="3" fill="#3b82f6"/>
+      <rect x="20" y="34" width="14" height="44" rx="3" fill="#22c55e"/>
+      <rect x="40" y="42" width="14" height="36" rx="3" fill="#f59e0b"/>
+      <rect x="60" y="26" width="14" height="52" rx="3" fill="#ef4444"/>
+      <rect x="80" y="38" width="14" height="40" rx="3" fill="#8b5cf6"/>
+      <rect x="-4" y="78" width="102" height="8" rx="2" fill="#a16207"/>
+    </g>
+    <circle cx="158" cy="72" r="18" fill="#fbbf24" stroke="#b45309" stroke-width="2"/>
+    <text x="158" y="77" text-anchor="middle" font-size="11" font-weight="800" fill="#78350f" font-family="system-ui,sans-serif">S</text>
+    <circle cx="36" cy="72" r="14" fill="#e7e5e4" stroke="#a8a29e" stroke-width="2"/>
+    <text x="36" y="76" text-anchor="middle" font-size="9" font-weight="800" fill="#57534e" font-family="system-ui,sans-serif">N</text>
   </svg>`,
 };
 
