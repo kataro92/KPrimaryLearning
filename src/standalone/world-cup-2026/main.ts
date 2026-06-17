@@ -40,7 +40,7 @@ function beginCountry(countryId: string): void {
   if (!country) return;
   level = createLevel(countryId);
   scene3d?.setCountryColors(country.flagColors);
-  scene3d?.setStage(1);
+  scene3d?.setStage(1, { hardReset: true });
   showStageQuestion();
 }
 
