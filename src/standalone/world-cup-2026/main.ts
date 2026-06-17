@@ -1,5 +1,8 @@
+import '@/styles/clay-tokens.css';
+import '@/styles/clay.css';
+import '@/styles/clay-game.css';
 import './styles.css';
-import { SoccerGameCanvas } from './game';
+import { WorldCupScene3D } from './scene3d';
 import {
   advanceStage,
   checkAnswer,
@@ -12,11 +15,11 @@ import {
   unlockCountry,
 } from './quiz';
 import { QuestionTimer } from './timer';
-import type { LevelState, ShotType } from './types';
+import type { LevelState, ScreenId, ShotType } from './types';
 import { createUi } from './ui';
 
 let level: LevelState | null = null;
-let canvas: SoccerGameCanvas | null = null;
+let scene3d: WorldCupScene3D | null = null;
 let pendingAfterAnim: (() => void) | null = null;
 let inputLocked = false;
 let focusAnswerIndex = 0;
@@ -26,12 +29,18 @@ function shotFromIndex(index: number): ShotType {
   return index === 0 ? 'A' : index === 1 ? 'B' : 'C';
 }
 
+function syncSceneView(screen: ScreenId): void {
+  if (!scene3d) return;
+  scene3d.setView(screen === 'play' ? 'play' : 'menu');
+  requestAnimationFrame(() => scene3d?.forceResize());
+}
+
 function beginCountry(countryId: string): void {
   const country = getCountryById(countryId);
   if (!country) return;
   level = createLevel(countryId);
-  canvas?.setCountryColors(country.flagColors);
-  canvas?.setStage(1);
+  scene3d?.setCountryColors(country.flagColors);
+  scene3d?.setStage(1);
   showStageQuestion();
 }
 
@@ -54,7 +63,7 @@ function showStageQuestion(): void {
   const country = getCountryById(level.countryId);
   if (!country) return;
   const question = pickQuestion(level, country);
-  canvas?.setStage(level.stage);
+  scene3d?.setStage(level.stage);
   ui.renderPlayHud(level, country, question);
   focusAnswerIndex = 0;
   ui.highlightAnswer(0);
@@ -95,7 +104,7 @@ function submitAnswer(index: number, fromTimeout = false): void {
   const shot: ShotType = fromTimeout ? 'B' : shotFromIndex(index);
 
   setTimeout(() => {
-    canvas?.playShot(shot, correct);
+    scene3d?.playShot(shot, correct);
     pendingAfterAnim = () => {
       if (!level) return;
       if (!correct) {
@@ -147,20 +156,26 @@ const ui = createUi(document.querySelector('#wc-app')!, {
   },
   onBackHome() {
     questionTimer.stop();
+    scene3d?.dispose();
+    scene3d = null;
     const base = import.meta.env.BASE_URL || '/';
     window.location.href = `${base}index.html`;
   },
   onPlayReady() {
-    canvas?.forceResize();
+    scene3d?.forceResize();
+  },
+  onScreenChange(screen) {
+    syncSceneView(screen);
   },
 });
 
-canvas = new SoccerGameCanvas(document.querySelector('#wc-canvas')!, {
+scene3d = new WorldCupScene3D(document.querySelector('#wc-three-root')!, {
   onSequenceDone() {
     pendingAfterAnim?.();
     pendingAfterAnim = null;
   },
 });
+scene3d.setView('menu');
 
 window.addEventListener('keydown', (e) => {
   if (!level || inputLocked) return;
