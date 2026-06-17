@@ -1,11 +1,9 @@
 /**
- * World Cup 2026 — 2.5D Three.js pitch scene
+ * World Cup 2026 — 2.5D Three.js pitch (side-view, matches Thiet_Ke_Game_Soccer_Quiz.md)
  *
- * Level design (Game Level Designer guide):
- * - Topology: linear corridor — striker advances through 3 defender chokepoints to boss goal.
- * - Landmarks: stage posts, country banners, stadium stands, goal frame.
- * - Pacing: compression at defender duels, release on scroll transition after success.
- * - Boss: stage 4 goalkeeper + goal arena with net shake on score.
+ * Normalized screen coords (X/Y 0–1) match the original Canvas 2D game:
+ * - UI zone: top 35% (handled in CSS)
+ * - Pitch zone: bottom 65% — horizon at Y=0.65, striker at (0.20, 0.75), defender at (0.80, 0.75)
  */
 
 import * as THREE from 'three';
@@ -17,53 +15,54 @@ export interface Scene3DCallbacks {
   onSequenceDone: () => void;
 }
 
-const STRIKER_BASE = { x: -6, y: 0.35, z: 0 };
-const DEFENDER_BASE = { x: 4.8, y: 0.35, z: 0 };
-const GK_BASE = { x: 4.2, y: 0.35, z: 0 };
+const STRIKER_BASE = { x: 0.2, y: 0.75 };
+const BALL_BASE = { x: 0.26, y: 0.78 };
+const DEFENDER_BASE = { x: 0.8, y: 0.75 };
+const GK_BASE = { x: 0.72, y: 0.72 };
+const HORIZON_Y = 0.65;
 
 function shotCurve(shot: ShotType): {
-  peak: { x: number; y: number; z: number };
-  end: { x: number; y: number; z: number };
+  peak: { x: number; y: number };
+  end: { x: number; y: number };
 } {
-  if (shot === 'A') return { peak: { x: 0, y: 2.2, z: 0.5 }, end: { x: 6.2, y: 0.35, z: 0 } };
-  if (shot === 'B') return { peak: { x: 0, y: 1.1, z: 0.3 }, end: { x: 6.2, y: 0.35, z: 0 } };
-  return { peak: { x: 1, y: 0.25, z: 0.1 }, end: { x: 6.2, y: 0.22, z: 0 } };
+  if (shot === 'A') return { peak: { x: 0.5, y: 0.4 }, end: { x: 0.88, y: 0.78 } };
+  if (shot === 'B') return { peak: { x: 0.5, y: 0.55 }, end: { x: 0.88, y: 0.78 } };
+  return { peak: { x: 0.55, y: 0.76 }, end: { x: 0.88, y: 0.78 } };
 }
 
-function hexColor(hex: string): number {
-  return Number.parseInt(hex.replace('#', ''), 16);
-}
 
 function buildPlayer(isGk: boolean, isStriker: boolean): THREE.Group {
   const g = new THREE.Group();
   const shirt = isGk ? 0xfacc15 : isStriker ? 0x3b82f6 : 0xef4444;
   const shorts = isStriker ? 0x1e3a8a : 0x7f1d1d;
   const body = new THREE.Mesh(
-    new THREE.CapsuleGeometry(0.22, 0.55, 6, 10),
+    new THREE.CapsuleGeometry(0.14, 0.38, 6, 10),
     new THREE.MeshStandardMaterial({ color: shirt, roughness: 0.55 })
   );
-  body.position.y = 0.55;
+  body.position.y = 0.38;
   const head = new THREE.Mesh(
-    new THREE.SphereGeometry(0.2, 12, 12),
+    new THREE.SphereGeometry(0.13, 12, 12),
     new THREE.MeshStandardMaterial({ color: 0xfcd9b6, roughness: 0.7 })
   );
-  head.position.y = 1.05;
+  head.position.y = 0.72;
   const legs = new THREE.Mesh(
-    new THREE.BoxGeometry(0.38, 0.28, 0.22),
+    new THREE.BoxGeometry(0.24, 0.18, 0.14),
     new THREE.MeshStandardMaterial({ color: shorts, roughness: 0.6 })
   );
-  legs.position.y = 0.18;
+  legs.position.y = 0.12;
   g.add(body, head, legs);
   if (isGk) {
     const gloveL = new THREE.Mesh(
-      new THREE.BoxGeometry(0.18, 0.22, 0.1),
+      new THREE.BoxGeometry(0.12, 0.14, 0.08),
       new THREE.MeshStandardMaterial({ color: 0xfbbf24 })
     );
-    gloveL.position.set(-0.35, 0.75, 0.1);
+    gloveL.position.set(-0.22, 0.52, 0.06);
     const gloveR = gloveL.clone();
-    gloveR.position.x = 0.35;
+    gloveR.position.x = 0.22;
     g.add(gloveL, gloveR);
   }
+  g.rotation.y = isStriker ? Math.PI / 2 : -Math.PI / 2;
+  g.scale.setScalar(isGk ? 1.28 : 1.08);
   return g;
 }
 
@@ -72,33 +71,36 @@ export class WorldCupScene3D {
   private callbacks: Scene3DCallbacks;
   private renderer: THREE.WebGLRenderer;
   private scene: THREE.Scene;
-  private camera: THREE.PerspectiveCamera;
+  private camera: THREE.OrthographicCamera;
   private raf = 0;
   private cancelSeq: (() => void) | null = null;
   private idleT = 0;
-  private viewMode: 'menu' | 'play' = 'menu';
+  private active = true;
+  private viewHalfH = 4;
+  private viewHalfW = 7;
 
-  private pitchGroup = new THREE.Group();
+  private bgGroup = new THREE.Group();
   private scrollGroup = new THREE.Group();
   private striker!: THREE.Group;
   private defender!: THREE.Group;
   private ball!: THREE.Mesh;
   private goalGroup = new THREE.Group();
   private hitFlash!: THREE.Mesh;
+  private kickFlash!: THREE.Mesh;
+  private kickFlashT = 0;
   private trail!: THREE.Mesh;
-  private banners: THREE.Mesh[] = [];
-  private stagePosts: THREE.Mesh[] = [];
+  private flagStrip!: THREE.Mesh;
 
   snapshot: SceneSnapshot = {
     phase: 'idle',
     stage: 1,
     isBoss: false,
     scrollOffset: 0,
-    strikerX: 0.2,
-    strikerY: 0.75,
-    defenderX: 0.8,
-    defenderY: 0.75,
-    ball: { x: 0.26, y: 0.78, progress: 0 },
+    strikerX: STRIKER_BASE.x,
+    strikerY: STRIKER_BASE.y,
+    defenderX: DEFENDER_BASE.x,
+    defenderY: DEFENDER_BASE.y,
+    ball: { x: BALL_BASE.x, y: BALL_BASE.y, progress: 0 },
     hitFlash: 0,
     netShake: 0,
     celebrate: 0,
@@ -112,30 +114,25 @@ export class WorldCupScene3D {
     this.mount = mount;
     this.callbacks = callbacks;
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.05;
     this.renderer.domElement.className = 'wc-three-canvas';
     mount.appendChild(this.renderer.domElement);
 
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0xbae6fd);
-    this.scene.fog = new THREE.Fog(0xbae6fd, 14, 32);
+    this.camera = new THREE.OrthographicCamera(-7, 7, 4, -4, 0.1, 50);
+    this.camera.position.set(0, 0, 10);
+    this.camera.lookAt(0, 0, 0);
 
-    this.camera = new THREE.PerspectiveCamera(42, 1, 0.1, 80);
-    this.camera.position.set(-3.5, 4.2, 9.5);
-
-    const hemi = new THREE.HemisphereLight(0xffffff, 0x4ade80, 0.95);
-    const dir = new THREE.DirectionalLight(0xffffff, 0.85);
-    dir.position.set(-4, 8, 6);
+    const hemi = new THREE.HemisphereLight(0xffffff, 0x86efac, 1.05);
+    const dir = new THREE.DirectionalLight(0xffffff, 0.55);
+    dir.position.set(-2, 4, 6);
     this.scene.add(hemi, dir);
 
-    this.buildEnvironment();
-    this.buildPitch();
+    this.buildBackground();
+    this.buildPitchLines();
     this.buildActors();
-    this.buildLandmarks();
 
     window.addEventListener('resize', this.resize);
     this.resize();
@@ -143,24 +140,14 @@ export class WorldCupScene3D {
   }
 
   setView(mode: 'menu' | 'play'): void {
-    this.viewMode = mode;
-    if (mode === 'menu') {
-      this.camera.position.set(-2, 5.5, 11);
-      this.camera.lookAt(0, 0.5, 0);
-      this.goalGroup.visible = true;
-      this.scrollGroup.position.x = 0;
-    } else {
-      this.camera.position.set(-3.5, 4.2, 9.5);
-      this.camera.lookAt(1.5, 0.4, 0);
-      this.goalGroup.visible = this.snapshot.isBoss;
-    }
+    this.active = mode === 'play';
+    if (mode === 'play') this.forceResize();
   }
 
   setCountryColors(colors: [string, string, string]): void {
-    this.banners.forEach((b, i) => {
-      const mat = b.material as THREE.MeshStandardMaterial;
-      mat.color.setHex(hexColor(colors[i] ?? colors[0]!));
-    });
+    const tex = this.makeFlagTexture(colors);
+    (this.flagStrip.material as THREE.MeshBasicMaterial).map = tex;
+    (this.flagStrip.material as THREE.MeshBasicMaterial).needsUpdate = true;
   }
 
   setStage(stage: 1 | 2 | 3 | 4): void {
@@ -168,15 +155,7 @@ export class WorldCupScene3D {
     this.snapshot.isBoss = stage === 4;
     this.swapDefender(stage === 4);
     this.resetPositions();
-    this.updateStagePosts(stage);
-    this.goalGroup.visible = stage === 4 || this.viewMode === 'menu';
-  }
-
-  private swapDefender(isGk: boolean): void {
-    this.scrollGroup.remove(this.defender);
-    disposeObject3D(this.defender);
-    this.defender = buildPlayer(isGk, false);
-    this.scrollGroup.add(this.defender);
+    this.goalGroup.visible = stage === 4;
   }
 
   forceResize(): void {
@@ -184,12 +163,13 @@ export class WorldCupScene3D {
   }
 
   resetPositions(): void {
+    const defBase = this.snapshot.isBoss ? GK_BASE : DEFENDER_BASE;
     this.snapshot.scrollOffset = 0;
-    this.snapshot.strikerX = 0.2;
-    this.snapshot.strikerY = 0.75;
-    this.snapshot.defenderX = 0.8;
-    this.snapshot.defenderY = 0.75;
-    this.snapshot.ball = { x: 0.26, y: 0.78, progress: 0 };
+    this.snapshot.strikerX = STRIKER_BASE.x;
+    this.snapshot.strikerY = STRIKER_BASE.y;
+    this.snapshot.defenderX = defBase.x;
+    this.snapshot.defenderY = defBase.y;
+    this.snapshot.ball = { x: BALL_BASE.x, y: BALL_BASE.y, progress: 0 };
     this.snapshot.hitFlash = 0;
     this.snapshot.netShake = 0;
     this.snapshot.celebrate = 0;
@@ -213,7 +193,7 @@ export class WorldCupScene3D {
     this.cancelSeq = runSequence({
       durationMs: 250,
       onUpdate: (t) => {
-        this.snapshot.strikerX = lerp(0.2, 0.23, easeOutCubic(t));
+        this.snapshot.strikerX = lerp(STRIKER_BASE.x, STRIKER_BASE.x + 0.03, easeOutCubic(t));
         this.applySnapshotToMeshes();
       },
       onComplete: () => this.flyBall(correct),
@@ -229,203 +209,239 @@ export class WorldCupScene3D {
     this.renderer.domElement.remove();
   }
 
-  private buildEnvironment(): void {
-    const standMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.85 });
-    for (const z of [-4.5, 4.5]) {
-      const stand = new THREE.Mesh(new THREE.BoxGeometry(18, 2.2, 1.2), standMat);
-      stand.position.set(1, 1.1, z);
-      this.scene.add(stand);
-      const upper = new THREE.Mesh(new THREE.BoxGeometry(18, 1.4, 0.8), standMat);
-      upper.position.set(1, 2.6, z);
-      this.scene.add(upper);
-    }
-    const skyPlate = new THREE.Mesh(
-      new THREE.PlaneGeometry(40, 16),
-      new THREE.MeshBasicMaterial({ color: 0x7dd3fc })
-    );
-    skyPlate.position.set(0, 6, -8);
-    this.scene.add(skyPlate);
+  private swapDefender(isGk: boolean): void {
+    this.scrollGroup.remove(this.defender);
+    disposeObject3D(this.defender);
+    this.defender = buildPlayer(isGk, false);
+    this.scrollGroup.add(this.defender);
   }
 
-  private buildPitch(): void {
-    const grass = new THREE.Mesh(
+  private makeFlagTexture(colors: [string, string, string]): THREE.CanvasTexture {
+    const canvas = document.createElement('canvas');
+    canvas.width = 384;
+    canvas.height = 16;
+    const ctx = canvas.getContext('2d')!;
+    const sw = canvas.width / 3;
+    colors.forEach((c, i) => {
+      ctx.fillStyle = c;
+      ctx.fillRect(i * sw, 0, sw, canvas.height);
+    });
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }
+
+  private buildBackground(): void {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d')!;
+    const h = canvas.height;
+    const horizon = Math.floor(h * HORIZON_Y);
+    const sky = ctx.createLinearGradient(0, 0, 0, horizon);
+    sky.addColorStop(0, '#7dd3fc');
+    sky.addColorStop(1, '#bae6fd');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, canvas.width, horizon);
+    ctx.fillStyle = '#64748b';
+    ctx.fillRect(0, horizon - 48, canvas.width, 36);
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(0, horizon - 12, canvas.width, 12);
+    ctx.fillStyle = '#4ade80';
+    ctx.fillRect(0, horizon, canvas.width, h - horizon);
+    ctx.fillStyle = '#22c55e';
+    ctx.fillRect(0, horizon + 10, canvas.width, h - horizon - 10);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const bg = new THREE.Mesh(
       new THREE.PlaneGeometry(20, 10),
-      new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.92 })
+      new THREE.MeshBasicMaterial({ map: tex })
     );
-    grass.rotation.x = -Math.PI / 2;
-    grass.position.y = 0;
-    this.pitchGroup.add(grass);
+    this.bgGroup.add(bg);
 
-    const stripeMat = new THREE.MeshBasicMaterial({ color: 0x16a34a, transparent: true, opacity: 0.25 });
-    for (let i = -4; i <= 4; i += 2) {
-      const stripe = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 10), stripeMat);
-      stripe.rotation.x = -Math.PI / 2;
-      stripe.position.set(i, 0.01, 0);
-      this.pitchGroup.add(stripe);
-    }
-
-    const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    const boundary = new THREE.Mesh(new THREE.PlaneGeometry(16, 0.06), lineMat);
-    boundary.rotation.x = -Math.PI / 2;
-    boundary.position.set(0, 0.02, -4.8);
-    this.pitchGroup.add(boundary);
-    const boundary2 = boundary.clone();
-    boundary2.position.z = 4.8;
-    this.pitchGroup.add(boundary2);
-
-    const mid = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 9.6), lineMat);
-    mid.rotation.x = -Math.PI / 2;
-    mid.position.set(0, 0.02, 0);
-    this.pitchGroup.add(mid);
-
-    this.scene.add(this.pitchGroup);
+    this.flagStrip = new THREE.Mesh(
+      new THREE.PlaneGeometry(20, 0.18),
+      new THREE.MeshBasicMaterial({ map: this.makeFlagTexture(['#22c55e', '#ffffff', '#3b82f6']) })
+    );
+    this.flagStrip.position.y = this.normToWorld(0.5, 0.04).y;
+    this.flagStrip.position.z = 0.2;
+    this.scene.add(this.flagStrip);
+    this.scrollGroup.add(this.bgGroup);
     this.scene.add(this.scrollGroup);
+  }
+
+  private buildPitchLines(): void {
+    const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.75 });
+    const topLeft = this.normToWorld(0.05, HORIZON_Y + 0.03);
+    const bottomRight = this.normToWorld(0.95, 0.96);
+    const w = bottomRight.x - topLeft.x;
+    const h = topLeft.y - bottomRight.y;
+    const boundary = new THREE.Mesh(new THREE.PlaneGeometry(w, 0.04), lineMat);
+    boundary.position.set((topLeft.x + bottomRight.x) / 2, topLeft.y, 0.05);
+    const boundaryB = boundary.clone();
+    boundaryB.position.y = bottomRight.y;
+    const mid = new THREE.Mesh(new THREE.PlaneGeometry(0.04, h), lineMat);
+    mid.position.set(0, (topLeft.y + bottomRight.y) / 2, 0.05);
+    this.scrollGroup.add(boundary, boundaryB, mid);
+  }
+
+  private buildGoal(): void {
+    const topLeft = this.normToWorld(0.82, HORIZON_Y + 0.04);
+    const bottomRight = this.normToWorld(0.98, 0.93);
+    const w = bottomRight.x - topLeft.x;
+    const h = topLeft.y - bottomRight.y;
+    const cx = (topLeft.x + bottomRight.x) / 2;
+    const cy = (topLeft.y + bottomRight.y) / 2;
+    const postMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.2, roughness: 0.35 });
+    const postR = 0.045;
+    const leftPost = new THREE.Mesh(new THREE.CylinderGeometry(postR, postR, h, 8), postMat);
+    leftPost.position.set(topLeft.x, cy, 0.1);
+    const rightPost = leftPost.clone();
+    rightPost.position.x = bottomRight.x;
+    const crossbar = new THREE.Mesh(new THREE.CylinderGeometry(postR * 0.85, postR * 0.85, w, 8), postMat);
+    crossbar.rotation.z = Math.PI / 2;
+    crossbar.position.set(cx, topLeft.y, 0.1);
+
+    const netPoints: number[] = [];
+    const netCols = 8;
+    const netRows = 6;
+    for (let i = 0; i <= netCols; i++) {
+      const t = i / netCols;
+      const x = topLeft.x + w * t;
+      netPoints.push(x, topLeft.y, 0.06, x, bottomRight.y, 0.06);
+    }
+    for (let j = 0; j <= netRows; j++) {
+      const t = j / netRows;
+      const y = topLeft.y - h * t;
+      netPoints.push(topLeft.x, y, 0.06, bottomRight.x, y, 0.06);
+    }
+    const netGeo = new THREE.BufferGeometry();
+    netGeo.setAttribute('position', new THREE.Float32BufferAttribute(netPoints, 3));
+    const net = new THREE.LineSegments(
+      netGeo,
+      new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.45 })
+    );
+
+    this.goalGroup.add(leftPost, rightPost, crossbar, net);
+    this.goalGroup.visible = false;
+    this.scrollGroup.add(this.goalGroup);
   }
 
   private buildActors(): void {
     this.striker = buildPlayer(false, true);
     this.defender = buildPlayer(false, false);
     this.ball = new THREE.Mesh(
-      new THREE.SphereGeometry(0.16, 16, 16),
+      new THREE.SphereGeometry(0.09, 16, 16),
       new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.35 })
     );
+    const pent = new THREE.Mesh(
+      new THREE.CircleGeometry(0.035, 5),
+      new THREE.MeshBasicMaterial({ color: 0x0f172a })
+    );
+    pent.position.z = 0.091;
+    this.ball.add(pent);
+
     this.trail = new THREE.Mesh(
-      new THREE.SphereGeometry(0.22, 10, 10),
+      new THREE.SphereGeometry(0.14, 10, 10),
       new THREE.MeshBasicMaterial({ color: 0xfb923c, transparent: true, opacity: 0 })
     );
     this.hitFlash = new THREE.Mesh(
-      new THREE.SphereGeometry(0.35, 10, 10),
+      new THREE.CircleGeometry(0.22, 16),
       new THREE.MeshBasicMaterial({ color: 0xf87171, transparent: true, opacity: 0 })
     );
+    this.hitFlash.position.z = 0.15;
+    this.kickFlash = new THREE.Mesh(
+      new THREE.CircleGeometry(0.1, 12),
+      new THREE.MeshBasicMaterial({ color: 0xfef08a, transparent: true, opacity: 0 })
+    );
+    this.kickFlash.position.z = 0.17;
 
-    const postMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.2 });
-    const netMat = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.35,
-      side: THREE.DoubleSide,
-    });
-    const leftPost = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.4, 8), postMat);
-    leftPost.position.set(0, 0.7, -0.85);
-    const rightPost = leftPost.clone();
-    rightPost.position.z = 0.85;
-    const crossbar = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.8, 8), postMat);
-    crossbar.rotation.x = Math.PI / 2;
-    crossbar.position.set(0, 1.35, 0);
-    const net = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.2), netMat);
-    net.position.set(-0.05, 0.75, 0);
-    this.goalGroup.add(leftPost, rightPost, crossbar, net);
-    this.goalGroup.position.set(7.2, 0, 0);
-    this.goalGroup.visible = false;
-
-    this.scrollGroup.add(this.striker, this.defender, this.ball, this.trail, this.hitFlash, this.goalGroup);
+    this.buildGoal();
+    this.scrollGroup.add(this.striker, this.defender, this.ball, this.trail, this.hitFlash, this.kickFlash);
     this.resetPositions();
   }
 
-  private buildLandmarks(): void {
-    const bannerGeo = new THREE.PlaneGeometry(1.4, 0.9);
-    for (let i = 0; i < 3; i++) {
-      const banner = new THREE.Mesh(
-        bannerGeo,
-        new THREE.MeshStandardMaterial({ color: 0xffffff, side: THREE.DoubleSide, roughness: 0.8 })
-      );
-      banner.position.set(-2 + i * 2.5, 2.4, -3.8);
-      banner.rotation.y = 0.15;
-      this.banners.push(banner);
-      this.scene.add(banner);
-    }
-
-    const postGeo = new THREE.CylinderGeometry(0.08, 0.1, 1.6, 8);
-    const postMat = new THREE.MeshStandardMaterial({ color: 0x7c3aed, emissive: 0x4c1d95, emissiveIntensity: 0.15 });
-    for (let i = 0; i < 4; i++) {
-      const post = new THREE.Mesh(postGeo, postMat);
-      post.position.set(-4 + i * 3.2, 0.8, 3.6);
-      this.stagePosts.push(post);
-      this.scene.add(post);
-    }
-    this.updateStagePosts(1);
-  }
-
-  private updateStagePosts(stage: number): void {
-    this.stagePosts.forEach((post, i) => {
-      const mat = post.material as THREE.MeshStandardMaterial;
-      if (i + 1 < stage) {
-        mat.color.setHex(0x10b981);
-        mat.emissive.setHex(0x047857);
-      } else if (i + 1 === stage) {
-        mat.color.setHex(0x7c3aed);
-        mat.emissive.setHex(0x4c1d95);
-        post.scale.y = 1.2;
-      } else {
-        mat.color.setHex(0x94a3b8);
-        mat.emissive.setHex(0x334155);
-        post.scale.y = 1;
-      }
-    });
-  }
-
-  private normToWorld(nx: number, ny: number, nz = 0): THREE.Vector3 {
-    return new THREE.Vector3(lerp(-7, 8, nx), lerp(0.05, 2.5, ny), nz);
+  private normToWorld(nx: number, ny: number): THREE.Vector3 {
+    const x = (nx - 0.5) * this.viewHalfW * 2;
+    const y = (0.5 - ny) * this.viewHalfH * 2;
+    return new THREE.Vector3(x, y, 0);
   }
 
   private applySnapshotToMeshes(): void {
-    const sx = lerp(STRIKER_BASE.x, STRIKER_BASE.x + 0.4, (this.snapshot.strikerX - 0.2) / 0.03);
-    const sy = STRIKER_BASE.y + (this.snapshot.disappointment ? -0.08 : 0) + Math.sin(this.idleT * 3) * 0.04;
-    this.striker.position.set(sx, sy, STRIKER_BASE.z);
+    const idleBounce = this.snapshot.phase === 'idle' ? Math.sin(this.idleT * 3) * 0.008 : 0;
+    const strikerNy = this.snapshot.strikerY + (this.snapshot.disappointment ? 0.02 : 0) + idleBounce;
+    const strikerPos = this.normToWorld(this.snapshot.strikerX, strikerNy);
+    this.striker.position.set(strikerPos.x, strikerPos.y, 0.12);
 
-    const defBase = this.snapshot.isBoss ? GK_BASE : DEFENDER_BASE;
-    const dx = lerp(defBase.x, defBase.x + 0.8, (this.snapshot.defenderX - 0.8) / 0.2);
-    const dy = lerp(defBase.y, defBase.y + 0.6, Math.abs(this.snapshot.defenderY - 0.75) / 0.08);
-    this.defender.position.set(dx, dy, defBase.z);
+    const defPos = this.normToWorld(this.snapshot.defenderX, this.snapshot.defenderY);
+    this.defender.position.set(defPos.x, defPos.y, 0.12);
 
-    const ballPos = this.normToWorld(this.snapshot.ball.x, this.snapshot.ball.y, this.snapshot.ball.progress * 0.3);
-    this.ball.position.copy(ballPos);
+    const ballPos = this.normToWorld(this.snapshot.ball.x, this.snapshot.ball.y);
+    this.ball.position.set(ballPos.x, ballPos.y, 0.14 + this.snapshot.ball.progress * 0.08);
 
-    this.scrollGroup.position.x = -this.snapshot.scrollOffset * 14;
+    this.scrollGroup.position.x = -this.snapshot.scrollOffset * this.viewHalfW * 2;
 
     this.trail.visible = this.snapshot.trailIntensity > 0 && this.snapshot.phase === 'flying';
     if (this.trail.visible) {
-      this.trail.position.copy(ballPos).add(new THREE.Vector3(-0.35, 0, 0));
+      const trailPos = this.normToWorld(this.snapshot.ball.x - 0.03, this.snapshot.ball.y);
+      this.trail.position.set(trailPos.x, trailPos.y, 0.1);
       (this.trail.material as THREE.MeshBasicMaterial).opacity = 0.55;
     }
 
     this.hitFlash.visible = this.snapshot.hitFlash > 0;
     if (this.hitFlash.visible) {
-      this.hitFlash.position.set(5.2, 0.5, 0);
+      const flashPos = this.normToWorld(0.72, 0.74);
+      this.hitFlash.position.set(flashPos.x, flashPos.y, 0.16);
       (this.hitFlash.material as THREE.MeshBasicMaterial).opacity = this.snapshot.hitFlash * 0.75;
     }
 
-    this.goalGroup.rotation.z = this.snapshot.netShake * 0.08;
+    this.kickFlash.visible = this.kickFlashT > 0;
+    if (this.kickFlash.visible) {
+      this.kickFlash.position.set(ballPos.x, ballPos.y, 0.18);
+      (this.kickFlash.material as THREE.MeshBasicMaterial).opacity = this.kickFlashT * 0.9;
+      const s = 1 + (1 - this.kickFlashT) * 1.2;
+      this.kickFlash.scale.set(s, s, 1);
+    }
+
+    this.goalGroup.rotation.z = this.snapshot.netShake * 0.06;
     if (this.snapshot.celebrate > 0) {
-      this.striker.rotation.z = Math.sin(this.snapshot.celebrate * 12) * 0.08;
+      this.striker.rotation.z = Math.sin(this.snapshot.celebrate * 12) * 0.12;
+      this.striker.position.y -= this.snapshot.celebrate * 0.06;
     } else {
       this.striker.rotation.z = 0;
     }
-
-    if (this.viewMode === 'play') {
-      this.camera.lookAt(lerp(0.5, 2.5, this.snapshot.stage / 4), 0.45, 0);
+    if (this.snapshot.phase !== 'flying' || !this.snapshot.isBoss) {
+      this.defender.rotation.z = lerp(this.defender.rotation.z, 0, 0.15);
     }
   }
 
   private flyBall(correct: boolean): void {
     const shot = this.snapshot.shot!;
     const curve = shotCurve(shot);
-    const start = { x: this.snapshot.ball.x, y: this.snapshot.ball.y };
+    const start = { x: BALL_BASE.x, y: BALL_BASE.y };
     this.snapshot.phase = 'flying';
+    this.kickFlashT = 1;
+    const defBaseY = this.snapshot.isBoss ? GK_BASE.y : DEFENDER_BASE.y;
 
     this.cancelSeq = runSequence({
       durationMs: correct ? 700 : 650,
       onUpdate: (t) => {
         const p = easeInOutQuad(t);
-        const pt2d = bezierPoint(p, start, { x: curve.peak.x * 0.08 + 0.5, y: curve.peak.y * 0.12 }, {
-          x: 0.88,
-          y: curve.end.y * 0.12 + 0.72,
-        });
-        this.snapshot.ball = { x: pt2d.x, y: pt2d.y, progress: p };
+        const pt = bezierPoint(p, start, curve.peak, curve.end);
+        this.snapshot.ball = { x: pt.x, y: pt.y, progress: p };
         if (!correct && t > 0.55) {
-          this.snapshot.defenderY = lerp(0.75, 0.67, (t - 0.55) / 0.45);
+          this.snapshot.defenderY = lerp(defBaseY, defBaseY - 0.08, (t - 0.55) / 0.45);
         } else if (correct) {
-          this.snapshot.defenderY = lerp(0.75, shot === 'C' ? 0.69 : 0.81, Math.min(1, t * 1.4));
+          this.snapshot.defenderY = lerp(
+            defBaseY,
+            defBaseY + (shot === 'C' ? -0.06 : 0.06),
+            Math.min(1, t * 1.4)
+          );
+          if (this.snapshot.isBoss && t > 0.35) {
+            this.snapshot.defenderY = lerp(defBaseY, defBaseY - 0.14, Math.min(1, (t - 0.35) / 0.45));
+            this.defender.rotation.z = lerp(0, shot === 'C' ? 0.35 : -0.45, Math.min(1, (t - 0.35) / 0.5));
+          }
         }
         this.applySnapshotToMeshes();
       },
@@ -445,19 +461,28 @@ export class WorldCupScene3D {
     this.snapshot.hitFlash = 1;
     const shot = this.snapshot.shot!;
     const blockX = 0.72;
+    const isBoss = this.snapshot.isBoss;
 
     this.cancelSeq = runSequence({
-      durationMs: 500,
+      durationMs: isBoss ? 700 : 500,
       onUpdate: (t) => {
         const p = easeOutCubic(t);
         const curve = shotCurve(shot);
-        const back = bezierPoint(
-          1 - p,
-          { x: blockX, y: curve.end.y * 0.12 + 0.72 },
-          { x: curve.peak.x * 0.08 + 0.5, y: curve.peak.y * 0.12 },
-          { x: 0.26, y: 0.78 }
-        );
-        this.snapshot.ball = { x: back.x, y: back.y, progress: 1 - p };
+        if (isBoss && t > 0.42) {
+          const hold = (t - 0.42) / 0.58;
+          this.snapshot.ball = {
+            x: lerp(blockX, GK_BASE.x - 0.03, hold),
+            y: lerp(curve.end.y, GK_BASE.y + 0.05, hold),
+            progress: 0,
+          };
+          this.defender.rotation.z = lerp(0, 0.28, hold);
+        } else {
+          const back = bezierPoint(1 - p, { x: blockX, y: curve.end.y }, curve.peak, {
+            x: BALL_BASE.x,
+            y: BALL_BASE.y,
+          });
+          this.snapshot.ball = { x: back.x, y: back.y, progress: 1 - p };
+        }
         this.snapshot.hitFlash = 1 - t;
         if (t > 0.5) this.snapshot.disappointment = (t - 0.5) * 2;
         this.applySnapshotToMeshes();
@@ -465,6 +490,7 @@ export class WorldCupScene3D {
       onComplete: () => {
         this.snapshot.phase = 'idle';
         this.snapshot.disappointment = 0;
+        this.defender.rotation.z = 0;
         this.resetPositions();
         this.callbacks.onSequenceDone();
       },
@@ -473,15 +499,16 @@ export class WorldCupScene3D {
 
   private scrollNext(): void {
     this.snapshot.phase = 'scrolling';
+    this.snapshot.defenderX = 1.05;
     this.cancelSeq = runSequence({
       durationMs: 1200,
       onUpdate: (t) => {
         const p = easeInOutQuad(t);
         this.snapshot.scrollOffset = p * 0.35;
-        this.snapshot.strikerX = lerp(0.22, 0.2, 1 - p * 0.3);
-        this.snapshot.ball.x = lerp(0.9, 0.26, 1 - p);
-        this.snapshot.ball.y = lerp(0.78, 0.78, 1 - p);
-        this.snapshot.defenderX = lerp(0.8, 1, p);
+        this.snapshot.strikerX = lerp(BALL_BASE.x - 0.04, STRIKER_BASE.x, 1 - p * 0.3);
+        this.snapshot.ball.x = lerp(0.9, BALL_BASE.x, 1 - p);
+        this.snapshot.ball.y = lerp(BALL_BASE.y, BALL_BASE.y, 1 - p);
+        this.snapshot.defenderX = lerp(1.05, DEFENDER_BASE.x, p);
         this.applySnapshotToMeshes();
       },
       onComplete: () => {
@@ -500,7 +527,7 @@ export class WorldCupScene3D {
       onUpdate: (t) => {
         this.snapshot.netShake = Math.max(0, 1 - t * 1.2) * Math.sin(t * 24);
         this.snapshot.celebrate = t;
-        this.snapshot.strikerY = lerp(0.75, 0.79, easeOutCubic(Math.min(1, t * 2)));
+        this.snapshot.strikerY = lerp(STRIKER_BASE.y, STRIKER_BASE.y + 0.04, easeOutCubic(Math.min(1, t * 2)));
         this.applySnapshotToMeshes();
       },
       onComplete: () => {
@@ -511,24 +538,32 @@ export class WorldCupScene3D {
   }
 
   private resize = (): void => {
-    const w = this.mount.clientWidth || window.innerWidth;
-    const h = this.mount.clientHeight || window.innerHeight;
-    this.renderer.setSize(w, h, false);
-    this.camera.aspect = w / h;
+    const w = Math.max(this.mount.clientWidth, 1);
+    const h = Math.max(this.mount.clientHeight, 1);
+    this.viewHalfH = 4;
+    this.viewHalfW = this.viewHalfH * (w / h);
+    this.camera.left = -this.viewHalfW;
+    this.camera.right = this.viewHalfW;
+    this.camera.top = this.viewHalfH;
+    this.camera.bottom = -this.viewHalfH;
     this.camera.updateProjectionMatrix();
+    this.renderer.setSize(w, h, false);
+    this.bgGroup.children[0]?.scale.set(this.viewHalfW * 2.05, this.viewHalfH * 2.05, 1);
+    this.flagStrip.scale.x = this.viewHalfW / 7;
   };
 
   private loop = (): void => {
     this.idleT += 0.016;
+    if (this.kickFlashT > 0) this.kickFlashT = Math.max(0, this.kickFlashT - 0.06);
     if (this.snapshot.phase === 'idle') {
-      this.defender.position.x += Math.sin(this.idleT * 2.2) * 0.002;
-      this.defender.rotation.y = Math.sin(this.idleT * 1.8) * 0.08;
+      const defBase = this.snapshot.isBoss ? GK_BASE : DEFENDER_BASE;
+      this.snapshot.defenderX = defBase.x + Math.sin(this.idleT * 2.2) * 0.012;
+      this.snapshot.defenderY = defBase.y + Math.abs(Math.sin(this.idleT * 2.8)) * 0.012;
     }
-    if (this.viewMode === 'menu') {
-      this.pitchGroup.rotation.y = Math.sin(this.idleT * 0.35) * 0.04;
+    if (this.active && this.mount.clientHeight > 0) {
+      this.applySnapshotToMeshes();
+      this.renderer.render(this.scene, this.camera);
     }
-    this.applySnapshotToMeshes();
-    this.renderer.render(this.scene, this.camera);
     this.raf = requestAnimationFrame(this.loop);
   };
 }

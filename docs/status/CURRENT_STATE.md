@@ -9,7 +9,7 @@ Last updated: 2026-06-17
   - Welcome -> Home -> Game Select -> Game Play -> (Level-up nếu lên cấp) -> Result/Celebration.
 - Welcome đã hỗ trợ profile picker nhiều hồ sơ (chọn profile cũ hoặc tạo profile mới theo tên).
 - Home có dock nổi 2 bên: trái (Nhân vật / **World Cup 2026** / Thoát), phải (4 toggle cấu hình nhanh: Giọng, SFX, Nhạc nền, Chữ+).
-- **World Cup 2026** (standalone): trang riêng `world-cup-2026.html`; quiz bóng đá 4 chặng (3 hậu vệ + thủ môn), 3 lượt sút, 12 quốc gia MVP; UI clay (HUD nổi + card trong suốt) trên sân 2.5D Three.js (`scene3d.ts`); đếm giờ câu hỏi; lưu mở khóa/điểm cao localStorage; mở từ icon bóng đá trên Home.
+- **World Cup 2026** (standalone): trang riêng `world-cup-2026.html`; quiz bóng đá 4 chặng (3 hậu vệ + thủ môn), 3 lượt sút, 12 quốc gia MVP; UI clay theo bố cục Thiet_Ke (35% HUD trên / 65% sân dưới); sân 2.5D Three.js orthographic side-view (`scene3d.ts`) dùng cùng tọa độ normalized như Canvas 2D; đếm giờ; localStorage mở khóa/điểm; launcher icon bóng đá trên Home.
 - Game Hội An: thẻ từ vựng; thuyền đêm 3D — thuyền glTF (`models/tu-vung-hoi-an/boat/`, cao ~16.2u, scale ×12) + đèn lồng glTF (`lantern/`); fallback procedural cùng tỷ lệ; camera lùi theo kích thước thuyền.
 - Game Trạng Nguyên: robot mech glTF Sketchfab trên bục lắp ráp (fallback khối procedural).
 - Game Trạng Tí: T-Rex glTF lớn quay mặt người chơi, nền kỷ Jura (đồi, cây cọ, núi lửa); bắn pháo khi đúng (fallback khối procedural).

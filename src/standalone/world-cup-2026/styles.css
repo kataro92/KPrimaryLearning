@@ -22,18 +22,9 @@ body {
   position: relative;
 }
 
-.wc-three-root {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
+.wc-clay-backdrop--hidden {
+  opacity: 0;
   pointer-events: none;
-  background: var(--clay-canvas);
-}
-
-.wc-three-canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
 }
 
 .wc-shell {
@@ -42,11 +33,17 @@ body {
   max-width: 1100px;
   margin: 0 auto;
   padding: 16px;
-  pointer-events: none;
 }
 
-.wc-shell :is(button, a, input, select, textarea, .game-card, .wc-answer-btn) {
-  pointer-events: auto;
+.wc-shell--playing {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+.wc-shell--playing .wc-header {
+  display: none;
 }
 
 .wc-screen[hidden] {
@@ -165,23 +162,75 @@ body {
   box-shadow: var(--shadow-clay-pressed);
 }
 
-/* Play — HUD floats over full-screen 2.5D pitch */
-.game-play--world-cup {
-  min-height: auto;
-  padding: 0;
-  gap: 12px;
-  max-width: 720px;
-  margin: 0 auto;
+/* Play layout — top 35% UI, bottom 65% pitch (Thiet_Ke spec) */
+.wc-screen--play {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  overflow: hidden;
 }
 
-.wc-screen--play-3d {
-  margin-top: min(28vh, 220px);
+.wc-screen--play[hidden] {
+  display: none !important;
+}
+
+.wc-play-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  background: var(--clay-canvas);
+}
+
+.wc-play-ui {
+  flex: 0 0 35%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px 8px;
+  overflow-y: auto;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(244, 241, 250, 0.88) 100%);
+  border-bottom: 2px solid rgba(124, 58, 237, 0.12);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.wc-field-wrap {
+  flex: 1 1 65%;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+  border-radius: 0;
+  box-shadow: inset 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
+.wc-three-root {
+  position: absolute;
+  inset: 0;
+}
+
+.wc-three-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .wc-play-hud {
-  padding: 14px 16px;
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(14px);
+  padding: 10px 14px;
+  flex-shrink: 0;
+}
+
+.wc-play-arena {
+  padding: 12px 14px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.wc-question {
+  margin: 0 0 10px;
+  font-weight: 700;
+  line-height: 1.4;
 }
 
 .wc-play-top__row {
@@ -262,12 +311,6 @@ body {
 
 .wc-play-arena {
   padding: 16px;
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(16px);
-}
-
-.wc-question {
-  margin: 0 0 14px;
 }
 
 .wc-answers {
@@ -328,6 +371,59 @@ body {
 .wc-answer-btn--fade {
   opacity: 0;
   pointer-events: none;
+}
+
+.feedback--goal {
+  color: var(--clay-success);
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+  animation: wc-goal-pop 0.6s ease;
+}
+
+@keyframes wc-goal-pop {
+  0% {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.wc-confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 10;
+}
+
+.wc-confetti__piece {
+  position: absolute;
+  top: -8px;
+  left: var(--x);
+  width: 8px;
+  height: 14px;
+  border-radius: 2px;
+  opacity: 0;
+  animation: wc-confetti-fall 1.8s ease-out var(--delay) forwards;
+}
+
+@keyframes wc-confetti-fall {
+  0% {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(220px) rotate(var(--spin));
+  }
 }
 
 @keyframes wc-blink {
@@ -403,8 +499,8 @@ body {
     text-align: left;
   }
 
-  .wc-screen--play-3d {
-    margin-top: min(18vh, 140px);
+  .wc-play-ui {
+    flex-basis: 38%;
   }
 
   .wc-answers {

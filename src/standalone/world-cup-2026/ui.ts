@@ -5,6 +5,25 @@ import type { CountryProfile, LevelState, QuizQuestion, ScreenId } from './types
 const SHOT_HINTS = ['Đá bổng', 'Đá thẳng', 'Đá sệt'] as const;
 const ANSWER_COLORS = ['#0ea5e9', '#7c3aed', '#10b981'] as const;
 
+function spawnVictoryConfetti(container: HTMLElement): void {
+  const wrap = document.createElement('div');
+  wrap.className = 'wc-confetti';
+  wrap.setAttribute('aria-hidden', 'true');
+  for (let i = 0; i < 28; i++) {
+    const piece = document.createElement('span');
+    piece.className = 'wc-confetti__piece';
+    piece.style.setProperty('--x', `${8 + Math.random() * 84}%`);
+    piece.style.setProperty('--delay', `${Math.random() * 0.35}s`);
+    piece.style.setProperty('--spin', `${Math.random() * 720 - 360}deg`);
+    piece.style.background = ['#facc15', '#34d399', '#7c3aed', '#0ea5e9', '#f472b6'][
+      Math.floor(Math.random() * 5)
+    ]!;
+    wrap.appendChild(piece);
+  }
+  container.appendChild(wrap);
+  setTimeout(() => wrap.remove(), 2600);
+}
+
 export interface UiHandles {
   root: HTMLElement;
   showScreen: (id: ScreenId) => void;
@@ -34,7 +53,11 @@ export interface UiHandles {
 
 export function createUi(root: HTMLElement, handles: Partial<UiHandles>): UiHandles {
   root.innerHTML = `
-    <div id="wc-three-root" class="wc-three-root" aria-hidden="true"></div>
+    <div class="clay-backdrop wc-clay-backdrop" aria-hidden="true">
+      <div class="clay-blob clay-blob--violet"></div>
+      <div class="clay-blob clay-blob--pink"></div>
+      <div class="clay-blob clay-blob--sky"></div>
+    </div>
     <div class="wc-shell screen screen--clay">
       <header class="wc-header clay-card">
         <button type="button" class="btn btn-secondary btn--toolbar" id="wc-back-home">← Về trang chính</button>
@@ -59,18 +82,25 @@ export function createUi(root: HTMLElement, handles: Partial<UiHandles>): UiHand
         <div class="wc-country-grid" id="wc-country-grid"></div>
       </section>
 
-      <section class="game-play game-play--clay game-play--world-cup wc-screen wc-screen--play-3d" id="wc-screen-play" hidden>
-        <div class="wc-play-hud clay-card">
-          <div class="wc-play-top__row">
-            <div class="wc-lives" id="wc-lives" aria-label="Lượt sút"></div>
-            <div class="wc-stage-dots" id="wc-progress" aria-label="Tiến trình chặng"></div>
+      <section class="wc-screen wc-screen--play" id="wc-screen-play" hidden>
+        <div class="wc-play-layout">
+          <div class="wc-play-ui">
+            <div class="wc-play-hud clay-card">
+              <div class="wc-play-top__row">
+                <div class="wc-lives" id="wc-lives" aria-label="Lượt sút"></div>
+                <div class="wc-stage-dots" id="wc-progress" aria-label="Tiến trình chặng"></div>
+              </div>
+              <div class="timer-bar" aria-hidden="true"><div class="timer-bar__fill" id="wc-timer-fill"></div></div>
+            </div>
+            <div class="game-play__arena wc-play-arena clay-card">
+              <p class="shape-quiz__prompt wc-question" id="wc-question"></p>
+              <div class="wc-answers" id="wc-answers"></div>
+              <p class="feedback" id="wc-feedback"></p>
+            </div>
           </div>
-          <div class="timer-bar" aria-hidden="true"><div class="timer-bar__fill" id="wc-timer-fill"></div></div>
-        </div>
-        <div class="game-play__arena wc-play-arena clay-card">
-          <p class="shape-quiz__prompt wc-question" id="wc-question"></p>
-          <div class="wc-answers" id="wc-answers"></div>
-          <p class="feedback" id="wc-feedback"></p>
+          <div class="wc-field-wrap game-play__visual-pane" aria-label="Sân bóng">
+            <div id="wc-three-root" class="wc-three-root"></div>
+          </div>
         </div>
       </section>
 
@@ -104,6 +134,8 @@ export function createUi(root: HTMLElement, handles: Partial<UiHandles>): UiHand
         if (key === 'victory') return;
         el.hidden = key !== id;
       });
+      root.querySelector('.wc-shell')?.classList.toggle('wc-shell--playing', id === 'play');
+      root.querySelector('.wc-clay-backdrop')?.classList.toggle('wc-clay-backdrop--hidden', id === 'play');
       ui.onScreenChange(id);
     },
     renderMenu() {
@@ -231,6 +263,11 @@ export function createUi(root: HTMLElement, handles: Partial<UiHandles>): UiHand
     },
     renderVictoryBanner() {
       ui.setFeedback('MÀN CHƠI HOÀN THÀNH - GOAL!!!', 'ok');
+      const feedback = root.querySelector('#wc-feedback');
+      feedback?.classList.add('feedback--goal');
+      const play = root.querySelector('#wc-screen-play');
+      if (play) spawnVictoryConfetti(play as HTMLElement);
+      setTimeout(() => feedback?.classList.remove('feedback--goal'), 2000);
     },
     onAnswer: () => {},
     onStartCountry: () => {},
