@@ -70,4 +70,5 @@ export interface SceneSnapshot {
   disappointment: number;
   shot: ShotType | null;
   correct: boolean | null;
+  trailIntensity: number;
 }

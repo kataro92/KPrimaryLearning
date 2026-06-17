@@ -118,6 +118,37 @@ body {
   border-radius: 999px;
 }
 
+.wc-country-card--done {
+  border-color: #86efac;
+  box-shadow: 0 8px 18px rgba(22, 163, 74, 0.12);
+}
+
+.wc-timer-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.25);
+  overflow: hidden;
+}
+
+.wc-timer-bar__fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+  transition: width 0.12s linear, background 0.2s ease;
+}
+
+.wc-timer-bar__fill--warn {
+  background: linear-gradient(90deg, #fb923c, #ef4444);
+}
+
+.wc-answer-btn__shot {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
 .wc-screen--play {
   display: grid;
   gap: 10px;

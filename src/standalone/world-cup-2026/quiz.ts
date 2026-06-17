@@ -52,15 +52,10 @@ export function checkAnswer(level: LevelState, answerIndex: number): boolean {
   return correct;
 }
 
-export function advanceStage(level: LevelState): boolean {
-  if (level.stage >= 4) return true;
+export function advanceStage(level: LevelState): void {
+  if (level.stage >= 4) return;
   level.stage = (level.stage + 1) as 1 | 2 | 3 | 4;
   level.currentQuestion = null;
-  return false;
-}
-
-export function isLevelComplete(level: LevelState): boolean {
-  return level.stage === 4 && level.currentQuestion === null && level.lives > 0;
 }
 
 export function computeFinalScore(level: LevelState): number {
@@ -70,11 +65,13 @@ export function computeFinalScore(level: LevelState): number {
   return Math.min(10, Math.round((base + lifeBonus + streakBonus) * 0.5 * 2) / 2);
 }
 
-const STORAGE_KEY = 'wc2026_unlocked';
+const STORAGE_UNLOCK = 'wc2026_unlocked';
+const STORAGE_COMPLETED = 'wc2026_completed';
+const STORAGE_BEST = 'wc2026_best';
 
 export function getUnlockedCountryIds(): string[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_UNLOCK);
     if (!raw) return [COUNTRIES[0]!.id];
     const parsed = JSON.parse(raw) as string[];
     return parsed.length > 0 ? parsed : [COUNTRIES[0]!.id];
@@ -83,12 +80,52 @@ export function getUnlockedCountryIds(): string[] {
   }
 }
 
-export function unlockCountry(id: string): void {
+export function getCompletedCountryIds(): string[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_COMPLETED);
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function getBestScore(countryId: string): number {
+  try {
+    const raw = localStorage.getItem(STORAGE_BEST);
+    if (!raw) return 0;
+    const map = JSON.parse(raw) as Record<string, number>;
+    return map[countryId] ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+export function unlockCountry(id: string, score: number): void {
   const current = new Set(getUnlockedCountryIds());
   current.add(id);
   const idx = COUNTRIES.findIndex((c) => c.id === id);
   if (idx >= 0 && idx + 1 < COUNTRIES.length) {
     current.add(COUNTRIES[idx + 1]!.id);
   }
-  localStorage.setItem(STORAGE_KEY, JSON.stringify([...current]));
+  localStorage.setItem(STORAGE_UNLOCK, JSON.stringify([...current]));
+
+  const completed = new Set(getCompletedCountryIds());
+  completed.add(id);
+  localStorage.setItem(STORAGE_COMPLETED, JSON.stringify([...completed]));
+
+  try {
+    const raw = localStorage.getItem(STORAGE_BEST);
+    const map = raw ? (JSON.parse(raw) as Record<string, number>) : {};
+    map[id] = Math.max(map[id] ?? 0, score);
+    localStorage.setItem(STORAGE_BEST, JSON.stringify(map));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function getNextCountryId(currentId: string): string | null {
+  const idx = COUNTRIES.findIndex((c) => c.id === currentId);
+  if (idx < 0 || idx + 1 >= COUNTRIES.length) return null;
+  const next = COUNTRIES[idx + 1]!;
+  return getUnlockedCountryIds().includes(next.id) ? next.id : null;
 }

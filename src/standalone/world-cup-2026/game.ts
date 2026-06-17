@@ -41,6 +41,7 @@ export class SoccerGameCanvas {
     disappointment: 0,
     shot: null,
     correct: null,
+    trailIntensity: 0,
   };
 
   constructor(canvas: HTMLCanvasElement, callbacks: GameCanvasCallbacks) {
@@ -62,6 +63,10 @@ export class SoccerGameCanvas {
     this.resetPositions();
   }
 
+  forceResize(): void {
+    this.resize();
+  }
+
   resetPositions(): void {
     this.snapshot.scrollOffset = 0;
     this.snapshot.strikerX = STRIKER_BASE.x;
@@ -76,6 +81,7 @@ export class SoccerGameCanvas {
     this.snapshot.phase = 'idle';
     this.snapshot.shot = null;
     this.snapshot.correct = null;
+    this.snapshot.trailIntensity = 0;
   }
 
   playShot(shot: ShotType, correct: boolean): void {
@@ -83,6 +89,7 @@ export class SoccerGameCanvas {
     this.cancelSeq?.();
     this.snapshot.shot = shot;
     this.snapshot.correct = correct;
+    this.snapshot.trailIntensity = this.snapshot.isBoss && correct ? 1 : 0;
     this.snapshot.phase = 'kicking';
 
     this.cancelSeq = runSequence({
@@ -256,6 +263,24 @@ export class SoccerGameCanvas {
       true
     );
     this.drawBall(w * this.snapshot.ball.x, h * this.snapshot.ball.y);
+
+    if (this.snapshot.trailIntensity > 0 && this.snapshot.phase === 'flying') {
+      ctx.save();
+      ctx.globalAlpha = 0.55;
+      ctx.fillStyle = '#fb923c';
+      ctx.beginPath();
+      ctx.ellipse(
+        w * this.snapshot.ball.x - 24,
+        h * this.snapshot.ball.y,
+        28,
+        10,
+        0,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+      ctx.restore();
+    }
 
     if (this.snapshot.hitFlash > 0) {
       ctx.fillStyle = `rgba(248,113,113,${this.snapshot.hitFlash * 0.7})`;

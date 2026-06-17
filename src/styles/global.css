@@ -397,6 +397,11 @@ h1 {
   box-shadow: 0 8px 14px rgba(79, 70, 229, 0.25);
 }
 
+.dock-action--world-cup {
+  min-height: 44px;
+  min-width: 44px;
+}
+
 .dock-action--world-cup .dock-action__chip {
   min-height: 40px;
   min-width: 40px;

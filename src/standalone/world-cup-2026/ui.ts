@@ -1,5 +1,8 @@
 import { COUNTRIES } from './countries';
+import { getBestScore, getCompletedCountryIds } from './quiz';
 import type { CountryProfile, LevelState, QuizQuestion, ScreenId } from './types';
+
+const SHOT_HINTS = ['Đá bổng', 'Đá thẳng', 'Đá sệt'] as const;
 
 export interface UiHandles {
   root: HTMLElement;
@@ -9,6 +12,7 @@ export interface UiHandles {
   renderPlayHud: (level: LevelState, country: CountryProfile, question: QuizQuestion) => void;
   updateLives: (lives: number, lostIndex?: number) => void;
   updateProgress: (stage: number) => void;
+  updateTimer: (ratio: number) => void;
   setFeedback: (text: string, kind?: 'ok' | 'bad' | 'neutral') => void;
   setAnswersEnabled: (enabled: boolean) => void;
   highlightAnswer: (index: number | null) => void;
@@ -23,6 +27,7 @@ export interface UiHandles {
   onBackHome: () => void;
   onPlayAgain: () => void;
   onStartMenu: () => void;
+  onPlayReady: () => void;
 }
 
 export function createUi(root: HTMLElement, handles: Partial<UiHandles>): UiHandles {
@@ -52,6 +57,7 @@ export function createUi(root: HTMLElement, handles: Partial<UiHandles>): UiHand
           <div class="wc-lives" id="wc-lives" aria-label="Lượt sút"></div>
           <div class="wc-progress" id="wc-progress"></div>
         </div>
+        <div class="wc-timer-bar" aria-hidden="true"><div class="wc-timer-bar__fill" id="wc-timer-fill"></div></div>
         <div class="wc-question-box" id="wc-question"></div>
         <div class="wc-answers" id="wc-answers"></div>
         <p class="wc-feedback" id="wc-feedback"></p>
@@ -96,18 +102,21 @@ export function createUi(root: HTMLElement, handles: Partial<UiHandles>): UiHand
     },
     renderCountrySelect(unlockedIds) {
       ui.showScreen('country-select');
+      const completed = new Set(getCompletedCountryIds());
       const grid = root.querySelector<HTMLElement>('#wc-country-grid')!;
       grid.innerHTML = '';
       for (const c of COUNTRIES) {
         const locked = !unlockedIds.includes(c.id);
+        const done = completed.has(c.id);
+        const best = getBestScore(c.id);
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = `wc-country-card${locked ? ' wc-country-card--locked' : ''}`;
+        btn.className = `wc-country-card${locked ? ' wc-country-card--locked' : ''}${done ? ' wc-country-card--done' : ''}`;
         btn.disabled = locked;
         btn.innerHTML = `
           <span class="wc-country-card__flag" style="background:linear-gradient(90deg,${c.flagColors.join(',')})"></span>
           <strong>${c.name}</strong>
-          <small>${locked ? 'Chưa mở khóa' : 'Sẵn sàng'}</small>
+          <small>${locked ? 'Chưa mở khóa' : done ? `Đã hoàn thành · ${best}/10` : 'Sẵn sàng'}</small>
         `;
         if (!locked) btn.addEventListener('click', () => ui.onStartCountry(c.id));
         grid.appendChild(btn);
@@ -124,15 +133,18 @@ export function createUi(root: HTMLElement, handles: Partial<UiHandles>): UiHand
         btn.type = 'button';
         btn.className = 'wc-answer-btn';
         btn.dataset.index = String(i);
-        btn.innerHTML = `<span class="wc-answer-btn__code">${labels[i]}</span><span>${opt}</span>`;
+        btn.innerHTML = `<span class="wc-answer-btn__code">${labels[i]}</span><span class="wc-answer-btn__shot">${SHOT_HINTS[i]}</span><span>${opt}</span>`;
         btn.addEventListener('click', () => ui.onAnswer(i));
         answers.appendChild(btn);
       });
       ui.updateLives(level.lives);
       ui.updateProgress(level.stage);
-      ui.setFeedback(`Đối đầu: ${country.name} — Chặng ${level.stage}/4`, 'neutral');
+      ui.updateTimer(1);
+      const stageLabel = level.stage === 4 ? 'Thủ môn' : `Hậu vệ ${level.stage}`;
+      ui.setFeedback(`${country.name} · ${stageLabel} — Chọn đáp án để sút (1/2/3)`, 'neutral');
       ui.setAnswersEnabled(true);
       ui.highlightAnswer(null);
+      requestAnimationFrame(() => ui.onPlayReady());
     },
     updateLives(lives, lostIndex) {
       const wrap = root.querySelector<HTMLElement>('#wc-lives')!;
@@ -151,6 +163,12 @@ export function createUi(root: HTMLElement, handles: Partial<UiHandles>): UiHand
           return `<span class="wc-progress__dot ${cls}">${label}</span>`;
         })
         .join('');
+    },
+    updateTimer(ratio) {
+      const fill = root.querySelector<HTMLElement>('#wc-timer-fill');
+      if (!fill) return;
+      fill.style.width = `${Math.max(0, Math.min(100, ratio * 100))}%`;
+      fill.classList.toggle('wc-timer-bar__fill--warn', ratio <= 0.2);
     },
     setFeedback(text, kind = 'neutral') {
       const el = root.querySelector<HTMLElement>('#wc-feedback')!;
@@ -207,6 +225,7 @@ export function createUi(root: HTMLElement, handles: Partial<UiHandles>): UiHand
     onBackHome: () => {},
     onPlayAgain: () => {},
     onStartMenu: () => {},
+    onPlayReady: () => {},
     ...handles,
   };
 
