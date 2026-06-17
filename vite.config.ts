@@ -8,6 +8,14 @@ export default defineConfig(({ mode }) => {
 
   return {
     base,
+    build: {
+      rollupOptions: {
+        input: {
+          main: fileURLToPath(new URL('./index.html', import.meta.url)),
+          worldCup2026: fileURLToPath(new URL('./world-cup-2026.html', import.meta.url)),
+        },
+      },
+    },
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),

@@ -31,6 +31,19 @@ export function renderHomeScreen(root: HTMLElement): void {
           <span class="dock-action__chip">Nhân vật</span>
           <span class="dock-action__tooltip" role="tooltip">Xem báo cáo học tập tổng quan</span>
         </button>
+        <button type="button" class="dock-action dock-action--world-cup" id="btn-world-cup" aria-label="Mở game World Cup 2026">
+          <span class="dock-action__chip dock-action__chip--icon" aria-hidden="true">
+            <svg class="dock-soccer-icon" viewBox="0 0 24 24" width="22" height="22">
+              <circle cx="12" cy="12" r="10" fill="#f8fafc" stroke="#0f172a" stroke-width="1.2"/>
+              <path d="M12 4.5 14.8 8.2 12 11.5 9.2 8.2Z" fill="#0f172a"/>
+              <path d="M14.8 8.2 18.5 9.5 17.2 13.2 14.8 11.5Z" fill="#0f172a"/>
+              <path d="M9.2 8.2 12 11.5 9.2 14.8 5.5 13.2Z" fill="#0f172a"/>
+              <path d="M14.8 11.5 17.2 13.2 14.8 16.5 12 14.8Z" fill="#0f172a"/>
+              <path d="M9.2 14.8 12 14.8 14.8 16.5 12 19.5Z" fill="#0f172a"/>
+            </svg>
+          </span>
+          <span class="dock-action__tooltip" role="tooltip">Bóng đá World Cup</span>
+        </button>
         <button type="button" class="dock-action" id="btn-logout">
           <span class="dock-action__chip">Thoát</span>
           <span class="dock-action__tooltip" role="tooltip">Về trang chọn hồ sơ và tên</span>
@@ -109,6 +122,11 @@ export function renderHomeScreen(root: HTMLElement): void {
     activeKnightScene?.dispose();
     activeKnightScene = null;
   };
+
+  root.querySelector('#btn-world-cup')!.addEventListener('click', () => {
+    const base = import.meta.env.BASE_URL || '/';
+    window.location.href = `${base}world-cup-2026.html`;
+  });
 
   root.querySelector('#btn-character')!.addEventListener('click', () => {
     modal.hidden = false;

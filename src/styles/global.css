@@ -397,6 +397,24 @@ h1 {
   box-shadow: 0 8px 14px rgba(79, 70, 229, 0.25);
 }
 
+.dock-action--world-cup .dock-action__chip {
+  min-height: 40px;
+  min-width: 40px;
+  padding: 6px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  box-shadow: 0 8px 14px rgba(22, 163, 74, 0.28);
+}
+
+.dock-action--world-cup .dock-action__chip--icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dock-soccer-icon {
+  display: block;
+}
+
 .dock-action:last-child .dock-action__chip {
   background: linear-gradient(135deg, #fda4af, #fb7185);
   color: #fff;

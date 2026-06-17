@@ -1,6 +1,6 @@
 # Current System State
 
-Last updated: 2026-06-15
+Last updated: 2026-06-17
 
 ## Product Snapshot
 
@@ -8,7 +8,8 @@ Last updated: 2026-06-15
 - Có **16** game playable với luồng đầy đủ:
   - Welcome -> Home -> Game Select -> Game Play -> (Level-up nếu lên cấp) -> Result/Celebration.
 - Welcome đã hỗ trợ profile picker nhiều hồ sơ (chọn profile cũ hoặc tạo profile mới theo tên).
-- Home có dock nổi 2 bên: trái (Nhân vật/Thoát), phải (4 toggle cấu hình nhanh: Giọng, SFX, Nhạc nền, Chữ+).
+- Home có dock nổi 2 bên: trái (Nhân vật / **World Cup 2026** / Thoát), phải (4 toggle cấu hình nhanh: Giọng, SFX, Nhạc nền, Chữ+).
+- **World Cup 2026** (standalone): trang riêng `world-cup-2026.html`; quiz bóng đá 4 chặng (3 hậu vệ + thủ môn), 3 lượt sút, 12 quốc gia MVP; mở từ icon bóng đá trên Home.
 - Game Hội An: thẻ từ vựng; thuyền đêm 3D — thuyền glTF (`models/tu-vung-hoi-an/boat/`, cao ~16.2u, scale ×12) + đèn lồng glTF (`lantern/`); fallback procedural cùng tỷ lệ; camera lùi theo kích thước thuyền.
 - Game Trạng Nguyên: robot mech glTF Sketchfab trên bục lắp ráp (fallback khối procedural).
 - Game Trạng Tí: T-Rex glTF lớn quay mặt người chơi, nền kỷ Jura (đồi, cây cọ, núi lửa); bắn pháo khi đúng (fallback khối procedural).
@@ -33,6 +34,7 @@ Last updated: 2026-06-15
 ## Technical Snapshot
 
 - Stack: Vite + TypeScript + Three.js (+ `GLTFLoader` cho asset Sketchfab tại `public/models/`).
+- Multi-page build: `index.html` (app chính) + `world-cup-2026.html` (game World Cup standalone tại `src/standalone/world-cup-2026/`).
 - Agent skill `.cursor/skills/kv-3d-models/`: hướng dẫn tạo/sửa mô hình 3D (procedural, glTF, Sketchfab, fallback); Blender tùy chọn qua CLI-Hub.
 - State: store thuần TypeScript (`useAppStore` API tương thích).
 - Persistence:
