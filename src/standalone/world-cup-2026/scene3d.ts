@@ -13,6 +13,15 @@ import {
   runSequence,
 } from './animation';
 import type { SceneSnapshot, ShotType } from './types';
+import {
+  animatePlayerRig,
+  attachPlayerRig,
+  buildPlayerRig,
+  getPlayerRig,
+  kitFromFlag,
+  opponentKitFromFlag,
+  recolorPlayerKit,
+} from './playerRig';
 
 export interface Scene3DCallbacks {
   onSequenceDone: () => void;
@@ -38,65 +47,9 @@ function shotCurve(shot: ShotType): {
   return { peak: { x: 0.55, y: 0.76 }, end: { x: 0.88, y: 0.78 } };
 }
 
-function buildPlayer(isGk: boolean, isStriker: boolean): THREE.Group {
-  const g = new THREE.Group();
-  const shirt = isGk ? 0xfacc15 : isStriker ? 0x2563eb : 0xdc2626;
-  const shorts = isStriker ? 0x1e3a8a : 0x991b1b;
-  const fabric = { roughness: 0.72, metalness: 0.02 };
-  const skin = { color: 0xfcd9b6, roughness: 0.82, metalness: 0 };
-
-  const body = new THREE.Mesh(
-    new THREE.CapsuleGeometry(0.14, 0.38, 6, 10),
-    new THREE.MeshStandardMaterial({ color: shirt, ...fabric })
-  );
-  body.position.y = 0.38;
-  body.castShadow = false;
-
-  const head = new THREE.Mesh(
-    new THREE.SphereGeometry(0.13, 12, 12),
-    new THREE.MeshStandardMaterial(skin)
-  );
-  head.position.y = 0.72;
-
-  const legs = new THREE.Mesh(
-    new THREE.BoxGeometry(0.24, 0.18, 0.14),
-    new THREE.MeshStandardMaterial({ color: shorts, roughness: 0.68, metalness: 0 })
-  );
-  legs.position.y = 0.12;
-
-  const bootMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.45, metalness: 0.05 });
-  const bootL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.06, 0.16), bootMat);
-  bootL.position.set(-0.07, 0.03, 0.04);
-  const bootR = bootL.clone();
-  bootR.position.x = 0.07;
-
-  const armMat = new THREE.MeshStandardMaterial({ color: shirt, ...fabric });
-  const armL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.22, 0.08), armMat);
-  armL.position.set(-0.2, 0.52, 0);
-  armL.rotation.z = isStriker ? 0.35 : -0.25;
-  const armR = armL.clone();
-  armR.position.x = 0.2;
-  armR.rotation.z = isStriker ? -0.2 : 0.25;
-
-  g.add(body, head, legs, bootL, bootR, armL, armR);
-
-  if (isGk) {
-    const gloveMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, roughness: 0.5, metalness: 0.05 });
-    const gloveL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.14, 0.08), gloveMat);
-    gloveL.position.set(-0.22, 0.52, 0.06);
-    const gloveR = gloveL.clone();
-    gloveR.position.x = 0.22;
-    g.add(gloveL, gloveR);
-  }
-
-  g.rotation.y = isStriker ? Math.PI / 2 : -Math.PI / 2;
-  g.scale.setScalar(isGk ? 1.28 : 1.08);
-  return g;
-}
-
-function makeBlobShadow(): THREE.Mesh {
+function makeBlobShadow(radius = 0.18): THREE.Mesh {
   const shadow = new THREE.Mesh(
-    new THREE.CircleGeometry(0.14, 16),
+    new THREE.CircleGeometry(radius, 16),
     new THREE.MeshBasicMaterial({ color: 0x052e16, transparent: true, opacity: 0.38 })
   );
   shadow.position.z = 0.02;
@@ -114,6 +67,8 @@ export class WorldCupScene3D {
   private cancelSeq: (() => void) | null = null;
   private idleT = 0;
   private runCycle = 0;
+  private kickAnimT = 0;
+  private gkDiveT = 0;
   private active = true;
   private viewHalfH = 4;
   private viewHalfW = 7;
@@ -135,6 +90,9 @@ export class WorldCupScene3D {
   private pitchPlane!: THREE.Mesh;
   private cameraPanX = 0;
   private targetCameraPanX = 0;
+  private countryFlagColors: [string, string, string] = ['#2563eb', '#ffffff', '#1e3a8a'];
+  private strikerLight = new THREE.PointLight(0x93c5fd, 0.38, 7, 2);
+  private defenderLight = new THREE.PointLight(0xfca5a5, 0.3, 7, 2);
 
   snapshot: SceneSnapshot = {
     phase: 'idle',
@@ -163,7 +121,7 @@ export class WorldCupScene3D {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.08;
+    this.renderer.toneMappingExposure = 1.12;
     this.renderer.domElement.className = 'wc-three-canvas';
     mount.appendChild(this.renderer.domElement);
 
@@ -175,11 +133,15 @@ export class WorldCupScene3D {
 
     const ambient = new THREE.AmbientLight(0xffffff, 0.42);
     const hemi = new THREE.HemisphereLight(0xe0f2fe, 0x15803d, 0.55);
-    const sun = new THREE.DirectionalLight(0xfff7ed, 0.85);
+    const sun = new THREE.DirectionalLight(0xfff7ed, 0.92);
     sun.position.set(-3, 6, 8);
-    const fill = new THREE.DirectionalLight(0xbfdbfe, 0.28);
+    const fill = new THREE.DirectionalLight(0xbfdbfe, 0.32);
     fill.position.set(4, 2, 5);
-    this.scene.add(ambient, hemi, sun, fill);
+    const rim = new THREE.DirectionalLight(0xffffff, 0.42);
+    rim.position.set(0, 3, -6);
+    const key = new THREE.PointLight(0xfffbeb, 0.55, 18, 1.6);
+    key.position.set(-1.5, 1.2, 4);
+    this.scene.add(ambient, hemi, sun, fill, rim, key, this.strikerLight, this.defenderLight);
 
     this.buildBackground();
     this.buildPitchLines();
@@ -196,9 +158,20 @@ export class WorldCupScene3D {
   }
 
   setCountryColors(colors: [string, string, string]): void {
+    this.countryFlagColors = colors;
     const tex = this.makeFlagTexture(colors);
     (this.flagStrip.material as THREE.MeshBasicMaterial).map = tex;
     (this.flagStrip.material as THREE.MeshBasicMaterial).needsUpdate = true;
+    this.applyPlayerKits();
+  }
+
+  private applyPlayerKits(): void {
+    const strikerRig = getPlayerRig(this.striker);
+    if (strikerRig) recolorPlayerKit(strikerRig, kitFromFlag(this.countryFlagColors));
+    const defenderRig = getPlayerRig(this.defender);
+    if (defenderRig && !defenderRig.isGk) {
+      recolorPlayerKit(defenderRig, opponentKitFromFlag(this.countryFlagColors));
+    }
   }
 
   setStage(stage: 1 | 2 | 3 | 4, options: SetStageOptions = {}): void {
@@ -231,9 +204,9 @@ export class WorldCupScene3D {
     this.snapshot.correct = null;
     this.snapshot.trailIntensity = 0;
     this.runCycle = 0;
+    this.kickAnimT = 0;
+    this.gkDiveT = 0;
     this.scrollGroup.position.x = 0;
-    this.defender.rotation.z = 0;
-    this.striker.rotation.z = 0;
     this.cameraPanX = 0;
     this.targetCameraPanX = 0;
     this.camera.position.x = 0;
@@ -254,13 +227,13 @@ export class WorldCupScene3D {
       durationMs: 320,
       onUpdate: (t) => {
         const p = easeOutCubic(t);
+        this.kickAnimT = p;
         this.snapshot.strikerX = lerp(STRIKER_BASE.x, STRIKER_BASE.x + 0.04, p);
         this.snapshot.strikerY = STRIKER_BASE.y - Math.sin(p * Math.PI) * 0.015;
-        this.striker.rotation.z = -0.18 * Math.sin(p * Math.PI);
         this.applySnapshotToMeshes();
       },
       onComplete: () => {
-        this.striker.rotation.z = 0;
+        this.kickAnimT = 1;
         this.flyBall(correct);
       },
     });
@@ -275,11 +248,18 @@ export class WorldCupScene3D {
     this.renderer.domElement.remove();
   }
 
+  private spawnPlayer(isGk: boolean, isStriker: boolean): THREE.Group {
+    const wrapper = new THREE.Group();
+    attachPlayerRig(wrapper, buildPlayerRig(isGk, isStriker));
+    return wrapper;
+  }
+
   private swapDefender(isGk: boolean): void {
     this.scrollGroup.remove(this.defender);
     disposeObject3D(this.defender);
-    this.defender = buildPlayer(isGk, false);
+    this.defender = this.spawnPlayer(isGk, false);
     this.scrollGroup.add(this.defender);
+    this.applyPlayerKits();
   }
 
   private setBallAtStriker(offsetX = DRIBBLE_OFFSET, offsetY = BALL_BASE.y - STRIKER_BASE.y): void {
@@ -446,8 +426,8 @@ export class WorldCupScene3D {
   }
 
   private buildActors(): void {
-    this.striker = buildPlayer(false, true);
-    this.defender = buildPlayer(false, false);
+    this.striker = this.spawnPlayer(false, true);
+    this.defender = this.spawnPlayer(false, false);
     this.ball = new THREE.Mesh(
       new THREE.SphereGeometry(0.09, 20, 20),
       new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.28, metalness: 0.04 })
@@ -492,6 +472,7 @@ export class WorldCupScene3D {
       this.hitFlash,
       this.kickFlash
     );
+    this.applyPlayerKits();
     this.resetPositions();
   }
 
@@ -522,6 +503,8 @@ export class WorldCupScene3D {
 
     this.strikerShadow.position.set(strikerPos.x, strikerPos.y - 0.02, 0.02);
     this.defenderShadow.position.set(defPos.x, defPos.y - 0.02, 0.02);
+    this.strikerLight.position.set(strikerPos.x - 0.3, strikerPos.y + 0.5, 0.35);
+    this.defenderLight.position.set(defPos.x + 0.3, defPos.y + 0.45, 0.35);
     const shadowScale = Math.max(0.45, 1 - ballLift * 4);
     this.ballShadow.position.set(ballPos.x, ballPos.y - 0.02, 0.015);
     this.ballShadow.scale.set(shadowScale * 0.65, shadowScale * 0.35, 1);
@@ -559,17 +542,33 @@ export class WorldCupScene3D {
     }
 
     this.goalGroup.rotation.z = this.snapshot.netShake * 0.06;
-    if (this.snapshot.celebrate > 0) {
-      this.striker.rotation.z = Math.sin(this.snapshot.celebrate * 12) * 0.12;
-      this.striker.position.y -= this.snapshot.celebrate * 0.06;
-    } else if (running) {
-      this.striker.rotation.z = Math.sin(this.runCycle * 1.6) * 0.06;
-    } else if (this.snapshot.phase !== 'kicking') {
-      this.striker.rotation.z = lerp(this.striker.rotation.z, 0, 0.2);
+
+    const strikerRig = getPlayerRig(this.striker);
+    const defenderRig = getPlayerRig(this.defender);
+    if (strikerRig) {
+      animatePlayerRig(strikerRig, this.snapshot.phase, this.idleT, this.runCycle, {
+        kickT: this.snapshot.phase === 'kicking' ? this.kickAnimT : undefined,
+        disappointed: this.snapshot.disappointment > 0,
+        ballHoldY:
+          this.snapshot.phase === 'idle' || this.snapshot.phase === 'selecting'
+            ? this.snapshot.ball.y - this.snapshot.strikerY
+            : undefined,
+      });
+    }
+    if (defenderRig) {
+      animatePlayerRig(defenderRig, this.snapshot.phase, this.idleT, this.runCycle, {
+        diveT: this.gkDiveT > 0 ? this.gkDiveT : undefined,
+        diveDir: this.snapshot.shot === 'C' ? 1 : -1,
+        blocking: this.snapshot.phase === 'blocking',
+      });
     }
 
-    if (this.snapshot.phase !== 'flying' || !this.snapshot.isBoss) {
-      this.defender.rotation.z = lerp(this.defender.rotation.z, 0, 0.12);
+    if (this.snapshot.celebrate > 0 && strikerRig) {
+      animatePlayerRig(strikerRig, 'goal', this.snapshot.celebrate, this.runCycle);
+      this.striker.position.y -= this.snapshot.celebrate * 0.06;
+      strikerRig.kit.torso.emissiveIntensity = 0.16 + Math.sin(this.snapshot.celebrate * 14) * 0.1;
+    } else if (strikerRig) {
+      strikerRig.kit.torso.emissiveIntensity = 0.16;
     }
   }
 
@@ -597,7 +596,9 @@ export class WorldCupScene3D {
           );
           if (this.snapshot.isBoss && t > 0.35) {
             this.snapshot.defenderY = lerp(defBaseY, defBaseY - 0.14, Math.min(1, (t - 0.35) / 0.45));
-            this.defender.rotation.z = lerp(0, shot === 'C' ? 0.35 : -0.45, Math.min(1, (t - 0.35) / 0.5));
+            this.gkDiveT = Math.min(1, (t - 0.35) / 0.5);
+          } else {
+            this.gkDiveT = 0;
           }
         }
         this.applySnapshotToMeshes();
@@ -634,7 +635,6 @@ export class WorldCupScene3D {
         };
         this.snapshot.defenderX = lerp(startDefenderX, 0.42, p);
         this.snapshot.defenderY = lerp(DEFENDER_BASE.y, DEFENDER_BASE.y + 0.04, p);
-        this.defender.rotation.z = lerp(0, 0.55, p);
         this.snapshot.strikerX = lerp(startStrikerX, beatBallX - DRIBBLE_OFFSET - 0.06, p * 0.55);
         this.applySnapshotToMeshes();
       },
@@ -660,7 +660,6 @@ export class WorldCupScene3D {
           progress: 0,
         };
         this.snapshot.defenderX = lerp(0.42, -0.08, p);
-        this.defender.rotation.z = lerp(0.55, 0.9, p);
         this.applySnapshotToMeshes();
       },
       onComplete: () => this.dribbleToNextDefender(),
@@ -674,7 +673,7 @@ export class WorldCupScene3D {
     this.swapDefender(false);
     this.snapshot.defenderX = 1.08;
     this.snapshot.defenderY = DEFENDER_BASE.y;
-    this.defender.rotation.z = 0;
+    this.gkDiveT = 0;
 
     this.cancelSeq = runSequence({
       durationMs: 1500,
@@ -724,8 +723,7 @@ export class WorldCupScene3D {
       onComplete: () => {
         this.snapshot.phase = 'idle';
         this.runCycle = 0;
-        this.defender.rotation.z = 0;
-        this.striker.rotation.z = 0;
+        this.gkDiveT = 0;
         this.callbacks.onSequenceDone();
       },
     });
@@ -750,7 +748,7 @@ export class WorldCupScene3D {
             y: lerp(curve.end.y, GK_BASE.y + 0.05, hold),
             progress: 0,
           };
-          this.defender.rotation.z = lerp(0, 0.28, hold);
+          this.gkDiveT = hold * 0.85;
         } else {
           const back = bezierPoint(1 - p, { x: blockX, y: curve.end.y }, curve.peak, {
             x: BALL_BASE.x,
@@ -768,7 +766,7 @@ export class WorldCupScene3D {
       onComplete: () => {
         this.snapshot.phase = 'idle';
         this.snapshot.disappointment = 0;
-        this.defender.rotation.z = 0;
+        this.gkDiveT = 0;
         this.resetPositions();
         this.callbacks.onSequenceDone();
       },
