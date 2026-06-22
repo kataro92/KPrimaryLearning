@@ -114,6 +114,12 @@ const TRACKS = [
     source: 'Arcade-Puzzler.ogg',
     title: 'Arcade Puzzler',
   },
+  {
+    gameId: 'world-cup-2026',
+    outFile: 'world-cup-2026.ogg',
+    source: 'Coin-Op-Chaos_Looping.ogg',
+    title: 'Coin-Op Chaos',
+  },
 ];
 
 const onlyArg = process.argv.find((a) => a.startsWith('--only='))?.slice('--only='.length)?.trim().toLowerCase();

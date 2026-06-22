@@ -3,9 +3,34 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { bakeSkinnedMeshesInPlace } from '@/core/assets/bakeSkinnedMeshesInPlace';
+import { disposeObject3D } from '@/core/assets/disposeObject3D';
+import { fitHumanoidModel, fitModelToHeight, tryLoadGltfScene } from '@/core/assets/fitGltfModel';
+
+const MODEL_BASE = `${import.meta.env.BASE_URL}models/doc-hieu-su-viet/`;
+const BABY_URLS = [`${MODEL_BASE}baby.glb`] as const;
+const KID_URLS = [`${MODEL_BASE}kid-warrior.glb`] as const;
+const HORSE_URLS = [`${MODEL_BASE}iron-horse.glb`] as const;
+const LEGEND_URLS = [`${MODEL_BASE}legend-adult.glb`] as const;
+
+const HORSE_TARGET_HEIGHT = 1.78;
+const BABY_RIDER_HEIGHT = 0.7;
+const KID_RIDER_HEIGHT = 1.08;
+const LEGEND_RIDER_HEIGHT = 1.38;
+/** Rotate glTF so hero faces +X (screen right from default camera). */
+const HERO_Y_ROT = Math.PI * 1.8;
+/** Y rotation (radians) for the whole horse assembly (model + flames + armor). */
+const HORSE_Y_ROT = Math.PI * 2.3;
+/** World position for hero groups — negative Z moves toward camera. */
+const HORSE_START_X = 0;
+const HORSE_START_Y = 0;
+const HORSE_START_Z = 0;
+const RIDER_START_X = 0;
+const RIDER_START_Y = 0.35;
+const RIDER_START_Z = 0;
 
 interface FlyingBowl {
-  mesh: THREE.Group;
+  mesh: THREE.Group
   from: THREE.Vector3;
   control: THREE.Vector3;
   to: THREE.Vector3;
@@ -20,8 +45,14 @@ export class ThanhGiongScene {
   private readonly scene: THREE.Scene;
   private readonly camera: THREE.PerspectiveCamera;
   private readonly mount: HTMLElement;
-  private readonly riderGroup = new THREE.Group();
   private readonly horseGroup = new THREE.Group();
+  private readonly horseSlot = new THREE.Group();
+  private readonly horseModelSlot = new THREE.Group();
+  private readonly riderGroup = new THREE.Group();
+  private readonly babyRider = new THREE.Group();
+  private readonly kidRider = new THREE.Group();
+  private readonly legendRider = new THREE.Group();
+  private readonly fallbackRider = new THREE.Group();
   private readonly riderArmorGroup = new THREE.Group();
   private readonly horseArmorGroup = new THREE.Group();
   private readonly flamesGroup = new THREE.Group();
@@ -33,13 +64,16 @@ export class ThanhGiongScene {
   private readonly clock = new THREE.Clock();
   private rafId = 0;
   private disposed = false;
-  private riderScaleBase = 0.9;
-  private horseScaleBase = 1;
+  private riderScaleBase = 1.05;
+  private horseScaleBase = 1.15;
   private isAdultLegend = false;
   private evolutionLevel = 0;
   private evolutionPulse = 0;
   private evolutionBurst = 0;
   private readonly cameraBaseZ = 6.2;
+  private saddleY = 1.02;
+  private useGltfHorse = false;
+  private useGltfRiders = false;
   private readonly flameMaterial = new THREE.MeshStandardMaterial({
     color: 0xfb923c,
     emissive: 0xff5b14,
@@ -77,13 +111,13 @@ export class ThanhGiongScene {
 
     this.addLights();
     this.buildWorld();
-    this.buildHorse();
-    this.buildRider();
-    this.decorateOutlines(this.horseGroup, 0.02);
-    this.decorateOutlines(this.riderGroup, 0.022);
+    this.buildHeroSlots();
+    this.buildFlames();
     this.auraRing = this.buildAuraRing();
     this.scene.add(this.auraRing);
     this.buildVietnamFlag();
+    this.syncRiderVisibility();
+    void this.loadHeroAssets();
     this.resize();
     window.addEventListener('resize', this.onResize);
     this.loop();
@@ -121,17 +155,37 @@ export class ThanhGiongScene {
     this.horseScaleBase = 1.32;
     this.riderGroup.scale.setScalar(this.riderScaleBase);
     this.horseGroup.scale.setScalar(this.horseScaleBase);
-    this.riderArmorGroup.visible = true;
-    this.horseArmorGroup.visible = true;
+    this.syncRiderVisibility();
     this.flamesGroup.visible = true;
     this.flamesGroup.scale.setScalar(1.18);
-    this.riderClothMaterial.color.setHex(0x475569);
+    if (!this.useGltfRiders) {
+      this.riderArmorGroup.visible = true;
+      this.riderClothMaterial.color.setHex(0x475569);
+    }
+    if (!this.useGltfHorse) {
+      this.horseArmorGroup.visible = true;
+    }
   }
 
   dispose(): void {
     this.disposed = true;
     cancelAnimationFrame(this.rafId);
     window.removeEventListener('resize', this.onResize);
+    this.composer.dispose();
+    this.clearSlot(this.horseModelSlot);
+    this.clearSlot(this.babyRider);
+    this.clearSlot(this.kidRider);
+    this.clearSlot(this.legendRider);
+    this.clearSlot(this.fallbackRider);
+    this.outlineMat.dispose();
+    this.flameMaterial.dispose();
+    this.riderClothMaterial.dispose();
+    this.bambooMaterial.dispose();
+    if (this.flagMesh) {
+      this.flagMesh.geometry.dispose();
+      this.flagMesh.material.map?.dispose();
+      this.flagMesh.material.dispose();
+    }
     this.mount.innerHTML = '';
     this.renderer.dispose();
     this.scene.traverse((obj) => {
@@ -142,6 +196,264 @@ export class ThanhGiongScene {
         else mat.dispose();
       }
     });
+  }
+
+  private async loadHeroAssets(): Promise<void> {
+    const [baby, kid, horse, legend] = await Promise.all([
+      tryLoadGltfScene(BABY_URLS),
+      tryLoadGltfScene(KID_URLS),
+      tryLoadGltfScene(HORSE_URLS),
+      tryLoadGltfScene(LEGEND_URLS),
+    ]);
+    if (this.disposed) {
+      [baby, kid, horse, legend].forEach((m) => m && disposeObject3D(m));
+      return;
+    }
+
+    if (horse) {
+      this.clearSlot(this.horseModelSlot);
+      this.attachFlamesToHorseSlot();
+      this.horseModelSlot.add(this.horseArmorGroup);
+      this.useGltfHorse = true;
+      this.mountHorseModel(horse);
+      this.horseArmorGroup.visible = false;
+      this.applyHorseRotation();
+      this.updateHorseAttachPoints();
+    } else {
+      console.warn('Thanh Giong iron-horse glTF unavailable, using procedural fallback.');
+    }
+
+    let ridersLoaded = 0;
+    if (baby) {
+      this.clearSlot(this.babyRider);
+      this.mountRiderModel(baby, this.babyRider, BABY_RIDER_HEIGHT);
+      ridersLoaded++;
+    }
+    if (kid) {
+      this.clearSlot(this.kidRider);
+      this.mountRiderModel(kid, this.kidRider, KID_RIDER_HEIGHT);
+      ridersLoaded++;
+    }
+    if (legend) {
+      this.clearSlot(this.legendRider);
+      this.mountRiderModel(legend, this.legendRider, LEGEND_RIDER_HEIGHT);
+      ridersLoaded++;
+    }
+
+    if (ridersLoaded >= 3) {
+      this.clearSlot(this.fallbackRider);
+      this.fallbackRider.visible = false;
+      this.useGltfRiders = true;
+      this.riderArmorGroup.visible = false;
+    } else {
+      console.warn('Thanh Giong rider glTF incomplete, using procedural fallback.');
+      [baby, kid, legend].forEach((m) => m && disposeObject3D(m));
+    }
+
+    if (this.useGltfRiders) {
+      this.decorateOutlines(this.babyRider, 0.022);
+      this.decorateOutlines(this.kidRider, 0.022);
+      this.decorateOutlines(this.legendRider, 0.022);
+    }
+    this.syncRiderVisibility();
+    this.applyEvolutionVisuals();
+  }
+
+  private mountHorseModel(model: THREE.Group): void {
+    this.styleHeroMaterials(model, { castShadow: false });
+    fitModelToHeight(model, HORSE_TARGET_HEIGHT);
+    const bakedCount = bakeSkinnedMeshesInPlace(model);
+    if (bakedCount === 0) {
+      console.warn('Thanh Giong iron-horse: no SkinnedMesh baked; rotation may not apply.');
+    }
+    this.horseModelSlot.add(model);
+    this.attachFlamesToHorseModel(model);
+    this.applyHorseRotation();
+    this.updateHorseAttachPoints();
+  }
+
+  /** Same pivot for procedural + baked glTF horse. */
+  private applyHorseRotation(): void {
+    this.horseSlot.rotation.y = 0;
+    this.horseModelSlot.rotation.y = HORSE_Y_ROT;
+    const root = this.getHorseModelRoot();
+    if (root) root.rotation.set(0, 0, 0);
+  }
+
+  private getHorseModelRoot(): THREE.Object3D | null {
+    for (const child of this.horseModelSlot.children) {
+      if (child === this.horseArmorGroup || child === this.flamesGroup) continue;
+      return child;
+    }
+    return null;
+  }
+
+  private attachFlamesToHorseModel(model: THREE.Object3D): void {
+    if (this.flamesGroup.parent) {
+      this.flamesGroup.parent.remove(this.flamesGroup);
+    }
+    model.add(this.flamesGroup);
+    this.flamesGroup.position.set(0, 0, 0);
+  }
+
+  private attachFlamesToHorseSlot(): void {
+    if (this.flamesGroup.parent) {
+      this.flamesGroup.parent.remove(this.flamesGroup);
+    }
+    this.horseModelSlot.add(this.flamesGroup);
+    this.flamesGroup.position.set(0, 0, 0);
+  }
+
+  private updateHorseAttachPoints(): void {
+    const root = this.getHorseModelRoot();
+    if (!root) return;
+    const savedSlotY = this.horseModelSlot.rotation.y;
+    this.horseModelSlot.rotation.y = 0;
+    root.updateMatrixWorld(true);
+    const localBox = new THREE.Box3().setFromObject(root);
+    this.horseModelSlot.rotation.y = savedSlotY;
+    this.saddleY = localBox.max.y * 0.78;
+    this.positionRiderMounts();
+    if (this.flamesGroup.parent === root) {
+      this.flamesGroup.position.set(localBox.max.x * 0.92, localBox.max.y * 0.82, 0);
+    } else {
+      this.flamesGroup.position.set(localBox.max.x * 0.92, localBox.max.y * 0.82, 0);
+    }
+  }
+
+  private mountRiderModel(model: THREE.Group, slot: THREE.Group, targetHeight: number): void {
+    this.styleHeroMaterials(model);
+    fitHumanoidModel(model, targetHeight);
+    model.rotation.y = HERO_Y_ROT;
+    slot.add(model);
+    this.positionRiderMounts();
+  }
+
+  private positionRiderMounts(): void {
+    const y = this.useGltfRiders ? this.saddleY : 0;
+    const x = this.useGltfRiders ? -0.06 : 0;
+    for (const slot of [this.babyRider, this.kidRider, this.legendRider]) {
+      slot.position.set(x, y, 0);
+    }
+    this.fallbackRider.position.set(0, 0, 0);
+  }
+
+  private syncRiderVisibility(): void {
+    if (this.useGltfRiders) {
+      this.fallbackRider.visible = false;
+      this.babyRider.visible = !this.isAdultLegend && this.evolutionLevel < 1;
+      this.kidRider.visible = !this.isAdultLegend && this.evolutionLevel >= 1;
+      this.legendRider.visible = this.isAdultLegend;
+      return;
+    }
+    this.babyRider.visible = false;
+    this.kidRider.visible = false;
+    this.legendRider.visible = false;
+    this.fallbackRider.visible = true;
+  }
+
+  private applyEvolutionVisuals(): void {
+    if (this.useGltfRiders) {
+      if (this.evolutionLevel >= 3 || this.isAdultLegend) {
+        this.flamesGroup.visible = true;
+      }
+      return;
+    }
+    if (this.evolutionLevel >= 1) {
+      this.riderArmorGroup.children.forEach((child) => {
+        if (child instanceof THREE.Mesh) child.visible = true;
+      });
+      this.horseArmorGroup.children.forEach((child) => {
+        if (child instanceof THREE.Mesh) child.visible = true;
+      });
+      this.riderArmorGroup.visible = true;
+      this.horseArmorGroup.visible = true;
+      this.riderArmorGroup.scale.setScalar(0.6);
+      this.horseArmorGroup.scale.setScalar(0.75);
+      this.riderClothMaterial.color.setHex(0x1d4ed8);
+    }
+    if (this.evolutionLevel >= 2) {
+      this.riderArmorGroup.scale.setScalar(0.82);
+      this.horseArmorGroup.scale.setScalar(0.9);
+      this.riderClothMaterial.color.setHex(0x1e40af);
+      this.bambooMaterial.color.setHex(0x65a30d);
+    }
+    if (this.evolutionLevel >= 3) {
+      this.flamesGroup.visible = true;
+      this.flamesGroup.scale.setScalar(0.6);
+      this.flameMaterial.emissiveIntensity = 1.05;
+    }
+  }
+
+  private styleHeroMaterials(root: THREE.Object3D, opts?: { castShadow?: boolean }): void {
+    const castShadow = opts?.castShadow ?? true;
+    root.traverse((node) => {
+      if (!(node instanceof THREE.Mesh)) return;
+      node.castShadow = castShadow;
+      node.receiveShadow = true;
+      const rawMats = Array.isArray(node.material) ? node.material : [node.material];
+      rawMats.forEach((raw) => {
+        if (raw instanceof THREE.MeshStandardMaterial) {
+          raw.roughness = Math.min(raw.roughness, 0.88);
+          raw.metalness = Math.min(raw.metalness, 0.85);
+        }
+      });
+    });
+  }
+
+  private clearSlot(group: THREE.Group): void {
+    while (group.children.length > 0) {
+      const child = group.children[0]!;
+      if (child === this.horseArmorGroup || child === this.flamesGroup) {
+        group.remove(child);
+        continue;
+      }
+      group.remove(child);
+      disposeObject3D(child);
+    }
+  }
+
+  private buildHeroSlots(): void {
+    this.horseModelSlot.add(this.horseArmorGroup);
+    this.horseModelSlot.add(this.flamesGroup);
+    const fallbackHorse = this.buildFallbackHorse();
+    fallbackHorse.scale.setScalar(HORSE_TARGET_HEIGHT / 1.28);
+    this.horseModelSlot.add(fallbackHorse);
+    this.horseSlot.add(this.horseModelSlot);
+    this.applyHorseRotation();
+    this.horseGroup.add(this.horseSlot);
+    this.scene.add(this.horseGroup);
+    this.updateHorseAttachPoints();
+
+    this.fallbackRider.add(this.buildFallbackRiderBody());
+    this.riderGroup.add(this.babyRider, this.kidRider, this.legendRider, this.fallbackRider);
+    this.scene.add(this.riderGroup);
+    this.applyHeroStartPositions();
+
+    this.decorateOutlines(this.fallbackRider, 0.022);
+  }
+
+  private applyHeroStartPositions(): void {
+    this.horseGroup.position.set(HORSE_START_X, HORSE_START_Y, HORSE_START_Z);
+    this.riderGroup.position.set(RIDER_START_X, RIDER_START_Y, RIDER_START_Z);
+    this.applyHorseRotation();
+  }
+
+  private buildFlames(): void {
+    for (const offset of [0, -0.12, 0.12]) {
+      const flame = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.56, 8), this.flameMaterial);
+      flame.rotation.z = Math.PI / 2;
+      flame.position.set(1.88, 1.65 + offset * 0.2, offset);
+      this.flamesGroup.add(flame);
+    }
+    const fireCore = new THREE.Mesh(
+      new THREE.SphereGeometry(0.12, 12, 12),
+      new THREE.MeshStandardMaterial({ color: 0xffe7ba, emissive: 0xff9a2a, emissiveIntensity: 1.1 })
+    );
+    fireCore.position.set(1.79, 1.65, 0);
+    this.flamesGroup.add(fireCore);
+    this.flamesGroup.visible = false;
+    this.horseArmorGroup.visible = false;
   }
 
   private addLights(): void {
@@ -242,32 +554,33 @@ export class ThanhGiongScene {
     return texture;
   }
 
-  private buildHorse(): void {
+  private buildFallbackHorse(): THREE.Group {
+    const root = new THREE.Group();
     const iron = new THREE.MeshStandardMaterial({ color: 0xb8c2cc, metalness: 0.72, roughness: 0.3 });
     const darkIron = new THREE.MeshStandardMaterial({ color: 0x6b7280, metalness: 0.75, roughness: 0.35 });
 
     const body = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.9, 0.85), iron);
-    body.castShadow = true;
+    body.castShadow = false;
     body.position.y = 1;
-    this.horseGroup.add(body);
+    root.add(body);
 
     const neck = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.9, 0.5), darkIron);
     neck.position.set(1.07, 1.42, 0);
     neck.rotation.z = -0.35;
-    neck.castShadow = true;
-    this.horseGroup.add(neck);
+    neck.castShadow = false;
+    root.add(neck);
 
     const head = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.55, 0.5), iron);
     head.position.set(1.42, 1.67, 0);
-    head.castShadow = true;
-    this.horseGroup.add(head);
+    head.castShadow = false;
+    root.add(head);
 
     for (const x of [-0.7, 0.7]) {
       for (const z of [-0.24, 0.24]) {
         const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.15, 1.2, 8), darkIron);
         leg.position.set(x, 0.4, z);
-        leg.castShadow = true;
-        this.horseGroup.add(leg);
+        leg.castShadow = false;
+        root.add(leg);
       }
     }
 
@@ -276,8 +589,8 @@ export class ThanhGiongScene {
       new THREE.MeshStandardMaterial({ color: 0x7c2d12, roughness: 0.9 })
     );
     saddle.position.set(-0.12, 1.5, 0);
-    saddle.castShadow = true;
-    this.horseGroup.add(saddle);
+    saddle.castShadow = false;
+    root.add(saddle);
 
     const horseArmor = new THREE.Mesh(
       new THREE.BoxGeometry(1.24, 0.42, 0.92),
@@ -287,52 +600,34 @@ export class ThanhGiongScene {
     horseArmor.visible = false;
     this.horseArmorGroup.add(horseArmor);
 
-    for (const offset of [0, -0.12, 0.12]) {
-      const flame = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.56, 8), this.flameMaterial);
-      flame.rotation.z = Math.PI / 2;
-      flame.position.set(1.88, 1.65 + offset * 0.2, offset);
-      this.flamesGroup.add(flame);
-    }
-    const fireCore = new THREE.Mesh(
-      new THREE.SphereGeometry(0.12, 12, 12),
-      new THREE.MeshStandardMaterial({ color: 0xffe7ba, emissive: 0xff9a2a, emissiveIntensity: 1.1 })
-    );
-    fireCore.position.set(1.79, 1.65, 0);
-    this.flamesGroup.add(fireCore);
-    this.flamesGroup.visible = false;
-    this.horseArmorGroup.visible = false;
-    this.horseGroup.add(this.horseArmorGroup);
-    this.horseGroup.add(this.flamesGroup);
-    this.scene.add(this.horseGroup);
+    return root;
   }
 
-  private buildRider(): void {
+  private buildFallbackRiderBody(): THREE.Group {
+    const root = new THREE.Group();
     const skin = new THREE.MeshStandardMaterial({ color: 0xf4c7a2, roughness: 0.82 });
     const metal = new THREE.MeshStandardMaterial({ color: 0x9ca3af, metalness: 0.8, roughness: 0.24 });
 
     const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.24, 0.56, 6, 10), this.riderClothMaterial);
     body.position.set(-0.12, 1.95, 0);
     body.castShadow = true;
-    this.riderGroup.add(body);
+    root.add(body);
 
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 24), skin);
     head.position.set(-0.12, 2.48, 0);
     head.castShadow = true;
-    this.riderGroup.add(head);
+    root.add(head);
 
     const hand = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 16), skin);
     hand.position.set(0.24, 2.08, 0.12);
     hand.castShadow = true;
-    this.riderGroup.add(hand);
+    root.add(hand);
 
-    const bamboo = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.04, 0.04, 1.9, 10),
-      this.bambooMaterial
-    );
+    const bamboo = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.9, 10), this.bambooMaterial);
     bamboo.position.set(0.55, 2.36, 0.12);
     bamboo.rotation.z = -0.34;
     bamboo.castShadow = true;
-    this.riderGroup.add(bamboo);
+    root.add(bamboo);
     const spearTip = new THREE.Mesh(
       new THREE.ConeGeometry(0.07, 0.24, 8),
       new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.88, roughness: 0.22 })
@@ -340,7 +635,7 @@ export class ThanhGiongScene {
     spearTip.position.set(0.86, 3.2, 0.12);
     spearTip.rotation.z = -0.34;
     spearTip.castShadow = true;
-    this.riderGroup.add(spearTip);
+    root.add(spearTip);
 
     const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.26, 22, 22), metal);
     helmet.position.set(-0.12, 2.52, 0);
@@ -360,9 +655,9 @@ export class ThanhGiongScene {
     crest.visible = false;
     this.riderArmorGroup.add(crest);
     this.riderArmorGroup.visible = false;
-    this.riderGroup.add(this.riderArmorGroup);
+    root.add(this.riderArmorGroup);
 
-    this.scene.add(this.riderGroup);
+    return root;
   }
 
   private decorateOutlines(group: THREE.Group, thickness = 0.02): void {
@@ -370,12 +665,14 @@ export class ThanhGiongScene {
     group.traverse((obj) => {
       if (!(obj instanceof THREE.Mesh)) return;
       if (obj.userData?.noOutline) return;
+      if (obj.material === this.outlineMat) return;
       meshes.push(obj);
     });
     meshes.forEach((obj) => {
       const shell = new THREE.Mesh(obj.geometry, this.outlineMat);
       shell.scale.setScalar(1 + thickness);
       shell.renderOrder = -1;
+      shell.userData.noOutline = true;
       obj.add(shell);
     });
   }
@@ -403,34 +700,11 @@ export class ThanhGiongScene {
   private upgradeKidForm(): void {
     this.evolutionBurst = 1;
     this.evolutionPulse = 1;
-    // Mỗi mốc 3 câu đúng tăng rõ nét vóc dáng "kid" và chi tiết chiến binh.
     const growth = 1 + Math.min(0.16, this.evolutionLevel * 0.06);
     this.riderGroup.scale.setScalar(this.riderScaleBase * growth);
     this.horseGroup.scale.setScalar(this.horseScaleBase * (1 + Math.min(0.09, this.evolutionLevel * 0.03)));
-    if (this.evolutionLevel >= 1) {
-      this.riderArmorGroup.children.forEach((child) => {
-        if (child instanceof THREE.Mesh) child.visible = true;
-      });
-      this.horseArmorGroup.children.forEach((child) => {
-        if (child instanceof THREE.Mesh) child.visible = true;
-      });
-      this.riderArmorGroup.visible = true;
-      this.horseArmorGroup.visible = true;
-      this.riderArmorGroup.scale.setScalar(0.6);
-      this.horseArmorGroup.scale.setScalar(0.75);
-      this.riderClothMaterial.color.setHex(0x1d4ed8);
-    }
-    if (this.evolutionLevel >= 2) {
-      this.riderArmorGroup.scale.setScalar(0.82);
-      this.horseArmorGroup.scale.setScalar(0.9);
-      this.riderClothMaterial.color.setHex(0x1e40af);
-      this.bambooMaterial.color.setHex(0x65a30d);
-    }
-    if (this.evolutionLevel >= 3) {
-      this.flamesGroup.visible = true;
-      this.flamesGroup.scale.setScalar(0.6);
-      this.flameMaterial.emissiveIntensity = 1.05;
-    }
+    this.syncRiderVisibility();
+    this.applyEvolutionVisuals();
   }
 
   private buildAuraRing(): THREE.Mesh {
@@ -495,8 +769,16 @@ export class ThanhGiongScene {
       this.camera.position.z = this.cameraBaseZ;
       this.riderGroup.rotation.y *= 0.92;
     }
-    this.horseGroup.position.y = Math.sin(t * 2.4) * 0.03;
-    this.riderGroup.position.y = 0.02 + Math.sin(t * 2.4 + 0.4) * 0.05;
+    this.horseGroup.position.set(
+      HORSE_START_X,
+      HORSE_START_Y + Math.sin(t * 2.4) * 0.03,
+      HORSE_START_Z
+    );
+    this.riderGroup.position.set(
+      RIDER_START_X,
+      RIDER_START_Y + 0.02 + Math.sin(t * 2.4 + 0.4) * 0.05,
+      RIDER_START_Z
+    );
     if (this.flagMesh && this.flagBasePositions) {
       const geo = this.flagMesh.geometry;
       const pos = geo.attributes.position.array as Float32Array;

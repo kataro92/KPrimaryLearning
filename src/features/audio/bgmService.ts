@@ -18,7 +18,8 @@ export type BgmGameId =
   | 'do-dat-co-thanh'
   | 'bep-bac-hoc-tro'
   | 'cho-so-lieu'
-  | 'dao-duc-nhi';
+  | 'dao-duc-nhi'
+  | 'world-cup-2026';
 
 interface BgmTrack {
   file: string;
@@ -109,6 +110,11 @@ const TRACKS: Record<BgmGameId, BgmTrack> = {
     file: 'dao-duc-nhi.ogg',
     title: 'Good Morning Doctor Weird',
     volume: 0.32,
+  },
+  'world-cup-2026': {
+    file: 'world-cup-2026.ogg',
+    title: 'Coin-Op Chaos',
+    volume: 0.34,
   },
 };
 

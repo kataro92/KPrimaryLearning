@@ -32,6 +32,7 @@ Hiện chưa có bản **nhạc thiếu nhi Việt Nam** (ví dụ *Thuyền bu�
 | `do-dat-co-thanh` | `do-dat-co-thanh.ogg` | Ancient Puzzles | https://soundimage.org/wp-content/uploads/2025/10/Ancient-Puzzles.ogg |
 | `bep-bac-hoc-tro` | `bep-bac-hoc-tro.ogg` | Another Cookie Heist | https://soundimage.org/wp-content/uploads/2025/10/Another-Cookie-Heist.ogg |
 | `cho-so-lieu` | `cho-so-lieu.ogg` | Arcade Puzzler | https://soundimage.org/wp-content/uploads/2025/10/Arcade-Puzzler.ogg |
+| `world-cup-2026` | `world-cup-2026.ogg` | Coin-Op Chaos | https://soundimage.org/wp-content/uploads/2025/10/Coin-Op-Chaos_Looping.ogg |
 
 ## Download
 

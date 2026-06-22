@@ -2,6 +2,15 @@ import '@/styles/clay-tokens.css';
 import '@/styles/clay.css';
 import '@/styles/clay-game.css';
 import './styles.css';
+import { disposeBgmService, resumeBgm, startBgm, stopBgm } from '@/features/audio/bgmService';
+import {
+  createTimerSfxState,
+  playSfx,
+  resumeAudio,
+  tickTimerSfx,
+  type TimerSfxState,
+} from '@/features/audio/sfxService';
+import { bindUiClickSounds } from '@/features/audio/uiClick';
 import { WorldCupScene3D } from './scene3d';
 import {
   advanceStage,
@@ -24,6 +33,14 @@ let pendingAfterAnim: (() => void) | null = null;
 let inputLocked = false;
 let focusAnswerIndex = 0;
 const questionTimer = new QuestionTimer();
+const timerSfx: TimerSfxState = createTimerSfxState();
+const WC_BGM_ID = 'world-cup-2026';
+
+function primeAudio(): void {
+  resumeAudio();
+  resumeBgm();
+  startBgm(WC_BGM_ID);
+}
 
 function shotFromIndex(index: number): ShotType {
   return index === 0 ? 'A' : index === 1 ? 'B' : 'C';
@@ -46,9 +63,14 @@ function beginCountry(countryId: string): void {
 
 function startQuestionTimer(): void {
   if (!level) return;
+  timerSfx.warned = false;
+  timerSfx.dangered = false;
   questionTimer.start(
     level.stage,
-    (ratio) => ui.updateTimer(ratio),
+    (ratio) => {
+      ui.updateTimer(ratio);
+      tickTimerSfx(ratio * 100, timerSfx);
+    },
     () => handleTimeout()
   );
 }
@@ -77,6 +99,7 @@ function finishLevel(): void {
   const country = getCountryById(level.countryId)!;
   const score = computeFinalScore(level);
   unlockCountry(level.countryId, score);
+  playSfx('unlock');
   ui.renderDiscovery(country, score);
 }
 
@@ -93,6 +116,7 @@ function submitAnswer(index: number, fromTimeout = false): void {
     scene3d?.highlightQuizAnswer(index);
     scene3d?.fadeOtherQuizAnswers(index);
   } else {
+    playSfx('timeout');
     scene3d?.setQuizFeedback('Hết giờ! Thủ môn cản phá.', 'bad');
   }
 
@@ -105,10 +129,12 @@ function submitAnswer(index: number, fromTimeout = false): void {
   const shot: ShotType = fromTimeout ? 'B' : shotFromIndex(index);
 
   setTimeout(() => {
+    playSfx('shoot');
     scene3d?.playShot(shot, correct);
     pendingAfterAnim = () => {
       if (!level) return;
       if (!correct) {
+        playSfx(fromTimeout ? 'miss' : 'wrong');
         ui.updateLives(level.lives, level.lives);
         if (level.lives <= 0) {
           ui.renderDefeat(country);
@@ -124,11 +150,13 @@ function submitAnswer(index: number, fromTimeout = false): void {
       }
 
       if (level.stage === 4) {
+        playSfx('celebrate');
         scene3d?.setQuizFeedback('MÀN CHƠI HOÀN THÀNH - GOAL!!!', 'ok');
         setTimeout(() => finishLevel(), 500);
         return;
       }
 
+      playSfx('correct');
       advanceStage(level);
       scene3d?.setQuizFeedback('Vượt qua hậu vệ! Chặng tiếp theo.', 'ok');
       setTimeout(() => showStageQuestion(), 400);
@@ -157,6 +185,7 @@ const ui = createUi(document.querySelector('#wc-app')!, {
   },
   onBackHome() {
     questionTimer.stop();
+    stopBgm();
     scene3d?.dispose();
     scene3d = null;
     const base = import.meta.env.BASE_URL || '/';
@@ -207,4 +236,9 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
+bindUiClickSounds(document.querySelector('#wc-app')!);
+document.addEventListener('pointerdown', primeAudio, { passive: true });
+window.addEventListener('pagehide', () => disposeBgmService());
+
 ui.renderMenu();
+startBgm(WC_BGM_ID);
