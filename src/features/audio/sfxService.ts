@@ -8,6 +8,7 @@ export type SfxKind =
   | 'click'
   | 'flip'
   | 'pop'
+  | 'coin'
   | 'shoot'
   | 'miss'
   | 'warn'
@@ -92,6 +93,10 @@ export function playSfx(kind: SfxKind): void {
     case 'pop':
       tone(ctx, { freq: 740, start: t, duration: 0.07, peak: 0.07, attack: 0.008 });
       tone(ctx, { freq: 988, start: t + 0.06, duration: 0.1, peak: 0.06 });
+      break;
+    case 'coin':
+      tone(ctx, { freq: 1318.5, type: 'triangle', start: t, duration: 0.07, peak: 0.06, attack: 0.004 });
+      tone(ctx, { freq: 1760, type: 'triangle', start: t + 0.05, duration: 0.12, peak: 0.05, attack: 0.004 });
       break;
     case 'shoot':
       tone(ctx, { freq: 190, type: 'square', start: t, duration: 0.11, peak: 0.06, attack: 0.01 });

@@ -39,7 +39,7 @@ export const OPS_BANK: OpsMcqChallenge[] = [
     sgkRef: 'toan-stn-nhan',
   },
   {
-    prompt: '25 × 53 = ? (m)',
+    prompt: 'Một xấp lụa dài 25 m. Thương nhân có 53 xấp, tổng bao nhiêu mét lụa?',
     choices: ['1 225', '1 325', '1 425', '1 525'],
     correctIndex: 1,
     sgkRef: 'toan-stn-nhan',
@@ -69,7 +69,7 @@ export const OPS_BANK: OpsMcqChallenge[] = [
     sgkRef: 'toan-stn-chia',
   },
   {
-    prompt: '76 : 19 = ? (cỏ cho bò)',
+    prompt: '76 bó rau chia đều cho 19 sạp ngoài chợ. Mỗi sạp được mấy bó?',
     choices: ['3', '4', '5', '6'],
     correctIndex: 1,
     sgkRef: 'toan-stn-chia',
@@ -105,7 +105,7 @@ export const OPS_BANK: OpsMcqChallenge[] = [
     sgkRef: 'toan-stn-bieu-thuc-chu',
   },
   {
-    prompt: '4 tòa × 15 tầng × 12 căn/tầng = ? căn',
+    prompt: '4 thuyền, mỗi thuyền 15 sọt, mỗi sọt 12 quả dưa. Tổng bao nhiêu quả?',
     choices: ['480', '720', '960', '600'],
     correctIndex: 1,
     sgkRef: 'toan-stn-tinh-chat-nhan',
@@ -123,7 +123,7 @@ export const OPS_BANK: OpsMcqChallenge[] = [
     sgkRef: 'toan-stn-tong-hieu',
   },
   {
-    prompt: '150 suất pizza/ngày × 7 ngày = ? suất',
+    prompt: 'Quầy phở bán 150 bát mỗi ngày. Sau 7 ngày bán được bao nhiêu bát?',
     choices: ['850', '950', '1 050', '1 150'],
     correctIndex: 2,
     sgkRef: 'toan-stn-nhan',

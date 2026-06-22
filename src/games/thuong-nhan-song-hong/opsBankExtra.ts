@@ -66,8 +66,8 @@ export const OPS_BANK_EXTRA: OpsMcqChallenge[] = [
     sgkRef: 'toan-stn-tong-hieu',
   },
   {
-    prompt: '18 bạn tình nguyện, nam nhiều hơn nữ 4. Có bao nhiêu bạn nữ?',
-    choices: ['5', '7', '9', '11'],
+    prompt: 'Hai sạp bán tổng 40 kg gạo, sạp A nhiều hơn sạp B 8 kg. Sạp B bán mấy kg?',
+    choices: ['14', '16', '18', '24'],
     correctIndex: 1,
     sgkRef: 'toan-stn-tong-hieu',
   },
@@ -91,7 +91,7 @@ export const OPS_BANK_EXTRA: OpsMcqChallenge[] = [
     sgkRef: 'toan-stn-tinh-chat-nhan',
   },
   {
-    prompt: '3 tòa × 20 tầng × 10 căn = ? căn',
+    prompt: '3 thuyền, mỗi thuyền 20 sọt, mỗi sọt 10 quả = ? quả',
     choices: ['300', '600', '900', '60'],
     correctIndex: 1,
     sgkRef: 'toan-stn-tinh-chat-nhan',
@@ -116,7 +116,7 @@ export const OPS_BANK_EXTRA: OpsMcqChallenge[] = [
     sgkRef: 'toan-stn-uoc-luong',
   },
   {
-    prompt: 'Ước lượng: 412 − 198 ≈ ?',
+    prompt: 'Ước lượng: 408 − 203 ≈ ?',
     choices: ['200', '210', '220', '300'],
     correctIndex: 0,
     sgkRef: 'toan-stn-uoc-luong',
@@ -135,7 +135,7 @@ export const OPS_BANK_EXTRA: OpsMcqChallenge[] = [
     sgkRef: 'toan-stn-cong-tru',
   },
   {
-    prompt: 'Số thuê bao Internet tăng thêm 26 033. Trước đó 412 500. Sau tăng là?',
+    prompt: 'Cửa hàng có vốn 412 500 đồng, lãi thêm 26 033 đồng. Tổng số tiền là?',
     choices: ['438 533', '426 033', '448 533', '386 467'],
     correctIndex: 0,
     sgkRef: 'toan-stn-cong-tru',
@@ -210,7 +210,7 @@ export const OPS_BANK_EXTRA: OpsMcqChallenge[] = [
   },
   // Tổng hợp L3
   {
-    prompt: 'Tim đập 75 lần/phút. Trong 2 giờ đập khoảng bao nhiêu lần?',
+    prompt: 'Thuyền chở 75 sọt hàng mỗi chuyến, đi 120 chuyến. Tổng bao nhiêu sọt?',
     choices: ['7 500', '8 500', '9 000', '9 500'],
     correctIndex: 2,
     sgkRef: 'toan-stn-nhan',
@@ -226,5 +226,78 @@ export const OPS_BANK_EXTRA: OpsMcqChallenge[] = [
     choices: ['400 000', '450 000', '470 000', '500 000'],
     correctIndex: 2,
     sgkRef: 'toan-stn-uoc-luong',
+  },
+  // Bổ sung theo chủ đề buôn bán ven sông Hồng
+  {
+    prompt: 'Sạp gạo thu 124 580 đồng buổi sáng, 65 420 đồng buổi chiều. Cả ngày thu bao nhiêu?',
+    choices: ['180 000', '185 000', '190 000', '200 000'],
+    correctIndex: 2,
+    sgkRef: 'toan-stn-cong-tru',
+  },
+  {
+    prompt: 'Thuyền chở 8 sọt cá, mỗi sọt 125 con. Tổng bao nhiêu con cá?',
+    choices: ['800', '900', '1 000', '1 200'],
+    correctIndex: 2,
+    sgkRef: 'toan-stn-nhan',
+  },
+  {
+    prompt: '960 quả cam xếp đều vào 12 sọt. Mỗi sọt mấy quả?',
+    choices: ['70', '80', '90', '96'],
+    correctIndex: 1,
+    sgkRef: 'toan-stn-chia',
+  },
+  {
+    prompt: 'Cửa hàng có 50 000 đồng, mua hàng hết 18 600 đồng. Còn lại bao nhiêu?',
+    choices: ['21 400', '31 400', '31 600', '32 400'],
+    correctIndex: 1,
+    sgkRef: 'toan-stn-cong-tru',
+  },
+  {
+    prompt: '3 phiên chợ bán được 18, 22, 20 tấm vải. Trung bình mỗi phiên bán mấy tấm?',
+    choices: ['18', '19', '20', '60'],
+    correctIndex: 2,
+    sgkRef: 'toan-stn-trung-binh',
+  },
+  {
+    prompt: 'Thương nhân gom 25 × 4 × 7 đồng tiền xu (tính nhanh) = ?',
+    choices: ['175', '350', '700', '750'],
+    correctIndex: 2,
+    sgkRef: 'toan-stn-tinh-chat-nhan',
+  },
+  {
+    prompt: 'Ước lượng tiền hàng: 297 000 + 198 000 ≈ ?',
+    choices: ['400 000', '450 000', '500 000', '600 000'],
+    correctIndex: 2,
+    sgkRef: 'toan-stn-uoc-luong',
+  },
+  {
+    prompt: 'Tính nhanh tiền lãi: 68 + 32 + 45 (nhóm 68 + 32 trước) = ?',
+    choices: ['100', '135', '145', '155'],
+    correctIndex: 2,
+    sgkRef: 'toan-stn-tinh-chat-cong',
+  },
+  {
+    prompt: 'Một chuyến buôn lãi 235 600 đồng, chuyến sau lãi 164 400 đồng. Tổng lãi?',
+    choices: ['390 000', '400 000', '410 000', '420 000'],
+    correctIndex: 1,
+    sgkRef: 'toan-stn-cong-tru',
+  },
+  {
+    prompt: 'Mỗi sọt hàng nặng a kg. Thuyền chở 6 sọt thì nặng bao nhiêu kg?',
+    choices: ['6 + a', '6 − a', '6 × a', 'a − 6'],
+    correctIndex: 2,
+    sgkRef: 'toan-stn-bieu-thuc-chu',
+  },
+  {
+    prompt: 'Giá 1 tấm lụa là a đồng. Mua 4 tấm hết bao nhiêu tiền?',
+    choices: ['a + 4', '4 − a', '4 × a', 'a − 4'],
+    correctIndex: 2,
+    sgkRef: 'toan-stn-bieu-thuc-chu',
+  },
+  {
+    prompt: '330 cân gạo chia đều vào các bao 30 cân. Cần bao nhiêu bao?',
+    choices: ['9', '10', '11', '12'],
+    correctIndex: 2,
+    sgkRef: 'toan-stn-chia',
   },
 ];
