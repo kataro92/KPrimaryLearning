@@ -17,6 +17,10 @@
     "extract:sgk-content:ocr": "python3 scripts/extract-sgk-content.py --ocr",
     "extract:sgk-content:ocr-tv": "python3 scripts/extract-sgk-content.py --ocr --force-ocr --pdf=tieng-viet",
     "tag:math-sgkref": "node scripts/tag-math-sgkref.mjs",
+    "inspect:wc-canvas": "node scripts/inspect-wc-canvas.mjs",
+    "probe:wc-credentials": "bash scripts/probe-wc-credentials.sh",
+    "tripo:balance": "bash -c 'set -a && source .env && set +a && python3 scripts/tripo-balance.py'",
+    "generate:wc-assets": "bash scripts/generate-wc-tripo-assets.sh",
     "cli-hub": ".venv/cli-hub/bin/cli-hub",
     "cli:browser": ".venv/cli-hub/bin/cli-anything-browser"
   },

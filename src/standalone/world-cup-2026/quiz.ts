@@ -1,5 +1,6 @@
 import type { CountryProfile, Difficulty, LevelState, QuizQuestion } from './types';
 import { COUNTRIES } from './countries';
+import { pickRandomItem, shuffleArray, shuffleQuestionOptions } from './quizRandom';
 
 const STAGE_DIFFICULTY: Record<1 | 2 | 3 | 4, Difficulty> = {
   1: 'easy',
@@ -27,16 +28,23 @@ export function createLevel(countryId: string): LevelState {
 
 export function pickQuestion(level: LevelState, country: CountryProfile): QuizQuestion {
   const difficulty = STAGE_DIFFICULTY[level.stage];
-  const pool = country.questions.filter(
-    (q) => q.difficulty === difficulty && !level.usedQuestionIds.has(q.id)
-  );
-  const fallback = country.questions.filter((q) => q.difficulty === difficulty);
-  const chosen = (pool.length > 0 ? pool : fallback)[
-    Math.floor(Math.random() * (pool.length > 0 ? pool.length : fallback.length))
-  ]!;
-  level.usedQuestionIds.add(chosen.id);
-  level.currentQuestion = chosen;
-  return chosen;
+  const byDifficulty = country.questions.filter((q) => q.difficulty === difficulty);
+
+  let pool = byDifficulty.filter((q) => !level.usedQuestionIds.has(q.id));
+  if (pool.length === 0) {
+    // Hết câu mới trong lượt — xáo lại toàn bộ độ khó, cho phép lặp nhưng vẫn random.
+    level.usedQuestionIds.forEach((id) => {
+      if (byDifficulty.some((q) => q.id === id)) level.usedQuestionIds.delete(id);
+    });
+    pool = byDifficulty;
+  }
+
+  const shuffled = shuffleArray(pool);
+  const base = pickRandomItem(shuffled) ?? byDifficulty[0]!;
+  const presented = shuffleQuestionOptions(base);
+  level.usedQuestionIds.add(base.id);
+  level.currentQuestion = presented;
+  return presented;
 }
 
 export function checkAnswer(level: LevelState, answerIndex: number): boolean {

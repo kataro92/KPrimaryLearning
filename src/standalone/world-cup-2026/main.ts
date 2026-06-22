@@ -64,9 +64,10 @@ function showStageQuestion(): void {
   if (!country) return;
   const question = pickQuestion(level, country);
   scene3d?.setStage(level.stage);
-  ui.renderPlayHud(level, country, question);
+  scene3d?.setQuiz(question);
+  ui.renderPlayHud(level);
   focusAnswerIndex = 0;
-  ui.highlightAnswer(0);
+  scene3d?.highlightQuizAnswer(0);
   inputLocked = false;
   startQuestionTimer();
 }
@@ -86,13 +87,13 @@ function submitAnswer(index: number, fromTimeout = false): void {
 
   questionTimer.stop();
   inputLocked = true;
-  ui.setAnswersEnabled(false);
+  scene3d?.setQuizAnswersEnabled(false);
 
   if (!fromTimeout) {
-    ui.highlightAnswer(index);
-    ui.fadeOtherAnswers(index);
+    scene3d?.highlightQuizAnswer(index);
+    scene3d?.fadeOtherQuizAnswers(index);
   } else {
-    ui.setFeedback('Hết giờ! Thủ môn cản phá.', 'bad');
+    scene3d?.setQuizFeedback('Hết giờ! Thủ môn cản phá.', 'bad');
   }
 
   const correct = fromTimeout ? false : checkAnswer(level, index);
@@ -113,20 +114,23 @@ function submitAnswer(index: number, fromTimeout = false): void {
           ui.renderDefeat(country);
           return;
         }
-        ui.setFeedback(fromTimeout ? 'Hết giờ! Mất 1 lượt sút.' : 'Bị cản phá! Mất 1 lượt sút.', 'bad');
+        scene3d?.setQuizFeedback(
+          fromTimeout ? 'Hết giờ! Mất 1 lượt sút.' : 'Bị cản phá! Mất 1 lượt sút.',
+          'bad'
+        );
         level.usedQuestionIds.delete(level.currentQuestion!.id);
         setTimeout(() => showStageQuestion(), 700);
         return;
       }
 
       if (level.stage === 4) {
-        ui.renderVictoryBanner();
+        scene3d?.setQuizFeedback('MÀN CHƠI HOÀN THÀNH - GOAL!!!', 'ok');
         setTimeout(() => finishLevel(), 500);
         return;
       }
 
       advanceStage(level);
-      ui.setFeedback('Vượt qua hậu vệ! Chặng tiếp theo.', 'ok');
+      scene3d?.setQuizFeedback('Vượt qua hậu vệ! Chặng tiếp theo.', 'ok');
       setTimeout(() => showStageQuestion(), 400);
     };
   }, fromTimeout ? 200 : 350);
@@ -138,9 +142,6 @@ const ui = createUi(document.querySelector('#wc-app')!, {
   },
   onStartCountry(countryId) {
     beginCountry(countryId);
-  },
-  onAnswer(index) {
-    submitAnswer(index);
   },
   onRetry() {
     if (!level) return;
@@ -169,10 +170,13 @@ const ui = createUi(document.querySelector('#wc-app')!, {
   },
 });
 
-scene3d = new WorldCupScene3D(document.querySelector('#wc-three-root')!, {
+scene3d = new WorldCupScene3D(document.querySelector('#wc-play-stage')!, {
   onSequenceDone() {
     pendingAfterAnim?.();
     pendingAfterAnim = null;
+  },
+  onQuizAnswer(index) {
+    submitAnswer(index);
   },
 });
 scene3d.setView('menu');
@@ -188,13 +192,13 @@ window.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
     e.preventDefault();
     focusAnswerIndex = (focusAnswerIndex + 2) % 3;
-    ui.highlightAnswer(focusAnswerIndex);
+    scene3d?.highlightQuizAnswer(focusAnswerIndex);
     return;
   }
   if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
     e.preventDefault();
     focusAnswerIndex = (focusAnswerIndex + 1) % 3;
-    ui.highlightAnswer(focusAnswerIndex);
+    scene3d?.highlightQuizAnswer(focusAnswerIndex);
     return;
   }
   if (e.key === ' ' || e.key === 'Enter') {

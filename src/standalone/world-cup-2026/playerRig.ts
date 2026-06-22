@@ -3,6 +3,7 @@
  */
 
 import * as THREE from 'three';
+import { getFabricTexture } from './graphics/ProceduralTextures';
 
 export interface PlayerRig {
   root: THREE.Group;
@@ -87,37 +88,7 @@ function darkenHex(hex: string, amount = 0.35): string {
   return `#${((Math.round(r) << 16) | (Math.round(g) << 8) | Math.round(b)).toString(16).padStart(6, '0')}`;
 }
 
-let fabricTexCache: THREE.CanvasTexture | null = null;
-
-export function getFabricTexture(): THREE.CanvasTexture {
-  if (fabricTexCache) return fabricTexCache;
-  const canvas = document.createElement('canvas');
-  canvas.width = 256;
-  canvas.height = 256;
-  const ctx = canvas.getContext('2d')!;
-  ctx.fillStyle = '#909090';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  for (let y = 0; y < canvas.height; y += 4) {
-    ctx.strokeStyle = `rgba(255,255,255,${y % 8 === 0 ? 0.1 : 0.05})`;
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(canvas.width, y);
-    ctx.stroke();
-  }
-  for (let x = 0; x < canvas.width; x += 4) {
-    ctx.strokeStyle = `rgba(0,0,0,${x % 8 === 0 ? 0.07 : 0.035})`;
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, canvas.height);
-    ctx.stroke();
-  }
-  fabricTexCache = new THREE.CanvasTexture(canvas);
-  fabricTexCache.wrapS = THREE.RepeatWrapping;
-  fabricTexCache.wrapT = THREE.RepeatWrapping;
-  fabricTexCache.repeat.set(2.5, 2.5);
-  fabricTexCache.colorSpace = THREE.SRGBColorSpace;
-  return fabricTexCache;
-}
+export { getFabricTexture } from './graphics/ProceduralTextures';
 
 export function opponentKitFromFlag(flag: [string, string, string]): {
   shirt: string;
@@ -411,6 +382,19 @@ export function buildPlayerRig(isGk: boolean, isStriker: boolean): PlayerRig {
   const cheekR = cheekL.clone();
   cheekR.position.x = 0.055;
   head.add(skull, hair, eyeL, eyeR, eyeShineL, eyeShineR, brow, smile, cheekL, cheekR);
+  if (isGk) {
+    const capBrim = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.16, 0.16, 0.02, 16),
+      smoothMat(0x0f172a, { roughness: 0.55 })
+    );
+    capBrim.position.set(0, 0.88, 0.02);
+    const capDome = new THREE.Mesh(
+      new THREE.SphereGeometry(0.11, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.55),
+      smoothMat(0xfacc15, { emissive: 0xfbbf24, emissiveIntensity: 0.12, roughness: 0.42 })
+    );
+    capDome.position.set(0, 0.9, -0.02);
+    head.add(capBrim, capDome);
+  }
 
   const armL = new THREE.Group();
   armL.position.set(-0.18, 0.52, 0);
@@ -583,7 +567,14 @@ export function animatePlayerRig(
 
   if (phase === 'kicking') {
     const k = opts.kickT ?? 0;
-    const swing = Math.sin(k * Math.PI);
+    const step = Math.sin(k * Math.PI);
+    if (rig.isStriker) {
+      rig.legR.rotation.x = -step * 0.5;
+      rig.shinR.rotation.x = step * 0.38;
+      rig.legL.rotation.x = step * 0.08;
+      return;
+    }
+    const swing = step;
     rig.armL.rotation.z = 0.35 - swing * 0.25;
     rig.armR.rotation.z = -0.4 + swing * 0.9;
     rig.forearmR.rotation.z = 0.35 + swing * 0.4;

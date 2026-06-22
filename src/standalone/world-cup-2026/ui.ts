@@ -1,46 +1,19 @@
 import { COUNTRIES } from './countries';
-import { getBestScore, getCompletedCountryIds } from './quiz';
-import type { CountryProfile, LevelState, QuizQuestion, ScreenId } from './types';
-
-const SHOT_HINTS = ['Đá bổng', 'Đá thẳng', 'Đá sệt'] as const;
-const ANSWER_COLORS = ['#0ea5e9', '#7c3aed', '#10b981'] as const;
-
-function spawnVictoryConfetti(container: HTMLElement): void {
-  const wrap = document.createElement('div');
-  wrap.className = 'wc-confetti';
-  wrap.setAttribute('aria-hidden', 'true');
-  for (let i = 0; i < 28; i++) {
-    const piece = document.createElement('span');
-    piece.className = 'wc-confetti__piece';
-    piece.style.setProperty('--x', `${8 + Math.random() * 84}%`);
-    piece.style.setProperty('--delay', `${Math.random() * 0.35}s`);
-    piece.style.setProperty('--spin', `${Math.random() * 720 - 360}deg`);
-    piece.style.background = ['#facc15', '#34d399', '#7c3aed', '#0ea5e9', '#f472b6'][
-      Math.floor(Math.random() * 5)
-    ]!;
-    wrap.appendChild(piece);
-  }
-  container.appendChild(wrap);
-  setTimeout(() => wrap.remove(), 2600);
-}
+import { getCountryFlagAlt, getCountryFlagUrl } from './flagAssets';
+import { getBestScore, getCompletedCountryIds, getCountryById } from './quiz';
+import type { CountryProfile, LevelState, ScreenId } from './types';
 
 export interface UiHandles {
   root: HTMLElement;
   showScreen: (id: ScreenId) => void;
   renderMenu: () => void;
   renderCountrySelect: (unlockedIds: string[]) => void;
-  renderPlayHud: (level: LevelState, country: CountryProfile, question: QuizQuestion) => void;
+  renderPlayHud: (level: LevelState) => void;
   updateLives: (lives: number, lostIndex?: number) => void;
   updateProgress: (stage: number) => void;
   updateTimer: (ratio: number) => void;
-  setFeedback: (text: string, kind?: 'ok' | 'bad' | 'neutral') => void;
-  setAnswersEnabled: (enabled: boolean) => void;
-  highlightAnswer: (index: number | null) => void;
-  fadeOtherAnswers: (selected: number) => void;
   renderDiscovery: (country: CountryProfile, score: number) => void;
   renderDefeat: (country: CountryProfile) => void;
-  renderVictoryBanner: () => void;
-  onAnswer: (index: number) => void;
   onStartCountry: (countryId: string) => void;
   onRetry: () => void;
   onNextCountry: () => void;
@@ -71,7 +44,7 @@ export function createUi(root: HTMLElement, handles: Partial<UiHandles>): UiHand
         <div class="clay-card wc-hero-card">
           <p class="wc-kicker wc-kicker--accent">Hành trình bóng đá</p>
           <h2>Chinh phục các đội bóng World Cup 2026!</h2>
-          <p class="subtitle wc-sub">Trả lời câu hỏi, chọn kiểu sút A/B/C, vượt qua hậu vệ và thủ môn để khám phá văn hóa từng quốc gia.</p>
+          <p class="subtitle wc-sub">Trả lời câu hỏi, vượt qua hậu vệ và thủ môn để khám phá văn hóa từng quốc gia.</p>
           <button type="button" class="btn btn-primary" id="wc-start">Bắt đầu chơi</button>
         </div>
       </section>
@@ -83,24 +56,17 @@ export function createUi(root: HTMLElement, handles: Partial<UiHandles>): UiHand
       </section>
 
       <section class="wc-screen wc-screen--play" id="wc-screen-play" hidden>
-        <div class="wc-play-layout">
-          <div class="wc-play-ui">
-            <div class="wc-play-hud clay-card">
-              <div class="wc-play-top__row">
-                <div class="wc-lives" id="wc-lives" aria-label="Lượt sút"></div>
-                <div class="wc-stage-dots" id="wc-progress" aria-label="Tiến trình chặng"></div>
-              </div>
+        <div class="wc-play-stage" id="wc-play-stage">
+          <header class="wc-play-hud-bar clay-card" aria-label="Thanh tiến trình">
+            <div class="wc-play-flag" id="wc-play-flag" hidden>
+              <img id="wc-play-flag-img" alt="" width="48" height="32" decoding="async" />
+            </div>
+            <div class="wc-lives" id="wc-lives" aria-label="Lượt sút"></div>
+            <div class="wc-play-hud-bar__timer">
               <div class="timer-bar" aria-hidden="true"><div class="timer-bar__fill" id="wc-timer-fill"></div></div>
             </div>
-            <div class="game-play__arena wc-play-arena clay-card">
-              <p class="shape-quiz__prompt wc-question" id="wc-question"></p>
-              <div class="wc-answers" id="wc-answers"></div>
-              <p class="feedback" id="wc-feedback"></p>
-            </div>
-          </div>
-          <div class="wc-field-wrap game-play__visual-pane" aria-label="Sân bóng">
-            <div id="wc-three-root" class="wc-three-root"></div>
-          </div>
+            <div class="wc-stage-dots" id="wc-progress" aria-label="Tiến trình chặng"></div>
+          </header>
         </div>
       </section>
 
@@ -154,8 +120,12 @@ export function createUi(root: HTMLElement, handles: Partial<UiHandles>): UiHand
         btn.type = 'button';
         btn.className = `game-card wc-country-card${locked ? ' wc-country-card--locked' : ''}${done ? ' wc-country-card--done' : ''}`;
         btn.disabled = locked;
+        const flagUrl = getCountryFlagUrl(c.id);
+        const flagImg = flagUrl
+          ? `<img class="wc-country-card__flag" src="${flagUrl}" alt="${getCountryFlagAlt(c.name)}" width="64" height="42" loading="lazy" />`
+          : `<span class="wc-country-card__flag wc-country-card__flag--fallback" style="background:linear-gradient(90deg,${c.flagColors.join(',')})" aria-hidden="true"></span>`;
         btn.innerHTML = `
-          <span class="wc-country-card__flag" style="background:linear-gradient(90deg,${c.flagColors.join(',')})"></span>
+          ${flagImg}
           <strong>${c.name}</strong>
           <small class="subtitle">${locked ? 'Chưa mở khóa' : done ? `Đã hoàn thành · ${best}/10` : 'Sẵn sàng'}</small>
         `;
@@ -163,29 +133,23 @@ export function createUi(root: HTMLElement, handles: Partial<UiHandles>): UiHand
         grid.appendChild(btn);
       }
     },
-    renderPlayHud(level, country, question) {
+    renderPlayHud(level) {
       ui.showScreen('play');
-      root.querySelector('#wc-question')!.textContent = question.prompt;
-      const answers = root.querySelector<HTMLElement>('#wc-answers')!;
-      answers.innerHTML = '';
-      const labels: Array<'A' | 'B' | 'C'> = ['A', 'B', 'C'];
-      question.options.forEach((opt, i) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'wc-answer-btn fps-option';
-        btn.style.setProperty('--opt-color', ANSWER_COLORS[i]!);
-        btn.dataset.index = String(i);
-        btn.innerHTML = `<span class="fps-option__code wc-answer-btn__code">${labels[i]}</span><span class="wc-answer-btn__shot">${SHOT_HINTS[i]}</span><span class="wc-answer-btn__label">${opt}</span>`;
-        btn.addEventListener('click', () => ui.onAnswer(i));
-        answers.appendChild(btn);
-      });
+      const country = getCountryById(level.countryId);
+      const flagWrap = root.querySelector<HTMLElement>('#wc-play-flag')!;
+      const flagImg = root.querySelector<HTMLImageElement>('#wc-play-flag-img')!;
+      const flagUrl = country ? getCountryFlagUrl(country.id) : null;
+      if (country && flagUrl) {
+        flagImg.src = flagUrl;
+        flagImg.alt = getCountryFlagAlt(country.name);
+        flagWrap.hidden = false;
+      } else {
+        flagImg.removeAttribute('src');
+        flagWrap.hidden = true;
+      }
       ui.updateLives(level.lives);
       ui.updateProgress(level.stage);
       ui.updateTimer(1);
-      const stageLabel = level.stage === 4 ? 'Thủ môn' : `Hậu vệ ${level.stage}`;
-      ui.setFeedback(`${country.name} · ${stageLabel} — Chọn đáp án để sút (1/2/3)`, 'neutral');
-      ui.setAnswersEnabled(true);
-      ui.highlightAnswer(null);
       requestAnimationFrame(() => ui.onPlayReady());
     },
     updateLives(lives, lostIndex) {
@@ -215,27 +179,6 @@ export function createUi(root: HTMLElement, handles: Partial<UiHandles>): UiHand
       fill.classList.toggle('timer-bar__fill--warn', ratio <= 0.2 && ratio > 0.08);
       fill.classList.toggle('timer-bar__fill--danger', ratio <= 0.08);
     },
-    setFeedback(text, kind = 'neutral') {
-      const el = root.querySelector<HTMLElement>('#wc-feedback')!;
-      el.textContent = text;
-      el.className =
-        kind === 'ok' ? 'feedback feedback--ok' : kind === 'bad' ? 'feedback feedback--bad' : 'feedback';
-    },
-    setAnswersEnabled(enabled) {
-      root.querySelectorAll<HTMLButtonElement>('.wc-answer-btn').forEach((b) => {
-        b.disabled = !enabled;
-      });
-    },
-    highlightAnswer(index) {
-      root.querySelectorAll<HTMLButtonElement>('.wc-answer-btn').forEach((b, i) => {
-        b.classList.toggle('wc-answer-btn--selected', index === i);
-      });
-    },
-    fadeOtherAnswers(selected) {
-      root.querySelectorAll<HTMLButtonElement>('.wc-answer-btn').forEach((b, i) => {
-        if (i !== selected) b.classList.add('wc-answer-btn--fade');
-      });
-    },
     renderDiscovery(country, score) {
       ui.showScreen('discovery');
       root.querySelector<HTMLElement>('#wc-discovery')!.innerHTML = `
@@ -261,15 +204,6 @@ export function createUi(root: HTMLElement, handles: Partial<UiHandles>): UiHand
       root.querySelector('#wc-defeat-text')!.textContent =
         `Bạn chưa vượt qua ${country.name}. Hãy thử lại nhé!`;
     },
-    renderVictoryBanner() {
-      ui.setFeedback('MÀN CHƠI HOÀN THÀNH - GOAL!!!', 'ok');
-      const feedback = root.querySelector('#wc-feedback');
-      feedback?.classList.add('feedback--goal');
-      const play = root.querySelector('#wc-screen-play');
-      if (play) spawnVictoryConfetti(play as HTMLElement);
-      setTimeout(() => feedback?.classList.remove('feedback--goal'), 2000);
-    },
-    onAnswer: () => {},
     onStartCountry: () => {},
     onRetry: () => {},
     onNextCountry: () => {},
