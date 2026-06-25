@@ -88,9 +88,20 @@ export class GundamRobotScene {
   private celebrationFade = 0;
   private poseProgress = 0;
   private shakeUntil = 0;
+  private wrongFlashUntil = 0;
   private rafId = 0;
   private disposed = false;
   private correctCount = 0;
+
+  private readonly energyFloor = new THREE.Group();
+  private energyFloorMat: THREE.MeshBasicMaterial | null = null;
+  private gridTex: THREE.CanvasTexture | null = null;
+  private platformRing: THREE.Mesh<THREE.TorusGeometry, THREE.MeshStandardMaterial> | null = null;
+  private readonly shockwaves: {
+    mesh: THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>;
+    startAt: number;
+    lifeMs: number;
+  }[] = [];
   private readonly maxParts: number;
   private readonly bgDark = new THREE.Color(0x030712);
   private readonly bgBright = new THREE.Color(0x312e81);
@@ -156,9 +167,10 @@ export class GundamRobotScene {
     this.addLights();
     this.buildUniverse();
     this.buildPlatform();
+    this.buildEnergyFloor();
     this.buildRobotBySpec();
     this.buildCelebrationFx();
-    this.scene.add(this.stars, this.nebula, this.platform, this.root, this.gltfMechRoot, this.fx);
+    this.scene.add(this.stars, this.nebula, this.platform, this.energyFloor, this.root, this.gltfMechRoot, this.fx);
 
     this.resize();
     window.addEventListener('resize', this.onResize);
@@ -188,6 +200,7 @@ export class GundamRobotScene {
 
   onCorrectAnswer(): void {
     this.correctCount++;
+    this.spawnShockwave();
     const idx = this.correctCount - 1;
     if (idx < this.parts.length) {
       const p = this.parts[idx]!;
@@ -208,7 +221,9 @@ export class GundamRobotScene {
   }
 
   onWrongAnswer(): void {
-    this.shakeUntil = performance.now() + 300;
+    const now = performance.now();
+    this.shakeUntil = now + 300;
+    this.wrongFlashUntil = now + 340;
   }
 
   dispose(): void {
@@ -218,6 +233,7 @@ export class GundamRobotScene {
     this.mount.innerHTML = '';
     this.renderer.dispose();
     this.scratchTex.dispose();
+    this.gridTex?.dispose();
     this.scene.traverse((obj) => {
       if (obj instanceof THREE.Mesh) {
         obj.geometry.dispose();
@@ -324,6 +340,117 @@ export class GundamRobotScene {
     ring.rotation.x = Math.PI / 2;
     ring.position.y = 0.35;
     this.platform.add(ring);
+    this.platformRing = ring;
+  }
+
+  /** Sàn năng lượng dạng lưới holographic — sáng dần theo số mảnh đã ghép. */
+  private buildEnergyFloor(): void {
+    this.gridTex = this.makeGridTexture();
+    const floor = new THREE.Mesh(
+      new THREE.CircleGeometry(2.55, 64),
+      new THREE.MeshBasicMaterial({
+        map: this.gridTex,
+        color: 0x38bdf8,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = 0.37;
+    this.energyFloorMat = floor.material;
+    this.energyFloor.add(floor);
+  }
+
+  private makeGridTexture(): THREE.CanvasTexture {
+    const s = 512;
+    const c = document.createElement('canvas');
+    c.width = c.height = s;
+    const ctx = c.getContext('2d')!;
+    ctx.clearRect(0, 0, s, s);
+    const cx = s / 2;
+    const cy = s / 2;
+    ctx.strokeStyle = 'rgba(125, 211, 252, 0.9)';
+    ctx.lineWidth = 2;
+    for (let i = 1; i <= 6; i++) {
+      ctx.globalAlpha = 0.35 + i * 0.1;
+      ctx.beginPath();
+      ctx.arc(cx, cy, (i / 6) * (cx - 6), 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 0.45;
+    for (let i = 0; i < 24; i++) {
+      const a = (i / 24) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(a) * cx, cy + Math.sin(a) * cy);
+      ctx.stroke();
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }
+
+  /** Vòng xung kích lan ra trên sàn mỗi khi trả lời đúng. */
+  private spawnShockwave(): void {
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(0.2, 0.32, 48),
+      new THREE.MeshBasicMaterial({
+        color: this.celebration ? 0xfacc15 : 0x7dd3fc,
+        transparent: true,
+        opacity: 0.85,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      })
+    );
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0.39;
+    this.energyFloor.add(ring);
+    this.shockwaves.push({ mesh: ring, startAt: performance.now(), lifeMs: 720 });
+  }
+
+  private updateShockwaves(now: number): void {
+    for (let i = this.shockwaves.length - 1; i >= 0; i--) {
+      const s = this.shockwaves[i]!;
+      const t = (now - s.startAt) / s.lifeMs;
+      if (t >= 1) {
+        this.energyFloor.remove(s.mesh);
+        s.mesh.geometry.dispose();
+        s.mesh.material.dispose();
+        this.shockwaves.splice(i, 1);
+        continue;
+      }
+      const e = 1 - Math.pow(1 - t, 2);
+      s.mesh.scale.setScalar(1 + e * 7.5);
+      s.mesh.material.opacity = 0.85 * (1 - t);
+    }
+  }
+
+  /** Sàn + vòng bệ phản ứng theo tiến độ ghép (gọi mỗi khung hình). */
+  private updateEnergyFloor(now: number, t: number): void {
+    const progress = this.maxParts > 0 ? Math.min(1, this.correctCount / this.maxParts) : 0;
+    const pulse = 0.5 + Math.sin(t * 2.2) * 0.5;
+    if (this.energyFloorMat) {
+      this.energyFloorMat.opacity = progress * (0.3 + pulse * 0.14) + (this.celebration ? 0.18 : 0);
+    }
+    this.energyFloor.rotation.y = t * 0.08;
+    if (this.platformRing) {
+      const flash = now < this.wrongFlashUntil;
+      if (flash) {
+        this.platformRing.material.emissive.setHex(0xff3b3b);
+        this.platformRing.material.color.setHex(0xff6b6b);
+        this.platformRing.material.emissiveIntensity = 1.7;
+      } else {
+        this.platformRing.material.emissive.setHex(0x0ea5e9);
+        this.platformRing.material.color.setHex(0x38bdf8);
+        this.platformRing.material.emissiveIntensity =
+          0.5 + progress * 1.5 + Math.sin(t * 3) * 0.12 * progress + (this.celebration ? 0.9 : 0);
+      }
+    }
+    this.updateShockwaves(now);
   }
 
   private addPart(order: number, to: THREE.Vector3, fromOffset: THREE.Vector3, group: THREE.Group): void {
@@ -898,6 +1025,7 @@ export class GundamRobotScene {
     this.platform.rotation.y = Math.sin(t * 0.45) * 0.04;
     this.updateAssembly(now);
     this.updateMechanics(t);
+    this.updateEnergyFloor(now, t);
 
     if (now < this.shakeUntil) this.root.rotation.z = Math.sin(t * 30) * 0.04;
     else this.root.rotation.z *= 0.86;

@@ -49,11 +49,25 @@ export function renderTrangNguyenToanGame(
   const heroHost = stage.root.querySelector<HTMLElement>('#game-hero')!;
   heroHost.innerHTML = `
     <div class="mecha-robot-wrap">
-      <div class="mecha-robot-status" id="mecha-status">Siêu robot Trạng Nguyên · 0/${questions.length} mảnh</div>
+      <div class="mecha-hud" id="mecha-status">
+        <span class="mecha-hud__title">Siêu robot Trạng Nguyên</span>
+        <span class="mecha-hud__track"><i class="mecha-hud__fill"></i></span>
+        <span class="mecha-hud__count">0/${questions.length}</span>
+      </div>
     </div>
   `;
   const sceneMount = heroHost.querySelector<HTMLElement>('.mecha-robot-wrap')!;
-  const statusEl = heroHost.querySelector<HTMLElement>('#mecha-status')!;
+  const hudEl = heroHost.querySelector<HTMLElement>('#mecha-status')!;
+  const hudTitleEl = heroHost.querySelector<HTMLElement>('.mecha-hud__title')!;
+  const hudFillEl = heroHost.querySelector<HTMLElement>('.mecha-hud__fill')!;
+  const hudCountEl = heroHost.querySelector<HTMLElement>('.mecha-hud__count')!;
+  const updateHud = (done: boolean) => {
+    const pct = questions.length ? Math.round((correctCount / questions.length) * 100) : 0;
+    hudFillEl.style.width = `${pct}%`;
+    hudCountEl.textContent = `${correctCount}/${questions.length}`;
+    hudTitleEl.textContent = done ? '🎆 Robot hoàn thành!' : 'Siêu robot Trạng Nguyên';
+    hudEl.classList.toggle('mecha-hud--done', done);
+  };
   const mechaScene = new GundamRobotScene(sceneMount, questions.length);
 
   let index = 0;
@@ -89,9 +103,7 @@ export function renderTrangNguyenToanGame(
       correctCount++;
       mechaScene.onCorrectAnswer();
       const done = correctCount >= questions.length;
-      statusEl.textContent = done
-        ? '🎆 Robot hoàn thành! Pháo hoa & sức mạnh tối đa!'
-        : `Siêu robot Trạng Nguyên · ${correctCount}/${questions.length} mảnh`;
+      updateHud(done);
     } else {
       mechaScene.onWrongAnswer();
     }
@@ -117,7 +129,7 @@ export function renderTrangNguyenToanGame(
           ${q.choices
             .map(
               (_, i) =>
-                `<button type="button" class="stone-tablet" data-i="${i}"><span></span></button>`
+                `<button type="button" class="stone-tablet" data-i="${i}"><b class="stone-tablet__key">${i + 1}</b><span></span></button>`
             )
             .join('')}
         </div>
