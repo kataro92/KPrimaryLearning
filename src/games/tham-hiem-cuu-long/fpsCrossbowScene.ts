@@ -4,7 +4,7 @@ import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { playSfx } from '@/features/audio/sfxService';
-import { createCrosshair3d, createHitFlashRig, FpsHud3d } from './fpsHud3d';
+import { createCrosshair3d, createCrossbow3d, createHitFlashRig, FpsHud3d, type Crosshair3d } from './fpsHud3d';
 
 export interface FpsOption {
   id: string;
@@ -19,6 +19,18 @@ interface Target {
   core: THREE.Mesh;
   frame: THREE.Mesh;
   choicePlane: THREE.Mesh;
+  baseY: number;
+  spawnAt: number;
+  phase: number;
+  hovered: boolean;
+  resolved: boolean;
+}
+
+interface Burst {
+  group: THREE.Group;
+  parts: Array<{ mesh: THREE.Mesh; vel: THREE.Vector3 }>;
+  startedAt: number;
+  durationMs: number;
 }
 
 interface Projectile {
@@ -28,6 +40,7 @@ interface Projectile {
   from: THREE.Vector3;
   to: THREE.Vector3;
   control: THREE.Vector3;
+  impactColor?: number;
 }
 
 const MAX_RENDER_WIDTH = 1280;
@@ -142,12 +155,17 @@ export class FpsCrossbowScene {
   private trailFrom = new THREE.Vector3();
   private trailTo = new THREE.Vector3();
   private projectiles: Projectile[] = [];
+  private bursts: Burst[] = [];
+  private birds: THREE.Group[] = [];
   private clouds: THREE.Mesh[] = [];
   private riverMesh: THREE.Mesh | null = null;
+  private riverTex: THREE.CanvasTexture | null = null;
   private isPointerLocked = false;
   private isPointerInside = false;
   private readonly hud: FpsHud3d;
   private readonly hitFlash: ReturnType<typeof createHitFlashRig>;
+  private readonly crosshair: Crosshair3d;
+  private readonly crossbow: ReturnType<typeof createCrossbow3d>;
 
   constructor(private mount: HTMLElement) {
     const w = mount.clientWidth || 640;
@@ -201,7 +219,10 @@ export class FpsCrossbowScene {
     this.scene.add(this.camera);
     this.hud = new FpsHud3d();
     this.hud.attachToWorld(this.world);
-    this.camera.add(createCrosshair3d());
+    this.crosshair = createCrosshair3d();
+    this.camera.add(this.crosshair.group);
+    this.crossbow = createCrossbow3d();
+    this.camera.add(this.crossbow.group);
     this.hitFlash = createHitFlashRig();
     this.camera.add(this.hitFlash.group);
     this.trail = new THREE.Line(
@@ -283,15 +304,29 @@ export class FpsCrossbowScene {
       );
       choicePlane.position.set(0, 0.08, 0.36);
       group.add(frame, core, choicePlane);
-      group.position.set(xPositions[idx] ?? 0, 2.0, -8.2);
+      const baseY = 2.0;
+      group.position.set(xPositions[idx] ?? 0, baseY, -8.2);
+      group.scale.setScalar(0.01);
       this.world.add(group);
-      this.targets.push({ option: opt, group, core, frame, choicePlane });
+      this.targets.push({
+        option: opt,
+        group,
+        core,
+        frame,
+        choicePlane,
+        baseY,
+        spawnAt: performance.now() + idx * 80,
+        phase: idx * 1.7,
+        hovered: false,
+        resolved: false,
+      });
     });
   }
 
   shoot(): string | null {
     if (this.disposed) return null;
     this.playShotSound();
+    this.crossbow.recoil();
     this.raycaster.setFromCamera(new THREE.Vector2(0, 0), this.camera);
     const dir = new THREE.Vector3();
     this.camera.getWorldDirection(dir);
@@ -300,7 +335,7 @@ export class FpsCrossbowScene {
     this.trailUntil = performance.now() + 120;
     const hits = this.raycaster.intersectObjects(this.targets.map((t) => t.core), false);
     if (hits.length === 0) {
-      this.spawnProjectile(this.trailFrom, this.trailTo);
+      this.spawnProjectile(this.trailFrom, this.trailTo, 0xcbd5e1);
       this.flash(0xf8fafc);
       return null;
     }
@@ -315,12 +350,18 @@ export class FpsCrossbowScene {
   markAnswer(answerId: string, ok: boolean): void {
     const target = this.targets.find((t) => t.option.id === answerId);
     if (!target) return;
+    target.resolved = true;
     const coreMat = target.core.material as THREE.MeshStandardMaterial;
     coreMat.color.setHex(ok ? 0x22c55e : 0xef4444);
     coreMat.emissive.setHex(ok ? 0x166534 : 0x7f1d1d);
     coreMat.emissiveIntensity = ok ? 0.35 : 0.28;
     (target.frame.material as THREE.MeshStandardMaterial).color.setHex(ok ? 0x166534 : 0x7f1d1d);
     this.flash(ok ? 0x22c55e : 0xef4444);
+    // Punch-scale + chùm mảnh vỡ tại vị trí mục tiêu.
+    target.group.scale.setScalar(1.22);
+    const impact = target.group.position.clone();
+    impact.z += 0.4;
+    this.spawnBurst(impact, ok ? 0x4ade80 : 0xf87171, ok ? 18 : 14);
   }
 
   dispose(): void {
@@ -338,6 +379,28 @@ export class FpsCrossbowScene {
     }
     this.clearTargets();
     this.hud.dispose();
+    this.crossbow.dispose();
+    this.bursts.forEach((b) => {
+      b.parts.forEach((p) => {
+        p.mesh.geometry.dispose();
+        (p.mesh.material as THREE.Material).dispose();
+      });
+      b.group.removeFromParent();
+    });
+    this.bursts = [];
+    this.birds.forEach((b) => {
+      b.traverse((node) => {
+        if (node instanceof THREE.Mesh) {
+          node.geometry.dispose();
+          const mat = node.material;
+          if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
+          else mat.dispose();
+        }
+      });
+      b.removeFromParent();
+    });
+    this.birds = [];
+    this.riverTex?.dispose();
     this.hitFlash.group.traverse((node) => {
       if (node instanceof THREE.Mesh) {
         node.geometry.dispose();
@@ -380,7 +443,9 @@ export class FpsCrossbowScene {
     ground.receiveShadow = true;
     this.world.add(ground);
 
-    // Dải sông chạy giữa thung lũng
+    // Dải sông Cửu Long chảy giữa thung lũng — texture cuộn để nước trôi
+    riverTex.repeat.set(2, 8);
+    this.riverTex = riverTex;
     const river = new THREE.Mesh(
       new THREE.BoxGeometry(5.4, 0.16, 20),
       new THREE.MeshLambertMaterial({ map: riverTex, transparent: true, opacity: 0.95 })
@@ -399,13 +464,57 @@ export class FpsCrossbowScene {
     riverBankR.position.x = 3.4;
     this.world.add(riverBankL, riverBankR);
 
-    for (let i = 0; i < 20; i++) {
-      const block = new THREE.Mesh(
-        new THREE.BoxGeometry(0.75, 0.75, 0.75),
-        new THREE.MeshLambertMaterial({ map: leavesTex })
-      );
-      block.position.set(-8 + (i % 10) * 1.8, 0.2, -12 - Math.floor(i / 10) * 3.2);
-      this.world.add(block);
+    // Viền bọt sáng dọc hai mép sông
+    const foamMat = new THREE.MeshBasicMaterial({ color: 0xe0f2fe, transparent: true, opacity: 0.6 });
+    const foamL = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.04, 20), foamMat);
+    foamL.position.set(-2.6, 0.06, -8.5);
+    const foamR = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.04, 20), foamMat);
+    foamR.position.set(2.6, 0.06, -8.5);
+    this.world.add(foamL, foamR);
+
+    // Cây voxel dọc hai bờ — thân gỗ + tán lá nhiều khối
+    const barkTex = makePixelTexture('#7c4a1e', '#5c3514');
+    const trunkGeo = new THREE.BoxGeometry(0.42, 1.4, 0.42);
+    const canopyGeo = new THREE.BoxGeometry(1.5, 1.0, 1.5);
+    const trunkMat = new THREE.MeshLambertMaterial({ map: barkTex });
+    const canopyMat = new THREE.MeshLambertMaterial({ map: leavesTex });
+    const treeSpots = [
+      [-4.6, -7], [-5.4, -11], [-4.8, -15], [4.6, -7], [5.4, -11], [4.8, -15], [-6.4, -13], [6.4, -9],
+    ];
+    treeSpots.forEach(([x, z], i) => {
+      const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+      trunk.position.set(x!, 0.6, z!);
+      trunk.castShadow = true;
+      const canopy = new THREE.Mesh(canopyGeo, canopyMat);
+      canopy.position.set(x!, 1.5 + (i % 2) * 0.2, z!);
+      canopy.castShadow = true;
+      const canopyTop = new THREE.Mesh(canopyGeo, canopyMat);
+      canopyTop.scale.setScalar(0.62);
+      canopyTop.position.set(x!, 2.2 + (i % 2) * 0.2, z!);
+      this.world.add(trunk, canopy, canopyTop);
+    });
+
+    // Mặt trời voxel phía xa
+    const sun = new THREE.Mesh(
+      new THREE.BoxGeometry(2.2, 2.2, 0.2),
+      new THREE.MeshBasicMaterial({ color: 0xfff3c4, toneMapped: false })
+    );
+    sun.position.set(-7, 7.5, -18);
+    this.world.add(sun);
+
+    // Vài cánh chim bay vòng phía xa cho cảnh sống động
+    for (let i = 0; i < 3; i++) {
+      const bird = new THREE.Group();
+      const wingGeo = new THREE.BoxGeometry(0.5, 0.06, 0.18);
+      const wingMat = new THREE.MeshBasicMaterial({ color: 0x334155 });
+      const wingL = new THREE.Mesh(wingGeo, wingMat);
+      wingL.position.x = -0.28;
+      const wingR = new THREE.Mesh(wingGeo, wingMat);
+      wingR.position.x = 0.28;
+      bird.add(wingL, wingR);
+      bird.position.set(-9 + i * 3, 5, -14 - i);
+      this.world.add(bird);
+      this.birds.push(bird);
     }
 
     // Dãy núi voxel phía xa
@@ -493,11 +602,7 @@ export class FpsCrossbowScene {
     const now = performance.now();
     this.camera.rotation.y = this.yaw;
     this.camera.rotation.x = this.pitch;
-    this.targets.forEach((t) => {
-      t.core.position.z = 0.14;
-      t.frame.rotation.y = 0;
-      t.choicePlane.rotation.y = 0;
-    });
+    this.updateTargets(now);
     if (now < this.trailUntil) {
       this.trail.geometry.setFromPoints([this.trailFrom, this.trailTo]);
       const m = this.trail.material as THREE.LineBasicMaterial;
@@ -520,14 +625,110 @@ export class FpsCrossbowScene {
       this.riverMesh.position.y = -0.03 + Math.sin(now * 0.0018) * 0.02;
       this.riverMesh.rotation.z = Math.sin(now * 0.0009) * 0.01;
     }
+    if (this.riverTex) {
+      this.riverTex.offset.y = (this.riverTex.offset.y - 0.0016) % 1;
+    }
+    this.updateBirds(now);
     this.updateProjectiles(now);
+    this.updateBursts(now);
+    this.crossbow.idleTick(now);
     this.hitFlash.tick(now);
+    this.hud.tick(now);
     this.hud.updateFacing(this.camera);
     this.composer.render();
     if (!this.disposed) {
       this.rafId = requestAnimationFrame(this.loop);
     }
   };
+
+  /** Hoạt ảnh mục tiêu: hiện ra, lơ lửng, sáng lên khi được ngắm trúng. */
+  private updateTargets(now: number): void {
+    let aimedAny = false;
+    if (this.targets.length > 0) {
+      this.raycaster.setFromCamera(new THREE.Vector2(0, 0), this.camera);
+      const hits = this.raycaster.intersectObjects(this.targets.map((t) => t.core), false);
+      const hitMesh = hits[0]?.object;
+      this.targets.forEach((t) => {
+        t.hovered = !t.resolved && t.core === hitMesh;
+        if (t.hovered) aimedAny = true;
+      });
+    }
+    this.crosshair.setLocked(aimedAny);
+
+    this.targets.forEach((t) => {
+      const grow = Math.min(1, Math.max(0, (now - t.spawnAt) / 260));
+      const ease = 1 - Math.pow(1 - grow, 3);
+      // Nhịp đập sau khi trả lời rồi giãn dần về 1.
+      const base = t.resolved ? t.group.scale.x : ease;
+      const settle = t.resolved ? base + (1 - base) * 0.12 : base;
+      const hoverBoost = t.hovered ? 1 + Math.sin(now * 0.012) * 0.05 : 1;
+      t.group.scale.setScalar(settle * hoverBoost);
+      if (!t.resolved) {
+        t.group.position.y = t.baseY + Math.sin(now * 0.0018 + t.phase) * 0.12 * ease;
+        t.group.rotation.y = Math.sin(now * 0.0012 + t.phase) * 0.06;
+      }
+      const coreMat = t.core.material as THREE.MeshStandardMaterial;
+      if (!t.resolved) {
+        coreMat.emissiveIntensity = t.hovered ? 0.45 : 0.12;
+      }
+    });
+  }
+
+  private spawnBurst(at: THREE.Vector3, colorHex: number, count: number): void {
+    const group = new THREE.Group();
+    group.position.copy(at);
+    const parts: Burst['parts'] = [];
+    const geo = new THREE.BoxGeometry(0.09, 0.09, 0.09);
+    for (let i = 0; i < count; i++) {
+      const mat = new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, toneMapped: false });
+      const mesh = new THREE.Mesh(geo, mat);
+      const dir = new THREE.Vector3(
+        (Math.random() - 0.5) * 2,
+        Math.random() * 1.4 + 0.2,
+        (Math.random() - 0.5) * 2
+      ).normalize();
+      const speed = 0.04 + Math.random() * 0.06;
+      parts.push({ mesh, vel: dir.multiplyScalar(speed) });
+      group.add(mesh);
+    }
+    this.scene.add(group);
+    this.bursts.push({ group, parts, startedAt: performance.now(), durationMs: 620 });
+  }
+
+  private updateBursts(now: number): void {
+    this.bursts = this.bursts.filter((b) => {
+      const t = (now - b.startedAt) / b.durationMs;
+      if (t >= 1) {
+        b.parts.forEach((p) => {
+          p.mesh.geometry.dispose();
+          (p.mesh.material as THREE.Material).dispose();
+        });
+        b.group.removeFromParent();
+        return false;
+      }
+      b.parts.forEach((p) => {
+        p.vel.y -= 0.0016; // trọng lực nhẹ
+        p.mesh.position.add(p.vel);
+        p.mesh.rotation.x += 0.2;
+        p.mesh.rotation.y += 0.16;
+        (p.mesh.material as THREE.MeshBasicMaterial).opacity = 1 - t;
+        p.mesh.scale.setScalar(1 - t * 0.6);
+      });
+      return true;
+    });
+  }
+
+  private updateBirds(now: number): void {
+    this.birds.forEach((b, i) => {
+      const speed = 0.4 + i * 0.12;
+      const x = ((now * 0.0006 * speed + i * 2.1) % 6) * 3 - 9;
+      b.position.x = x;
+      b.position.y = 5 + Math.sin(now * 0.002 + i) * 0.4;
+      b.children.forEach((wing, wi) => {
+        wing.rotation.z = (wi === 0 ? 1 : -1) * Math.sin(now * 0.02 + i) * 0.5;
+      });
+    });
+  }
 
   private clearTargets(): void {
     this.targets.forEach((t) => {
@@ -554,17 +755,31 @@ export class FpsCrossbowScene {
     this.composer?.setSize(rw, rh);
   }
 
-  private spawnProjectile(from: THREE.Vector3, to: THREE.Vector3): void {
-    const core = new THREE.Mesh(
-      new THREE.SphereGeometry(0.028, 8, 8),
-      new THREE.MeshBasicMaterial({ color: 0xf8fafc, toneMapped: false })
+  private spawnProjectile(from: THREE.Vector3, to: THREE.Vector3, impactColor?: number): void {
+    // Mũi tên nỏ: thân trụ + đầu nhọn + cánh đuôi, hướng theo chiều bay (group.lookAt).
+    const g = new THREE.Group();
+    const shaft = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.012, 0.012, 0.34, 6),
+      new THREE.MeshBasicMaterial({ color: 0xcbd5e1, toneMapped: false })
     );
+    shaft.rotation.x = Math.PI / 2;
+    shaft.position.z = 0.02;
+    const tip = new THREE.Mesh(
+      new THREE.ConeGeometry(0.026, 0.08, 6),
+      new THREE.MeshBasicMaterial({ color: 0x94a3b8, toneMapped: false })
+    );
+    tip.rotation.x = -Math.PI / 2;
+    tip.position.z = 0.22;
+    const fletch = new THREE.Mesh(
+      new THREE.BoxGeometry(0.12, 0.005, 0.07),
+      new THREE.MeshBasicMaterial({ color: 0xf87171, toneMapped: false })
+    );
+    fletch.position.z = -0.14;
     const glow = new THREE.Mesh(
       new THREE.SphereGeometry(0.05, 8, 8),
-      new THREE.MeshBasicMaterial({ color: 0x7dd3fc, transparent: true, opacity: 0.45, toneMapped: false })
+      new THREE.MeshBasicMaterial({ color: 0x7dd3fc, transparent: true, opacity: 0.4, toneMapped: false })
     );
-    const g = new THREE.Group();
-    g.add(glow, core);
+    g.add(glow, shaft, tip, fletch);
     g.position.copy(from);
     this.scene.add(g);
     const mid = from.clone().lerp(to, 0.5);
@@ -577,6 +792,7 @@ export class FpsCrossbowScene {
       from: from.clone(),
       to: to.clone(),
       control,
+      impactColor,
     });
   }
 
@@ -590,6 +806,9 @@ export class FpsCrossbowScene {
       p.mesh.position.set(x, y, z);
       p.mesh.lookAt(p.to);
       if (t >= 1) {
+        if (p.impactColor !== undefined) {
+          this.spawnBurst(p.to.clone(), p.impactColor, 9);
+        }
         p.mesh.traverse((node) => {
           if (node instanceof THREE.Mesh) {
             node.geometry.dispose();
