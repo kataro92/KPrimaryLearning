@@ -22,7 +22,7 @@ export const VOCAB_PAIRS: VocabPair[] = [
   { en: 'banana', vi: 'chuối', emoji: '🍌', level: 1 },
   { en: 'rice', vi: 'cơm', emoji: '🍚', level: 1 },
   { en: 'teacher', vi: 'giáo viên', emoji: '👩‍🏫', level: 2 },
-  { en: 'breakfast', vi: 'bữa sáng', emoji: '🌅', level: 2 },
+  { en: 'breakfast', vi: 'bữa sáng', emoji: '🍳', level: 2 },
   { en: 'elephant', vi: 'voi', emoji: '🐘', level: 2 },
   { en: 'library', vi: 'thư viện', emoji: '📖', level: 2 },
   { en: 'beautiful', vi: 'đẹp', emoji: '✨', level: 2 },

@@ -1533,6 +1533,21 @@ h1 {
   outline: 3px solid rgba(250, 204, 21, 0.85);
 }
 
+/* Chế độ ghép trực tiếp (cấp 1): thẻ mở sẵn, chọn để ghép */
+.lantern-card--static .lantern-card__face,
+.lantern-card--static .lantern-card__back {
+  transition: none;
+}
+
+.lantern-card--selected {
+  transform: translateY(-2px) scale(1.03);
+}
+
+.lantern-card--selected .lantern-card__face {
+  outline: 3px solid rgba(37, 99, 235, 0.92);
+  outline-offset: -1px;
+}
+
 @keyframes lantern-checking-pulse {
   0%,
   100% {
@@ -1621,6 +1636,67 @@ h1 {
   hyphens: auto;
 }
 
+/* Thẻ có hình minh hoạ: xếp hình trên, chữ dưới */
+.vocab-play-card--pic {
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vocab-play-card__emoji {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  line-height: 1;
+  font-size: clamp(1.1rem, 42cqh, 2.4rem);
+}
+
+.vocab-play-card--pic .vocab-play-card__word {
+  height: auto;
+  flex: 0 0 auto;
+  padding: 0 4px;
+  font-size: clamp(0.55rem, 18cqh, 0.92rem);
+}
+
+/* Toast củng cố nghĩa khi ghép đúng */
+.vocab-reveal {
+  position: absolute;
+  left: 50%;
+  top: 8px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 2px solid #b45309;
+  background: linear-gradient(165deg, #fffef8 0%, #fef3c7 100%);
+  box-shadow: 0 6px 16px rgba(120, 53, 15, 0.28);
+  color: #422006;
+  font-weight: 700;
+  font-size: clamp(0.8rem, 1.8vh, 1rem);
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, -10px) scale(0.9);
+  pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.34, 1.5, 0.64, 1);
+}
+
+.vocab-reveal--show {
+  opacity: 1;
+  transform: translate(-50%, 0) scale(1);
+}
+
+.vocab-reveal__emoji {
+  font-size: 1.4em;
+  line-height: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vocab-reveal {
+    transition: opacity 0.2s ease;
+  }
+}
+
 .memory-hud {
   flex-shrink: 0;
   margin: 0 0 clamp(4px, 0.8vh, 8px);
@@ -1682,6 +1758,10 @@ h1 {
   flex: 1;
   min-height: 0;
   grid-template-rows: repeat(var(--hoi-an-rows, 3), minmax(0, 1fr));
+}
+
+.game-play--hoi-an .game-play__arena {
+  position: relative;
 }
 
 .game-play--hoi-an .lantern-card {
