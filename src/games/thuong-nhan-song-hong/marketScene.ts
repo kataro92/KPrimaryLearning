@@ -1,5 +1,7 @@
 /** Hero 3D — chợ Thương Nhân ven sông Hồng (procedural Three.js, không cần file model) */
 import * as THREE from 'three';
+import { FrameLoop } from '@/core/rendering/frameLoop';
+import { createGameRenderer } from '@/core/rendering/createGameRenderer';
 import { disposeObject3D } from '@/core/assets/disposeObject3D';
 import { playSfx } from '@/features/audio/sfxService';
 
@@ -136,7 +138,7 @@ export class MarketScene {
 
   private sold = 0;
   private coins = 0;
-  private rafId = 0;
+  private frame: FrameLoop | null = null;
   private disposed = false;
   private celebrateUntil = 0;
   private shakeUntil = 0;
@@ -154,8 +156,8 @@ export class MarketScene {
     this.camera.position.set(0, 1.75, 4.4);
     this.camera.lookAt(0, 0.7, 0);
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // DPR + antialias theo tầng phần cứng; cảnh này không dùng đổ bóng.
+    this.renderer = createGameRenderer({ shadows: false }).renderer;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.15;
@@ -180,7 +182,8 @@ export class MarketScene {
 
     this.onResize();
     window.addEventListener('resize', this.onResize);
-    this.loop();
+    this.frame = new FrameLoop(this.loop, 60);
+    this.frame.start();
   }
 
   private buildWorld(): void {
@@ -343,12 +346,11 @@ export class MarketScene {
       : THREE.MathUtils.lerp(this.celebrateLight.intensity, 0, 0.15);
 
     this.renderer.render(this.scene, this.camera);
-    this.rafId = requestAnimationFrame(this.loop);
   };
 
   dispose(): void {
     this.disposed = true;
-    cancelAnimationFrame(this.rafId);
+    this.frame?.dispose();
     window.removeEventListener('resize', this.onResize);
     disposeObject3D(this.scene);
     this.waterTex.dispose();

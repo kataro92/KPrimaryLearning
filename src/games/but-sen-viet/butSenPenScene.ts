@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { FrameLoop } from '@/core/rendering/frameLoop';
+import { createGameRenderer } from '@/core/rendering/createGameRenderer';
 import { disposeObject3D } from '@/core/assets/disposeObject3D';
 import { fitModelToHeight, tryLoadGltfScene } from '@/core/assets/fitGltfModel';
 
@@ -18,7 +20,7 @@ export class ButSenPenScene {
   private readonly inkDrip: THREE.Mesh;
   private readonly lotusRing: THREE.Group;
   private readonly clock = new THREE.Clock();
-  private rafId = 0;
+  private frame: FrameLoop | null = null;
   private disposed = false;
   private loadFailed = false;
 
@@ -39,8 +41,8 @@ export class ButSenPenScene {
     this.camera.position.set(0.15, 0.55, 2.85);
     this.camera.lookAt(0, 0.35, 0);
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // DPR + antialias theo tầng phần cứng; cảnh này không dùng đổ bóng.
+    this.renderer = createGameRenderer({ shadows: false }).renderer;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.15;
@@ -87,7 +89,8 @@ export class ButSenPenScene {
     void this.loadModel();
     this.onResize();
     window.addEventListener('resize', this.onResize);
-    this.loop();
+    this.frame = new FrameLoop(this.loop, 60);
+    this.frame.start();
   }
 
   /** Tiến độ câu đúng (0…total) — mực và sen nở dần. */
@@ -112,7 +115,7 @@ export class ButSenPenScene {
 
   dispose(): void {
     this.disposed = true;
-    cancelAnimationFrame(this.rafId);
+    this.frame?.dispose();
     window.removeEventListener('resize', this.onResize);
     this.clearPivot();
     this.mount.innerHTML = '';
@@ -305,6 +308,5 @@ export class ButSenPenScene {
     }
 
     this.renderer.render(this.scene, this.camera);
-    this.rafId = requestAnimationFrame(this.loop);
   };
 }

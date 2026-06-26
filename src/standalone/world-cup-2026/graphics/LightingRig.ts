@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { getTierProfile } from '@/core/rendering/qualityTier';
 
 export interface LightingRigLights {
   ambient: THREE.AmbientLight;
@@ -17,12 +18,14 @@ export interface LightingRig {
 }
 
 export function configureRenderer(renderer: THREE.WebGLRenderer): void {
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  // DPR + đổ bóng theo tầng phần cứng (xem qualityTier).
+  const profile = getTierProfile();
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, profile.dprCap));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.enabled = profile.shadowsEnabled;
+  if (profile.shadowsEnabled) renderer.shadowMap.type = profile.shadowMapType;
 }
 
 export function createLightingRig(): LightingRig {
@@ -32,7 +35,8 @@ export function createLightingRig(): LightingRig {
   const sun = new THREE.DirectionalLight(0xfff7ed, 1.05);
   sun.position.set(-4, 8, 6);
   sun.castShadow = true;
-  sun.shadow.mapSize.set(1024, 1024);
+  const shadowSize = getTierProfile().shadowMapSize;
+  sun.shadow.mapSize.set(shadowSize, shadowSize);
   sun.shadow.camera.near = 0.5;
   sun.shadow.camera.far = 40;
   sun.shadow.camera.left = -12;

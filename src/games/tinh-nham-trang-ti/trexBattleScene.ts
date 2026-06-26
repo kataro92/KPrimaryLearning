@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { FrameLoop } from '@/core/rendering/frameLoop';
+import { createGameRenderer } from '@/core/rendering/createGameRenderer';
+import { getTierProfile } from '@/core/rendering/qualityTier';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
@@ -62,7 +65,7 @@ export class TrexBattleScene {
   private slowMoUntil = 0;
   private zoomUntil = 0;
   private simTime = 0;
-  private rafId = 0;
+  private frame: FrameLoop | null = null;
   private disposed = false;
   private landedHits = 0;
   private nextFireworkAt = 0;
@@ -87,10 +90,8 @@ export class TrexBattleScene {
     this.camera.position.set(0, 4.1, 11.5);
     this.camera.lookAt(0, 2.75, 0.1);
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // DPR, antialias, shadow map đều theo tầng phần cứng (xem createGameRenderer/qualityTier).
+    this.renderer = createGameRenderer({ shadows: true }).renderer;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.1;
@@ -99,7 +100,7 @@ export class TrexBattleScene {
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
     this.bloomPass = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.36, 0.45, 0.85);
-    this.composer.addPass(this.bloomPass);
+    if (getTierProfile().bloomEnabled) this.composer.addPass(this.bloomPass);
     this.composer.addPass(new OutputPass());
 
     this.buildWorld();
@@ -110,7 +111,8 @@ export class TrexBattleScene {
     this.resize();
     window.addEventListener('resize', this.onResize);
     void this.loadGltfTrex();
-    this.loop();
+    this.frame = new FrameLoop(this.loop, 60);
+    this.frame.start();
   }
 
   private async loadGltfTrex(): Promise<void> {
@@ -163,7 +165,7 @@ export class TrexBattleScene {
 
   dispose(): void {
     this.disposed = true;
-    cancelAnimationFrame(this.rafId);
+    this.frame?.dispose();
     window.removeEventListener('resize', this.onResize);
     this.mount.innerHTML = '';
     this.renderer.dispose();
@@ -197,7 +199,7 @@ export class TrexBattleScene {
 
   private buildWorld(): void {
     const sky = new THREE.Mesh(
-      new THREE.SphereGeometry(44, 32, 18),
+      new THREE.SphereGeometry(44, 24, 14),
       new THREE.MeshBasicMaterial({ map: this.skyTexture, side: THREE.BackSide, fog: false, depthWrite: false })
     );
     sky.position.y = 6;
@@ -208,7 +210,8 @@ export class TrexBattleScene {
     const sun = new THREE.DirectionalLight(0xffe8b8, 1.38);
     sun.position.set(9, 14, 7);
     sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
+    const shadowSize = getTierProfile().shadowMapSize;
+    sun.shadow.mapSize.set(shadowSize, shadowSize);
     sun.shadow.bias = -0.0005;
     sun.shadow.camera.near = 0.5;
     sun.shadow.camera.far = 45;
@@ -631,7 +634,7 @@ export class TrexBattleScene {
   private loop = (): void => {
     if (this.disposed) return;
     const now = performance.now();
-    const dt = this.clock.getDelta();
+    const dt = Math.min(this.clock.getDelta(), 0.05);
     const speedScale = now < this.slowMoUntil ? 0.34 : 1;
     this.simTime += dt * speedScale;
     const t = this.simTime;
@@ -709,7 +712,6 @@ export class TrexBattleScene {
     this.camera.lookAt(0, 2.75 + zoomBlend * 0.15, 0.12);
 
     this.composer.render();
-    this.rafId = requestAnimationFrame(this.loop);
   };
 }
 

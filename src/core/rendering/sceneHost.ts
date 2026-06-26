@@ -10,6 +10,10 @@ export class SceneHost {
   readonly camera: THREE.OrthographicCamera;
   private rafId = 0;
   private disposed = false;
+  private paused = false;
+  private lastFrame = 0;
+  /** Nền chỉ là decor 2.5D — 30fps là quá đủ, giảm một nửa chi phí khi có game 3D đè lên. */
+  private readonly minInterval = 1000 / 30;
   private themeGroup = new THREE.Group();
   private overlayGroup = new THREE.Group();
   private currentThemeId = 'default';
@@ -53,8 +57,37 @@ export class SceneHost {
     this.scene.add(this.overlayGroup);
 
     window.addEventListener('resize', this.onResize);
-    this.loop();
+    document.addEventListener('visibilitychange', this.onVisibility);
+    this.loop(performance.now());
   }
+
+  /** Tạm dừng vòng lặp nền (vd: khi không cần vẽ). */
+  pause(): void {
+    this.paused = true;
+    if (this.rafId) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = 0;
+    }
+  }
+
+  /** Chạy lại vòng lặp nền. */
+  resume(): void {
+    if (this.disposed || this.rafId || document.hidden) return;
+    this.paused = false;
+    this.lastFrame = performance.now();
+    this.loop(this.lastFrame);
+  }
+
+  private onVisibility = (): void => {
+    if (document.hidden) {
+      if (this.rafId) {
+        cancelAnimationFrame(this.rafId);
+        this.rafId = 0;
+      }
+    } else if (!this.paused) {
+      this.resume();
+    }
+  };
 
   /** Đăng ký hủy timer/3D/TTS — gọi khi ấn Về hoặc khi App unmount game. */
   setActiveGameTeardown(fn: () => void): void {
@@ -135,21 +168,24 @@ export class SceneHost {
     this.renderer.setSize(w, h, false);
   };
 
-  private loop = (): void => {
+  private loop = (now: number): void => {
     if (this.disposed) return;
+    this.rafId = requestAnimationFrame(this.loop);
+    if (now - this.lastFrame < this.minInterval) return;
+    this.lastFrame = now;
     if (this.parallaxSway) {
-      const sway = Math.sin(Date.now() * 0.0004) * 0.08;
+      const sway = Math.sin(now * 0.0004) * 0.08;
       this.themeGroup.rotation.y = sway;
       this.overlayGroup.rotation.y = sway * 0.5;
     }
     this.renderer.render(this.scene, this.camera);
-    this.rafId = requestAnimationFrame(this.loop);
   };
 
   dispose(): void {
     this.disposed = true;
     cancelAnimationFrame(this.rafId);
     window.removeEventListener('resize', this.onResize);
+    document.removeEventListener('visibilitychange', this.onVisibility);
     this.resetTheme();
     this.renderer.dispose();
     this.canvas.remove();

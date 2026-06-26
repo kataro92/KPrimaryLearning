@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { FrameLoop } from '@/core/rendering/frameLoop';
+import { createGameRenderer } from '@/core/rendering/createGameRenderer';
+import { getTierProfile } from '@/core/rendering/qualityTier';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
@@ -62,7 +65,7 @@ export class ThanhGiongScene {
   private flagBasePositions: Float32Array | null = null;
   private readonly bowls: FlyingBowl[] = [];
   private readonly clock = new THREE.Clock();
-  private rafId = 0;
+  private frame: FrameLoop | null = null;
   private disposed = false;
   private riderScaleBase = 1.05;
   private horseScaleBase = 1.15;
@@ -94,10 +97,8 @@ export class ThanhGiongScene {
     this.camera.position.set(0, 1.8, this.cameraBaseZ);
     this.camera.lookAt(0, 1.1, 0);
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // DPR, antialias, shadow map đều theo tầng phần cứng (xem createGameRenderer/qualityTier).
+    this.renderer = createGameRenderer({ shadows: true }).renderer;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.15;
@@ -106,7 +107,7 @@ export class ThanhGiongScene {
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
     this.bloomPass = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.35, 0.45, 0.86);
-    this.composer.addPass(this.bloomPass);
+    if (getTierProfile().bloomEnabled) this.composer.addPass(this.bloomPass);
     this.composer.addPass(new OutputPass());
 
     this.addLights();
@@ -120,7 +121,8 @@ export class ThanhGiongScene {
     void this.loadHeroAssets();
     this.resize();
     window.addEventListener('resize', this.onResize);
-    this.loop();
+    this.frame = new FrameLoop(this.loop, 60);
+    this.frame.start();
   }
 
   onCorrectAnswer(correctCount: number): void {
@@ -169,7 +171,7 @@ export class ThanhGiongScene {
 
   dispose(): void {
     this.disposed = true;
-    cancelAnimationFrame(this.rafId);
+    this.frame?.dispose();
     window.removeEventListener('resize', this.onResize);
     this.composer.dispose();
     this.clearSlot(this.horseModelSlot);
@@ -462,7 +464,8 @@ export class ThanhGiongScene {
     const key = new THREE.DirectionalLight(0xfff3dd, 1.25);
     key.position.set(4, 7, 4);
     key.castShadow = true;
-    key.shadow.mapSize.set(2048, 2048);
+    const shadowSize = getTierProfile().shadowMapSize;
+    key.shadow.mapSize.set(shadowSize, shadowSize);
     key.shadow.bias = -0.0005;
     const fill = new THREE.DirectionalLight(0x99bbff, 0.5);
     fill.position.set(-4, 3, -4);
@@ -471,7 +474,7 @@ export class ThanhGiongScene {
 
   private buildWorld(): void {
     const ground = new THREE.Mesh(
-      new THREE.CircleGeometry(7, 48),
+      new THREE.CircleGeometry(7, 32),
       new THREE.MeshStandardMaterial({ color: 0x86efac, roughness: 0.95 })
     );
     ground.rotation.x = -Math.PI / 2;
@@ -818,6 +821,5 @@ export class ThanhGiongScene {
     }
     this.updateBowls(now);
     this.composer.render();
-    this.rafId = requestAnimationFrame(this.loop);
   };
 }

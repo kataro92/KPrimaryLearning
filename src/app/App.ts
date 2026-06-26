@@ -9,6 +9,7 @@ import type { PlayResult } from '@/features/gameplay/types';
 import { getGameRenderer } from '@/games/registry';
 import { loadSettings } from '@/data/storage/settingsStore';
 import { bindUiClickSounds } from '@/features/audio/uiClick';
+import { initPerfOverlay } from '@/core/rendering/perfOverlay';
 
 export class App {
   private sceneHost: SceneHost | null = null;
@@ -33,6 +34,9 @@ export class App {
     this.uiRoot = mount.querySelector('#ui-layer')!;
     const sceneLayer = mount.querySelector<HTMLElement>('#scene-layer')!;
     this.sceneHost = new SceneHost(sceneLayer);
+
+    // Overlay đo FPS + chọn tầng chất lượng (Ctrl+Shift+P hoặc ?perf=1).
+    initPerfOverlay();
 
     useAppStore.subscribe(() => this.render());
 

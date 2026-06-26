@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { FrameLoop } from '@/core/rendering/frameLoop';
+import { createGameRenderer } from '@/core/rendering/createGameRenderer';
+import { getTierProfile } from '@/core/rendering/qualityTier';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
@@ -89,7 +92,7 @@ export class GundamRobotScene {
   private poseProgress = 0;
   private shakeUntil = 0;
   private wrongFlashUntil = 0;
-  private rafId = 0;
+  private frame: FrameLoop | null = null;
   private disposed = false;
   private correctCount = 0;
 
@@ -149,10 +152,8 @@ export class GundamRobotScene {
     this.camera.position.set(0, 2.25, 7.5);
     this.camera.lookAt(0, 2.6, 0);
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // DPR, antialias, shadow map đều theo tầng phần cứng (xem createGameRenderer/qualityTier).
+    this.renderer = createGameRenderer({ shadows: true }).renderer;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.15;
@@ -161,7 +162,7 @@ export class GundamRobotScene {
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
     this.bloomPass = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.42, 0.5, 0.84);
-    this.composer.addPass(this.bloomPass);
+    if (getTierProfile().bloomEnabled) this.composer.addPass(this.bloomPass);
     this.composer.addPass(new OutputPass());
 
     this.addLights();
@@ -175,7 +176,8 @@ export class GundamRobotScene {
     this.resize();
     window.addEventListener('resize', this.onResize);
     void this.loadGltfMech();
-    this.loop();
+    this.frame = new FrameLoop(this.loop, 60);
+    this.frame.start();
   }
 
   private async loadGltfMech(): Promise<void> {
@@ -228,7 +230,7 @@ export class GundamRobotScene {
 
   dispose(): void {
     this.disposed = true;
-    cancelAnimationFrame(this.rafId);
+    this.frame?.dispose();
     window.removeEventListener('resize', this.onResize);
     this.mount.innerHTML = '';
     this.renderer.dispose();
@@ -274,7 +276,8 @@ export class GundamRobotScene {
     const key = new THREE.DirectionalLight(0xfff4dd, 1.35);
     key.position.set(5, 8, 5);
     key.castShadow = true;
-    key.shadow.mapSize.set(2048, 2048);
+    const shadowSize = getTierProfile().shadowMapSize;
+    key.shadow.mapSize.set(shadowSize, shadowSize);
     key.shadow.bias = -0.0005;
     const rim = new THREE.DirectionalLight(0x7aa9ff, 0.82);
     rim.position.set(-6, 4, -5);
@@ -347,7 +350,7 @@ export class GundamRobotScene {
   private buildEnergyFloor(): void {
     this.gridTex = this.makeGridTexture();
     const floor = new THREE.Mesh(
-      new THREE.CircleGeometry(2.55, 64),
+      new THREE.CircleGeometry(2.55, 36),
       new THREE.MeshBasicMaterial({
         map: this.gridTex,
         color: 0x38bdf8,
@@ -847,7 +850,7 @@ export class GundamRobotScene {
 
   private buildCelebrationFx(): void {
     this.glowSphere = new THREE.Mesh(
-      new THREE.SphereGeometry(10, 36, 28),
+      new THREE.SphereGeometry(10, 24, 18),
       new THREE.MeshBasicMaterial({
         color: 0xfff1aa,
         transparent: true,
@@ -1109,7 +1112,6 @@ export class GundamRobotScene {
     this.camera.lookAt(0, 2.6, 0);
 
     this.composer.render();
-    this.rafId = requestAnimationFrame(this.loop);
   };
 }
 

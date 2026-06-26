@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { FrameLoop } from '@/core/rendering/frameLoop';
+import { createGameRenderer } from '@/core/rendering/createGameRenderer';
 import { disposeObject3D } from '@/core/assets/disposeObject3D';
 import { loadGltfModel } from '@/core/assets/loadGltfModel';
 
@@ -29,7 +31,7 @@ export class DongSonDrumScene {
   private readonly fogNormal = 0x1a1208;
   private readonly fogCelebrate = 0x3d1a08;
   private readonly glowMaterials: GlowMaterial[] = [];
-  private rafId = 0;
+  private frame: FrameLoop | null = null;
   private disposed = false;
   private celebrateUntil = 0;
   private faceTargetY = 0;
@@ -48,8 +50,8 @@ export class DongSonDrumScene {
     this.camera.position.set(0, 1.05, 2.85);
     this.camera.lookAt(0, 0.55, 0);
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // DPR + antialias theo tầng phần cứng; cảnh này không dùng đổ bóng.
+    this.renderer = createGameRenderer({ shadows: false }).renderer;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.22;
@@ -83,7 +85,8 @@ export class DongSonDrumScene {
     void this.loadModel();
     this.onResize();
     window.addEventListener('resize', this.onResize);
-    this.loop();
+    this.frame = new FrameLoop(this.loop, 60);
+    this.frame.start();
   }
 
   /** Hiệu ứng chúc mừng khi trả lời đúng. */
@@ -96,7 +99,7 @@ export class DongSonDrumScene {
 
   dispose(): void {
     this.disposed = true;
-    cancelAnimationFrame(this.rafId);
+    this.frame?.dispose();
     window.removeEventListener('resize', this.onResize);
     this.clearPivot();
     this.glowMaterials.length = 0;
@@ -230,7 +233,7 @@ export class DongSonDrumScene {
 
   private loop = (): void => {
     if (this.disposed) return;
-    const delta = this.clock.getDelta();
+    const delta = Math.min(this.clock.getDelta(), 0.05);
     const t = this.clock.getElapsedTime();
     const celebrating = performance.now() < this.celebrateUntil;
     const celebrateT = celebrating
@@ -269,6 +272,5 @@ export class DongSonDrumScene {
     }
 
     this.renderer.render(this.scene, this.camera);
-    this.rafId = requestAnimationFrame(this.loop);
   };
 }

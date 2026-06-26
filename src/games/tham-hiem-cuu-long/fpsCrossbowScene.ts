@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { FrameLoop } from '@/core/rendering/frameLoop';
+import { createGameRenderer } from '@/core/rendering/createGameRenderer';
+import { getTierProfile } from '@/core/rendering/qualityTier';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
@@ -140,7 +143,7 @@ export class FpsCrossbowScene {
   private bloomPass!: UnrealBloomPass;
   private scene: THREE.Scene;
   private camera: THREE.PerspectiveCamera;
-  private rafId = 0;
+  private frame: FrameLoop | null = null;
   private disposed = false;
   private yaw = 0;
   private pitch = 0;
@@ -177,15 +180,8 @@ export class FpsCrossbowScene {
     canvas.className = 'fps-canvas';
     mount.appendChild(canvas);
 
-    this.renderer = new THREE.WebGLRenderer({
-      canvas,
-      antialias: true,
-      alpha: true,
-      powerPreference: 'high-performance',
-    });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // DPR, antialias, shadow map đều theo tầng phần cứng (xem createGameRenderer/qualityTier).
+    this.renderer = createGameRenderer({ canvas, shadows: true }).renderer;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.18;
@@ -202,7 +198,8 @@ export class FpsCrossbowScene {
     const sun = new THREE.DirectionalLight(0xfff4e0, 1.05);
     sun.position.set(5, 9, 4);
     sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
+    const shadowSize = getTierProfile().shadowMapSize;
+    sun.shadow.mapSize.set(shadowSize, shadowSize);
     sun.shadow.bias = -0.0004;
     sun.shadow.camera.near = 0.5;
     sun.shadow.camera.far = 40;
@@ -212,7 +209,7 @@ export class FpsCrossbowScene {
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
     this.bloomPass = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.3, 0.45, 0.88);
-    this.composer.addPass(this.bloomPass);
+    if (getTierProfile().bloomEnabled) this.composer.addPass(this.bloomPass);
     this.composer.addPass(new OutputPass());
 
     this.buildMinecraftBackdrop();
@@ -237,7 +234,8 @@ export class FpsCrossbowScene {
     mount.addEventListener('click', this.onRequestPointerLock);
     document.addEventListener('pointerlockchange', this.onPointerLockChange);
     window.addEventListener('resize', this.onResize);
-    this.loop();
+    this.frame = new FrameLoop(this.loop, 60);
+    this.frame.start();
   }
 
   /** Đưa focus vào khung chơi để điều khiển ngay (chuột + phím). */
@@ -367,7 +365,7 @@ export class FpsCrossbowScene {
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
-    cancelAnimationFrame(this.rafId);
+    this.frame?.dispose();
     this.mount.removeEventListener('pointermove', this.onPointerMove);
     this.mount.removeEventListener('pointerenter', this.onPointerEnter);
     this.mount.removeEventListener('pointerleave', this.onPointerLeave);
@@ -636,9 +634,6 @@ export class FpsCrossbowScene {
     this.hud.tick(now);
     this.hud.updateFacing(this.camera);
     this.composer.render();
-    if (!this.disposed) {
-      this.rafId = requestAnimationFrame(this.loop);
-    }
   };
 
   /** Hoạt ảnh mục tiêu: hiện ra, lơ lửng, sáng lên khi được ngắm trúng. */

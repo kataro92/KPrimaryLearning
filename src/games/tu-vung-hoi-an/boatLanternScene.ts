@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { FrameLoop } from '@/core/rendering/frameLoop';
+import { createGameRenderer } from '@/core/rendering/createGameRenderer';
+import { getTierProfile } from '@/core/rendering/qualityTier';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
@@ -73,7 +76,7 @@ export class HoiAnBoatScene {
   private readonly reflectionGroup = new THREE.Group();
   private readonly worldTmp = new THREE.Vector3();
 
-  private rafId = 0;
+  private frame: FrameLoop | null = null;
   private disposed = false;
   private correctCount = 0;
   private celebrating = false;
@@ -102,10 +105,8 @@ export class HoiAnBoatScene {
     this.camera.position.copy(CAM_BASE);
     this.camera.lookAt(CAM_LOOK);
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // DPR, antialias, shadow map đều theo tầng phần cứng (xem createGameRenderer/qualityTier).
+    this.renderer = createGameRenderer({ shadows: true }).renderer;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.28;
@@ -114,7 +115,7 @@ export class HoiAnBoatScene {
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
     this.bloomPass = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.4, 0.5, 0.85);
-    this.composer.addPass(this.bloomPass);
+    if (getTierProfile().bloomEnabled) this.composer.addPass(this.bloomPass);
     this.composer.addPass(new OutputPass());
 
     this.buildEnvironment();
@@ -127,7 +128,8 @@ export class HoiAnBoatScene {
     window.addEventListener('resize', this.onResize);
     void this.loadBoatModel();
     void this.loadLanternTemplate();
-    this.loop();
+    this.frame = new FrameLoop(this.loop, 60);
+    this.frame.start();
   }
 
   private async loadBoatModel(): Promise<void> {
@@ -185,7 +187,7 @@ export class HoiAnBoatScene {
 
   dispose(): void {
     this.disposed = true;
-    cancelAnimationFrame(this.rafId);
+    this.frame?.dispose();
     window.removeEventListener('resize', this.onResize);
     this.mount.innerHTML = '';
     this.renderer.dispose();
@@ -205,7 +207,8 @@ export class HoiAnBoatScene {
     const key = new THREE.DirectionalLight(0xfff4d6, 1.65);
     key.position.set(18, 28, 22);
     key.castShadow = true;
-    key.shadow.mapSize.set(2048, 2048);
+    const shadowSize = getTierProfile().shadowMapSize;
+    key.shadow.mapSize.set(shadowSize, shadowSize);
     key.shadow.bias = -0.0005;
     key.shadow.camera.near = 0.5;
     key.shadow.camera.far = 165;
@@ -635,7 +638,6 @@ export class HoiAnBoatScene {
     this.camera.position.z = CAM_BASE.z;
     this.camera.lookAt(CAM_LOOK.x, CAM_LOOK.y + Math.sin(t * 0.28) * 0.2, CAM_LOOK.z);
     this.composer.render();
-    this.rafId = requestAnimationFrame(this.loop);
   };
 }
 

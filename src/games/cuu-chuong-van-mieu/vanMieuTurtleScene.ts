@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { FrameLoop } from '@/core/rendering/frameLoop';
+import { createGameRenderer } from '@/core/rendering/createGameRenderer';
+import { getTierProfile } from '@/core/rendering/qualityTier';
 import { disposeObject3D } from '@/core/assets/disposeObject3D';
 import { fitModelToHeight, tryLoadGltfScene } from '@/core/assets/fitGltfModel';
 
@@ -18,7 +21,7 @@ export class VanMieuTurtleScene {
   private readonly path = new THREE.Group();
   private readonly platform: THREE.Mesh;
   private readonly clock = new THREE.Clock();
-  private rafId = 0;
+  private frame: FrameLoop | null = null;
   private disposed = false;
   private progress = 0;
   private targetProgress = 0;
@@ -38,10 +41,8 @@ export class VanMieuTurtleScene {
     this.camera.position.set(0, 1.35, 3.4);
     this.camera.lookAt(0, 0.45, 0);
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // DPR, antialias, shadow map đều theo tầng phần cứng (xem createGameRenderer/qualityTier).
+    this.renderer = createGameRenderer({ shadows: true }).renderer;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.18;
@@ -53,7 +54,8 @@ export class VanMieuTurtleScene {
     const key = new THREE.DirectionalLight(0xfff5dc, 1.15);
     key.position.set(2.5, 4, 2.8);
     key.castShadow = true;
-    key.shadow.mapSize.set(1024, 1024);
+    const shadowSize = getTierProfile().shadowMapSize;
+    key.shadow.mapSize.set(shadowSize, shadowSize);
     key.shadow.bias = -0.0004;
     this.scene.add(key);
     const rim = new THREE.DirectionalLight(0xfbbf24, 0.55);
@@ -82,7 +84,8 @@ export class VanMieuTurtleScene {
     void this.loadModel();
     this.onResize();
     window.addEventListener('resize', this.onResize);
-    this.loop();
+    this.frame = new FrameLoop(this.loop, 60);
+    this.frame.start();
   }
 
   /** Cập nhật vị trí rùa theo số câu đúng (0…total). */
@@ -94,7 +97,7 @@ export class VanMieuTurtleScene {
 
   dispose(): void {
     this.disposed = true;
-    cancelAnimationFrame(this.rafId);
+    this.frame?.dispose();
     window.removeEventListener('resize', this.onResize);
     this.clearPivot();
     this.mount.innerHTML = '';
@@ -227,6 +230,5 @@ export class VanMieuTurtleScene {
       this.pivot.rotation.y = Math.sin(t * 0.8) * 0.15;
     }
     this.renderer.render(this.scene, this.camera);
-    this.rafId = requestAnimationFrame(this.loop);
   };
 }

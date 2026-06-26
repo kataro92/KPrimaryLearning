@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { FrameLoop } from '@/core/rendering/frameLoop';
+import { createGameRenderer } from '@/core/rendering/createGameRenderer';
 import { disposeObject3D } from '@/core/assets/disposeObject3D';
 
 function buildHeartShape(): THREE.Shape {
@@ -29,7 +31,7 @@ export class EthicsHeartScene {
   private readonly rightWing: THREE.Mesh;
   private readonly sparkles: THREE.Points;
   private readonly clock = new THREE.Clock();
-  private rafId = 0;
+  private frame: FrameLoop | null = null;
   private disposed = false;
 
   private growth = 1;
@@ -50,8 +52,8 @@ export class EthicsHeartScene {
     this.camera.position.set(0, 0.35, 3.4);
     this.camera.lookAt(0, 0.2, 0);
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // DPR + antialias theo tầng phần cứng; cảnh này không dùng đổ bóng.
+    this.renderer = createGameRenderer({ shadows: false }).renderer;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.12;
@@ -145,7 +147,8 @@ export class EthicsHeartScene {
 
     this.onResize();
     window.addEventListener('resize', this.onResize);
-    this.loop();
+    this.frame = new FrameLoop(this.loop, 60);
+    this.frame.start();
   }
 
   /** Mỗi câu đúng — tim đập và to dần. */
@@ -172,8 +175,7 @@ export class EthicsHeartScene {
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
-    cancelAnimationFrame(this.rafId);
-    this.rafId = 0;
+    this.frame?.dispose();
     window.removeEventListener('resize', this.onResize);
     disposeObject3D(this.root);
     this.renderer.dispose();
@@ -190,7 +192,6 @@ export class EthicsHeartScene {
 
   private loop = (): void => {
     if (this.disposed) return;
-    this.rafId = requestAnimationFrame(this.loop);
     const t = this.clock.getElapsedTime();
     const now = performance.now();
 

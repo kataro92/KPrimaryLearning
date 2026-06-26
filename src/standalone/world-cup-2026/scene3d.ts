@@ -3,6 +3,7 @@
  */
 
 import * as THREE from 'three';
+import { FrameLoop } from '@/core/rendering/frameLoop';
 import { disposeObject3D } from '@/core/assets/disposeObject3D';
 import {
   bezierPoint,
@@ -103,7 +104,7 @@ export class WorldCupScene3D {
   private lighting!: LightingRig;
   private world!: WorldLayers;
   private vfx!: VfxHandles;
-  private raf = 0;
+  private frame: FrameLoop | null = null;
   private cancelSeq: (() => void) | null = null;
   private idleT = 0;
   private runCycle = 0;
@@ -221,7 +222,8 @@ export class WorldCupScene3D {
 
     void this.initActors();
     this.resize();
-    this.loop();
+    this.frame = new FrameLoop(this.loop, 60);
+    this.frame.start();
   }
 
   private async initActors(): Promise<void> {
@@ -422,7 +424,7 @@ export class WorldCupScene3D {
   }
 
   dispose(): void {
-    cancelAnimationFrame(this.raf);
+    this.frame?.dispose();
     this.cancelSeq?.();
     this.removeQuizPointer?.();
     window.removeEventListener('resize', this.resize);
@@ -897,7 +899,6 @@ export class WorldCupScene3D {
         grassArt: this.world?.usesGrassArt ? 1 : 0,
       };
     }
-    this.raf = requestAnimationFrame(this.loop);
   };
 }
 
